@@ -1,37 +1,24 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { ShoppingCart, Search, User as UserIcon, Menu, X } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useCart } from "@/lib/cart-store";
-import { useAuth, useIsAdmin } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { CartDrawer } from "@/components/site/CartDrawer";
 
 export function Navbar() {
-  const count = useCart((s) => s.items.reduce((n, i) => n + i.quantity, 0));
-  const { user } = useAuth();
-  const { isAdmin } = useIsAdmin(user?.id);
   const router = useRouter();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    router.navigate({ to: "/shop", search: { q } as any });
+    router.navigate({ to: "/shop", search: { q } });
   };
 
   const nav = [
     { to: "/", label: "Home" },
     { to: "/shop", label: "Shop" },
-    { to: "/categories", label: "Categories" },
-  ];
+  ] as const;
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
@@ -69,55 +56,7 @@ export function Navbar() {
         </form>
 
         <div className="ml-auto flex items-center gap-1 md:ml-2">
-          <Link to="/cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {count > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background">
-                  {count}
-                </span>
-              )}
-            </Button>
-          </Link>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <UserIcon className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {user ? (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/orders">My Orders</Link>
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin">Admin</Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      router.navigate({ to: "/" });
-                    }}
-                  >
-                    Sign out
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem asChild>
-                  <Link to="/auth">Sign in</Link>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
+          <CartDrawer />
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen(!open)}>
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
