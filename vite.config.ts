@@ -12,4 +12,27 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      include: [
+        "@supabase/supabase-js",
+        "@tanstack/react-query",
+        "@tanstack/react-router",
+        "@tanstack/react-start",
+        "@radix-ui/react-checkbox",
+        "@radix-ui/react-dropdown-menu",
+        "@radix-ui/react-label",
+        "@radix-ui/react-select",
+        "@radix-ui/react-slider",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-slot",
+        "lucide-react",
+        "qrcode.react",
+        "sonner",
+        "zod",
+        "zustand",
+        "zustand/middleware",
+      ],
+    },
+  },
 });
