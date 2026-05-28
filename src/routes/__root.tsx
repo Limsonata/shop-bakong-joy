@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
+import { useCartSync } from "@/hooks/useCartSync";
 
 function NotFoundComponent() {
   return (
@@ -113,6 +114,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useCartSync();
 
   return (
     <QueryClientProvider client={queryClient}>
