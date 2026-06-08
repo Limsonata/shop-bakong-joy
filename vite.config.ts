@@ -5,6 +5,10 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   tanstackStart: {
@@ -33,6 +37,11 @@ export default defineConfig({
         "zustand",
         "zustand/middleware",
       ],
+    },
+    resolve: {
+      alias: {
+        "node:async_hooks": path.resolve(__dirname, "src/polyfills/async_hooks.ts"),
+      },
     },
   },
 });

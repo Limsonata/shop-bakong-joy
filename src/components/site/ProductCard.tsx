@@ -2,18 +2,18 @@ import { Link } from "@tanstack/react-router";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { LocalProductEdge } from "@/lib/localStore";
 import { toast } from "sonner";
 
-export function ProductCard({ product }: { product: ShopifyProduct }) {
+export function ProductCard({ product }: { product: LocalProductEdge }) {
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
 
   const p = product.node;
-  const variant = p.variants.edges[0]?.node;
-  const image = p.images.edges[0]?.node;
-  const price = parseFloat(p.priceRange.minVariantPrice.amount);
-  const currency = p.priceRange.minVariantPrice.currencyCode;
+  const variant = p.variants[0];
+  const image = p.images[0];
+  const price = parseFloat(p.price.amount);
+  const currency = p.price.currencyCode;
 
   const handleAdd = async (e: React.MouseEvent) => {
     e.preventDefault();

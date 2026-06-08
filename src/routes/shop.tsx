@@ -6,11 +6,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  storefrontApiRequest,
-  STOREFRONT_PRODUCTS_QUERY,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { getProducts } from "@/lib/localStore";
 
 const searchSchema = z.object({
   q: z.string().optional().catch(undefined),
@@ -28,10 +24,7 @@ function ShopPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["products", "all"],
-    queryFn: async () => {
-      const res = await storefrontApiRequest(STOREFRONT_PRODUCTS_QUERY, { first: 50, query: null });
-      return (res?.data?.products?.edges ?? []) as ShopifyProduct[];
-    },
+    queryFn: () => getProducts({ first: 50 }),
   });
 
   const term = q.trim().toLowerCase();
@@ -51,7 +44,11 @@ function ShopPage() {
         <aside className="space-y-6">
           <div className="space-y-2">
             <Label>Search</Label>
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products..." />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search products..."
+            />
           </div>
         </aside>
         <div>

@@ -5,11 +5,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCartStore } from "@/stores/cartStore";
-import {
-  storefrontApiRequest,
-  STOREFRONT_PRODUCT_BY_HANDLE_QUERY,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { getProductByHandle } from "@/lib/localStore";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/product/$handle")({
@@ -25,17 +21,11 @@ function ProductDetail() {
 
   const { data, isLoading: qLoading } = useQuery({
     queryKey: ["product", handle],
-    queryFn: async () => {
-      const res = await storefrontApiRequest(STOREFRONT_PRODUCT_BY_HANDLE_QUERY, { handle });
-      return res?.data?.product as ShopifyProduct["node"] | null;
-    },
+    queryFn: () => getProductByHandle(handle),
   });
 
-  const variant = useMemo(() => data?.variants.edges[variantIdx]?.node, [data, variantIdx]);
-  const product = useMemo<ShopifyProduct | null>(
-    () => (data ? ({ node: data } as ShopifyProduct) : null),
-    [data],
-  );
+  const variant = useMemo(() => data?.variants[variantIdx], [data, variantIdx]);
+  const product = useMemo(() => (data ? { node: data } : null), [data]);
 
   const handleAdd = async () => {
     if (!product || !variant) return;
@@ -74,8 +64,8 @@ function ProductDetail() {
     );
   }
 
-  const image = data.images.edges[0]?.node;
-  const price = variant?.price ?? data.priceRange.minVariantPrice;
+  const image = data?.images[0];
+  const price = variant?.price ?? data?.price;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -105,20 +95,20 @@ function ProductDetail() {
           {data.description && (
             <p className="whitespace-pre-line text-muted-foreground">{data.description}</p>
           )}
-          {data.variants.edges.length > 1 && (
+          {data.variants.length > 1 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Variant</p>
               <div className="flex flex-wrap gap-2">
-                {data.variants.edges.map((v, i) => (
+                {data.variants.map((v, i) => (
                   <Button
-                    key={v.node.id}
+                    key={v.id}
                     variant={i === variantIdx ? "default" : "outline"}
                     size="sm"
                     className="rounded-full"
                     onClick={() => setVariantIdx(i)}
-                    disabled={!v.node.availableForSale}
+                    disabled={!v.availableForSale}
                   >
-                    {v.node.title}
+                    {v.title}
                   </Button>
                 ))}
               </div>
@@ -130,9 +120,7 @@ function ProductDetail() {
             onClick={handleAdd}
             disabled={!variant?.availableForSale || isLoading}
           >
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {variant?.availableForSale ? "Add to cart" : "Sold out"}
           </Button>
         </div>

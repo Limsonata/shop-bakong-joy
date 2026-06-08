@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
+import { toast } from "sonner";
 
 export function CartDrawer() {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,10 +36,15 @@ export function CartDrawer() {
 
   const handleCheckout = () => {
     const url = getCheckoutUrl();
-    if (url) {
-      window.open(url, "_blank");
+    if (!url) {
+      toast.error("Checkout is not ready", {
+        description: "Please add an available product to your cart before checkout.",
+      });
       setIsOpen(false);
+      return;
     }
+
+    window.location.href = url;
   };
 
   return (
@@ -77,9 +83,9 @@ export function CartDrawer() {
                   {items.map((item) => (
                     <div key={item.variantId} className="flex gap-4 p-2">
                       <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                        {item.product.node.images?.edges?.[0]?.node && (
+                        {item.product.node.images?.[0] && (
                           <img
-                            src={item.product.node.images.edges[0].node.url}
+                            src={item.product.node.images[0].url}
                             alt={item.product.node.title}
                             className="h-full w-full object-cover"
                           />
@@ -147,7 +153,7 @@ export function CartDrawer() {
                   ) : (
                     <>
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Checkout with Shopify
+                      Checkout
                     </>
                   )}
                 </Button>

@@ -4,11 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/site/ProductCard";
-import {
-  storefrontApiRequest,
-  STOREFRONT_PRODUCTS_QUERY,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { getProducts } from "@/lib/localStore";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,7 +12,8 @@ export const Route = createFileRoute("/")({
       { title: "Storefront — Less, but better." },
       {
         name: "description",
-        content: "A curated storefront of considered everyday goods. Secure checkout powered by Shopify.",
+        content:
+          "A curated storefront of considered everyday goods. Local checkout with Bakong payment.",
       },
       { property: "og:title", content: "Storefront" },
       { property: "og:description", content: "Minimal modern shopping." },
@@ -28,10 +25,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { data, isLoading } = useQuery({
     queryKey: ["products", "featured"],
-    queryFn: async () => {
-      const res = await storefrontApiRequest(STOREFRONT_PRODUCTS_QUERY, { first: 8, query: null });
-      return (res?.data?.products?.edges ?? []) as ShopifyProduct[];
-    },
+    queryFn: () => getProducts({ first: 8 }),
   });
 
   return (
@@ -45,7 +39,7 @@ function Index() {
             Less, but better.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-balance text-muted-foreground sm:text-lg">
-            A curated storefront of considered everyday goods. Secure checkout powered by Shopify.
+            A curated storefront of considered everyday goods. Local checkout with Bakong payment.
           </p>
           <div className="mt-8 flex justify-center gap-3">
             <Button asChild size="lg" className="rounded-full">
@@ -71,7 +65,7 @@ function Index() {
             ))
           ) : !data || data.length === 0 ? (
             <div className="col-span-full rounded-2xl border bg-card p-16 text-center text-muted-foreground">
-              No products found. Tell me what to add — e.g. "create a product called Linen Tee for $39".
+              No products found.
             </div>
           ) : (
             data.map((product) => <ProductCard key={product.node.id} product={product} />)
