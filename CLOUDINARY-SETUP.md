@@ -12,6 +12,7 @@
 ## 📸 Your Cloudinary Cloud Name
 
 After signing up, find your **Cloud Name** in the dashboard:
+
 ```
 Dashboard → Account Details → Cloud Name
 ```
@@ -23,16 +24,19 @@ Example: `dxyz123abc`
 ## 🔗 Image URL Format
 
 ### Basic URL:
+
 ```
 https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/your-image.jpg
 ```
 
 ### Optimized URL (Recommended):
+
 ```
 https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_800,q_auto,f_auto/your-image.jpg
 ```
 
 ### With Folder:
+
 ```
 https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/products/tshirt.jpg
 ```
@@ -42,21 +46,25 @@ https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/products/tshirt.jpg
 ## 🎨 Image Optimization Parameters
 
 ### For Product Cards (400x400):
+
 ```
 w_400,h_400,c_fill,q_auto,f_auto
 ```
 
 ### For Product Detail (800px wide):
+
 ```
 w_800,q_auto,f_auto
 ```
 
 ### For Hero Images (1200px wide):
+
 ```
 w_1200,q_auto,f_auto
 ```
 
 ### Parameters Explained:
+
 - `w_` = width
 - `h_` = height
 - `c_fill` = crop to fill (maintains aspect ratio)
@@ -68,6 +76,7 @@ w_1200,q_auto,f_auto
 ## 📝 Example: Update products.json
 
 ### Replace this:
+
 ```json
 "images": [
   {
@@ -78,6 +87,7 @@ w_1200,q_auto,f_auto
 ```
 
 ### With this:
+
 ```json
 "images": [
   {

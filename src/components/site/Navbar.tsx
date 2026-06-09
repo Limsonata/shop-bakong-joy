@@ -1,35 +1,34 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Search, Menu, X, ChevronDown, User } from "lucide-react";
-import { useState } from "react";
+import { Search, Menu, X, ShoppingBag, User, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { getCollections, getProductTypes } from "@/lib/localStore";
 import { useAuth } from "@/hooks/useAuth";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
   const router = useRouter();
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
 
-  // Fetch collections
+  // Track scroll for glassmorphism effect
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Fetch collections and product types
   const { data: collectionsData } = useQuery({
     queryKey: ["collections"],
     queryFn: () => getCollections({ first: 20 }),
   });
 
-  // Fetch product types
   const { data: productTypes = [] } = useQuery({
     queryKey: ["productTypes"],
     queryFn: () => getProductTypes(),
@@ -40,211 +39,288 @@ export function Navbar() {
     router.navigate({ to: "/shop", search: { q } });
   };
 
-  const handleCategoryClick = (type: string) => {
-    router.navigate({ to: "/shop", search: { q: type } });
-    setCategoriesOpen(false);
-    setOpen(false);
-  };
-
-  const nav = [
+  const navItems = [
     { to: "/", label: "Home" },
     { to: "/shop", label: "Shop" },
-  ] as const;
+    { to: "/shop", label: "Collections", isDropdown: true },
+  ];
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background font-bold">
-            S
-          </div>
-          <span className="text-lg font-semibold tracking-tight">Storefront</span>
-        </Link>
+    <>
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled
+            ? "liquid-glass border-b"
+            : "bg-transparent"
+        }`}
+      >
+        {/* Top Banner */}
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="bg-foreground text-background py-2 text-center text-xs font-medium tracking-wide"
+        >
+          <span className="inline-flex items-center gap-2">
+            Free shipping on orders over $50
+            <ArrowRight className="w-3 h-3" />
+          </span>
+        </motion.div>
 
-        <nav className="ml-6 hidden items-center gap-1 md:flex">
-          {nav.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              activeProps={{ className: "text-foreground" }}
-            >
-              {n.label}
-            </Link>
-          ))}
-
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="h-auto rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
-                  Categories
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    {collectionsData && collectionsData.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold">Collections</h4>
-                        <ul className="space-y-1">
-                          {collectionsData.map((collection) => (
-                            <li key={collection.node.id}>
-                              <NavigationMenuLink asChild>
-                                <button
-                                  onClick={() => handleCategoryClick(collection.node.title)}
-                                  className="block w-full rounded-md px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                >
-                                  {collection.node.title}
-                                </button>
-                              </NavigationMenuLink>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {productTypes.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold">Product Types</h4>
-                        <ul className="space-y-1">
-                          {productTypes.map((type) => (
-                            <li key={type}>
-                              <NavigationMenuLink asChild>
-                                <button
-                                  onClick={() => handleCategoryClick(type)}
-                                  className="block w-full rounded-md px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                >
-                                  {type}
-                                </button>
-                              </NavigationMenuLink>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {(!collectionsData || collectionsData.length === 0) &&
-                      productTypes.length === 0 && (
-                        <div className="col-span-2 py-6 text-center text-sm text-muted-foreground">
-                          No categories available
-                        </div>
-                      )}
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
-        </nav>
-
-        <form onSubmit={onSearch} className="ml-auto hidden flex-1 max-w-sm md:block">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search products..."
-              className="pl-9"
-            />
-          </div>
-        </form>
-
-        <div className="ml-auto flex items-center gap-1 md:ml-2">
-          {authLoading ? (
-            <div className="hidden h-8 w-14 md:block" aria-hidden="true" />
-          ) : user ? (
-            <Button asChild variant="ghost" size="icon" title={user.name}>
-              <Link to="/account">
-                <User className="h-5 w-5" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo */}
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Link to="/" className="flex items-center">
+                <img src="/logo.png" alt="hairora" className="h-8 w-auto" />
               </Link>
-            </Button>
-          ) : (
-            <Button asChild variant="ghost" size="sm" className="hidden md:flex">
-              <Link to="/login">Login</Link>
-            </Button>
-          )}
-          <CartDrawer />
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen(!open)}>
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
-      </div>
+            </motion.div>
 
-      {open && (
-        <div className="border-t md:hidden">
-          <div className="mx-auto max-w-7xl space-y-1 px-4 py-3">
-            <form onSubmit={onSearch}>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search products..."
-                  className="pl-9"
-                />
-              </div>
-            </form>
-            {nav.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                onClick={() => setOpen(false)}
-                className="block rounded-md px-3 py-2 text-sm hover:bg-accent"
-              >
-                {n.label}
-              </Link>
-            ))}
-
-            {/* Mobile Categories */}
-            <div className="space-y-1">
-              <button
-                onClick={() => setCategoriesOpen(!categoriesOpen)}
-                className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent"
-              >
-                Categories
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${categoriesOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {categoriesOpen && (
-                <div className="space-y-1 pl-3">
-                  {collectionsData && collectionsData.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">
-                        Collections
-                      </p>
-                      {collectionsData.map((collection) => (
-                        <button
-                          key={collection.node.id}
-                          onClick={() => handleCategoryClick(collection.node.title)}
-                          className="block w-full rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent"
-                        >
-                          {collection.node.title}
-                        </button>
-                      ))}
-                    </div>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-8">
+              {navItems.map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + index * 0.1 }}
+                >
+                  {item.isDropdown ? (
+                    <DropdownNav
+                      label={item.label}
+                      collections={collectionsData}
+                      productTypes={productTypes}
+                      router={router}
+                    />
+                  ) : (
+                    <Link
+                      to={item.to}
+                      className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 group"
+                    >
+                      {item.label}
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-foreground transition-all group-hover:w-full" />
+                    </Link>
                   )}
+                </motion.div>
+              ))}
+            </nav>
 
-                  {productTypes.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">
-                        Product Types
-                      </p>
-                      {productTypes.map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => handleCategoryClick(type)}
-                          className="block w-full rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent"
-                        >
-                          {type}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {/* Search Button (Desktop) */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Button variant="ghost" size="icon" className="hidden md:flex">
+                  <Search className="h-5 w-5" />
+                </Button>
+              </motion.div>
+
+              {/* Account */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                {authLoading ? (
+                  <div className="h-9 w-9" />
+                ) : user ? (
+                  <Button asChild variant="ghost" size="icon">
+                    <Link to="/account">
+                      <User className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="ghost" size="sm" className="hidden md:flex">
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                )}
+              </motion.div>
+
+              {/* Cart */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <CartDrawer />
+              </motion.div>
+
+              {/* Mobile Menu Toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <motion.div
+                  animate={{ rotate: mobileMenuOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </motion.div>
+              </Button>
             </div>
           </div>
         </div>
-      )}
-    </header>
+      </motion.header>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-40 bg-background md:hidden"
+          >
+            <div className="pt-20 px-6 pb-6 h-full overflow-auto">
+              <form onSubmit={onSearch} className="mb-8">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search products..."
+                    className="pl-12 py-6 text-lg rounded-full"
+                  />
+                </div>
+              </form>
+
+              <nav className="space-y-2">
+                {[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: "Orders", to: "/orders" }, { label: "Account", to: "/account" }].map((item, i) => (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Link
+                      to={item.to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-4 text-2xl font-medium border-b border-border hover:pl-4 transition-all"
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </nav>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-8"
+              >
+                {!user && (
+                  <Button asChild className="w-full py-6 text-lg rounded-full">
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                )}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Spacer for fixed header */}
+      <div className="h-[72px]" />
+    </>
+  );
+}
+
+// Dropdown Navigation Component
+function DropdownNav({
+  label,
+  collections,
+  productTypes,
+  router,
+}: {
+  label: string;
+  collections?: { node: { id: string; title: string } }[];
+  productTypes: string[];
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleClick = (type: string) => {
+    router.navigate({ to: "/shop", search: { q: type } });
+    setIsOpen(false);
+  };
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <button className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2">
+        {label}
+        <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          ▼
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full left-0 pt-2"
+          >
+            <div className="bg-card rounded-2xl shadow-2xl border p-6 min-w-[400px]">
+              <div className="grid grid-cols-2 gap-8">
+                {collections && collections.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                      Collections
+                    </h4>
+                    <ul className="space-y-1">
+                      {collections.slice(0, 6).map((collection) => (
+                        <li key={collection.node.id}>
+                          <button
+                            onClick={() => handleClick(collection.node.title)}
+                            className="text-sm text-foreground hover:text-primary transition-colors py-1"
+                          >
+                            {collection.node.title}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {productTypes.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                      Product Types
+                    </h4>
+                    <ul className="space-y-1">
+                      {productTypes.slice(0, 6).map((type) => (
+                        <li key={type}>
+                          <button
+                            onClick={() => handleClick(type)}
+                            className="text-sm text-foreground hover:text-primary transition-colors py-1"
+                          >
+                            {type}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

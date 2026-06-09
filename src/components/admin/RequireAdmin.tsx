@@ -14,6 +14,7 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     getCurrentUser().then((user) => {
       if (cancelled) return;
+      console.log("[RequireAdmin] user:", user);
       if (user?.role === "admin") {
         setStatus("allowed");
       } else {

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,11 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import {
-  deleteProduct,
-  getProducts,
-  type Product,
-} from "@/lib/productStore";
+import { deleteProduct, getProducts, type Product } from "@/lib/productStore";
 
 export const Route = createFileRoute("/admin/products")({
   head: () => ({ meta: [{ title: "Products - Admin" }] }),
@@ -29,11 +25,13 @@ export const Route = createFileRoute("/admin/products")({
 });
 
 function ProductsAdmin() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Product | null>(null);
+  const isProductsIndex = pathname.replace(/\/$/, "") === "/admin/products";
 
   const loadProducts = async () => {
     setIsLoading(true);
@@ -49,8 +47,10 @@ function ProductsAdmin() {
   };
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (isProductsIndex) {
+      loadProducts();
+    }
+  }, [isProductsIndex]);
 
   const handleDelete = async () => {
     if (!pendingDelete) return;
@@ -75,6 +75,14 @@ function ProductsAdmin() {
       p.productType.toLowerCase().includes(q)
     );
   });
+
+  if (!isProductsIndex) {
+    return (
+      <RequireAdmin>
+        <Outlet />
+      </RequireAdmin>
+    );
+  }
 
   return (
     <RequireAdmin>
@@ -125,7 +133,9 @@ function ProductsAdmin() {
                   {search ? "No products match your search" : "No products yet"}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {search ? "Try a different search term." : "Add your first product to get started."}
+                  {search
+                    ? "Try a different search term."
+                    : "Add your first product to get started."}
                 </p>
                 {!search && (
                   <Button asChild className="mt-4">
@@ -198,10 +208,7 @@ function ProductsAdmin() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button asChild variant="ghost" size="icon">
-                            <Link
-                              to="/admin/products/$id"
-                              params={{ id: product.id }}
-                            >
+                            <Link to="/admin/products/$id" params={{ id: product.id }}>
                               <Pencil className="h-4 w-4" />
                             </Link>
                           </Button>

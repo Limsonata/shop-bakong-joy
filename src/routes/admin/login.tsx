@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/admin/login")({
 });
 
 function LoginPage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   // Login form
@@ -36,7 +37,7 @@ function LoginPage() {
       toast.success(`Welcome back, ${result.user.name}!`);
       const redirectTo = result.user.role === "admin" ? "/admin" : "/";
       setTimeout(() => {
-        window.location.href = redirectTo;
+        navigate({ to: redirectTo });
       }, 600);
     } else {
       toast.error(result.error || "Login failed");
@@ -53,7 +54,7 @@ function LoginPage() {
     if (result.success && result.user) {
       toast.success(`Welcome, ${result.user.name}!`);
       setTimeout(() => {
-        window.location.href = "/";
+        navigate({ to: "/" });
       }, 600);
     } else {
       toast.error(result.error || "Registration failed");

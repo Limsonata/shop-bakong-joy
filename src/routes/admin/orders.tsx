@@ -12,12 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
-import {
-  getAllOrders,
-  updateOrderStatus,
-  type Order,
-  type OrderStatus,
-} from "@/lib/orderStore";
+import { getAllOrders, updateOrderStatus, type Order, type OrderStatus } from "@/lib/orderStore";
 
 export const Route = createFileRoute("/admin/orders")({
   head: () => ({ meta: [{ title: "Orders - Admin" }] }),

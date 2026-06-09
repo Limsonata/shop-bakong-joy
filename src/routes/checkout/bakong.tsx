@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCartStore } from "@/stores/cartStore";
 import { getBakongPaymentConfig, isBakongConfigured, generateBakongQR } from "@/lib/bakong";
 import { createOrder } from "@/lib/orderStore";
+import { notifyOrderReceipt } from "@/lib/telegramNotify";
+import { getTelegramId } from "@/lib/telegramAuth";
 
 export const Route = createFileRoute("/checkout/bakong")({
   head: () => ({ meta: [{ title: "Bakong Checkout - Shop Bakong Joy" }] }),
@@ -99,6 +101,12 @@ function BakongCheckout() {
         })),
       });
 
+      // Send Telegram receipt if user logged in via Telegram
+      const telegramId = getTelegramId();
+      if (telegramId) {
+        notifyOrderReceipt(telegramId, order);
+      }
+
       toast.success("Order submitted!");
       setIsSubmitted(true);
       clearCart();
@@ -118,8 +126,8 @@ function BakongCheckout() {
             <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
             <CardTitle>Order submitted</CardTitle>
             <CardDescription>
-              We received your order and Bakong payment reference. Once we confirm payment, we
-              will start fulfillment.
+              We received your order and Bakong payment reference. Once we confirm payment, we will
+              start fulfillment.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-center">

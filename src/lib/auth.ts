@@ -242,11 +242,7 @@ export async function login(email: string, password: string): Promise<AuthResult
 /**
  * Register a new account (async). Works with both Supabase and demo mode.
  */
-export async function register(
-  email: string,
-  password: string,
-  name: string,
-): Promise<AuthResult> {
+export async function register(email: string, password: string, name: string): Promise<AuthResult> {
   if (isSupabaseConfigured) {
     return registerSupabase(email, password, name);
   }

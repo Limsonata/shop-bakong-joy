@@ -53,8 +53,8 @@ export const useCartStore = create<CartStore>()(
             cartId: cart.id,
             checkoutUrl: getBakongCheckoutUrl(),
           });
-        } catch (error) {
-          console.error("Failed to add item:", error);
+        } catch {
+          // Silently fail - cart operations are not critical
         } finally {
           set({ isLoading: false });
         }
@@ -66,8 +66,8 @@ export const useCartStore = create<CartStore>()(
           await localUpdateCartItem(variantId, quantity);
           const cart = getLocalCart();
           set({ items: cart.items });
-        } catch (error) {
-          console.error("Failed to update quantity:", error);
+        } catch {
+          // Silently fail - cart operations are not critical
         } finally {
           set({ isLoading: false });
         }
@@ -79,8 +79,8 @@ export const useCartStore = create<CartStore>()(
           await localRemoveFromCart(variantId);
           const cart = getLocalCart();
           set({ items: cart.items });
-        } catch (error) {
-          console.error("Failed to remove item:", error);
+        } catch {
+          // Silently fail - cart operations are not critical
         } finally {
           set({ isLoading: false });
         }
@@ -104,8 +104,8 @@ export const useCartStore = create<CartStore>()(
             cartId: cart.id,
             checkoutUrl: cart.items.length > 0 ? getBakongCheckoutUrl() : null,
           });
-        } catch (error) {
-          console.error("Failed to sync cart:", error);
+        } catch {
+          // Silently fail - cart sync is not critical
         } finally {
           set({ isSyncing: false });
         }

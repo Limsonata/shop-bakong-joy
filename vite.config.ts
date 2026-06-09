@@ -17,6 +17,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    server: {
+      allowedHosts: [".ngrok-free.app", ".ngrok-free.dev", ".ngrok.io"],
+    },
     optimizeDeps: {
       include: [
         "@supabase/supabase-js",

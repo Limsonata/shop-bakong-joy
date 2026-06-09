@@ -1,6 +1,7 @@
 // Browser polyfill for node:async_hooks
 // This is needed because @tanstack/react-start tries to use AsyncLocalStorage in the browser
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class AsyncLocalStorage<T = any> {
   private store: T | undefined;
 

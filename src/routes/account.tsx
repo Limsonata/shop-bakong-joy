@@ -1,16 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { logout } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { User, ShoppingBag, LogOut, Shield } from "lucide-react";
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/account")({
-  head: () => ({ meta: [{ title: "My Account" }] }),
+  head: () => ({ meta: [{ title: "My Account — Shop Bakong Joy" }] }),
   component: AccountPage,
 });
+
+const fadeUp = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
+};
 
 function AccountPage() {
   const { user, isLoading } = useAuth();
@@ -24,7 +29,7 @@ function AccountPage() {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/";
+    navigate({ to: "/" });
   };
 
   if (isLoading) {
@@ -38,106 +43,119 @@ function AccountPage() {
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <div className="mb-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="mx-auto max-w-4xl px-4 py-12 sm:px-6"
+    >
+      <motion.div {...fadeUp} className="mb-10">
         <h1 className="text-3xl font-semibold tracking-tight">My Account</h1>
         <p className="mt-2 text-muted-foreground">Manage your account and preferences</p>
-      </div>
+      </motion.div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Profile</CardTitle>
-                <CardDescription>Your account information</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-medium">{user.name}</p>
+      <div className="grid gap-5 md:grid-cols-2">
+        {/* Profile */}
+        <motion.div
+          {...fadeUp}
+          transition={{ ...fadeUp.transition, delay: 0.05 }}
+          className="liquid-glass-card rounded-2xl p-6 space-y-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/8 border border-border">
+              <User className="h-5 w-5 text-foreground" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{user.email}</p>
+              <p className="font-semibold">Profile</p>
+              <p className="text-sm text-muted-foreground">Your account information</p>
+            </div>
+          </div>
+          <div className="space-y-3 pt-2">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Name</p>
+              <p className="font-medium mt-0.5">{user.name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Role</p>
-              <div className="flex items-center gap-2">
-                {user.role === "admin" && <Shield className="h-4 w-4 text-primary" />}
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Email</p>
+              <p className="font-medium mt-0.5">{user.email}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Role</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {user.role === "admin" && <Shield className="h-3.5 w-3.5 text-accent" />}
                 <p className="font-medium capitalize">{user.role}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <ShoppingBag className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Orders</CardTitle>
-                <CardDescription>View your order history</CardDescription>
-              </div>
+        {/* Orders */}
+        <motion.div
+          {...fadeUp}
+          transition={{ ...fadeUp.transition, delay: 0.1 }}
+          className="liquid-glass-card rounded-2xl p-6 space-y-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/8 border border-border">
+              <ShoppingBag className="h-5 w-5 text-foreground" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
+            <div>
+              <p className="font-semibold">Orders</p>
+              <p className="text-sm text-muted-foreground">View your order history</p>
+            </div>
+          </div>
+          <div className="space-y-2 pt-2">
+            <Button asChild className="w-full rounded-full">
               <Link to="/orders">View My Orders</Link>
             </Button>
-            <Button asChild className="mt-2 w-full" variant="outline">
+            <Button asChild className="w-full rounded-full" variant="outline">
               <Link to="/shop">Continue Shopping</Link>
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
 
+        {/* Admin */}
         {user.role === "admin" && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Shield className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Admin Access</CardTitle>
-                  <CardDescription>Manage your store</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full">
-                <Link to="/admin">Go to Admin Dashboard</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="md:col-span-2">
-          <CardHeader>
+          <motion.div
+            {...fadeUp}
+            transition={{ ...fadeUp.transition, delay: 0.15 }}
+            className="liquid-glass-card rounded-2xl p-6 space-y-4 md:col-span-2"
+          >
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-                <LogOut className="h-6 w-6 text-destructive" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 border border-border">
+                <Shield className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <CardTitle>Logout</CardTitle>
-                <CardDescription>Sign out of your account</CardDescription>
+                <p className="font-semibold">Admin Access</p>
+                <p className="text-sm text-muted-foreground">Manage your store</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleLogout} variant="destructive" className="w-full">
-              Logout
+            <Button asChild className="w-full rounded-full">
+              <Link to="/admin">Go to Admin Dashboard</Link>
             </Button>
-          </CardContent>
-        </Card>
+          </motion.div>
+        )}
+
+        {/* Logout */}
+        <motion.div
+          {...fadeUp}
+          transition={{ ...fadeUp.transition, delay: 0.2 }}
+          className="liquid-glass-card rounded-2xl p-6 space-y-4 md:col-span-2"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 border border-border">
+              <LogOut className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <p className="font-semibold">Sign out</p>
+              <p className="text-sm text-muted-foreground">Sign out of your account</p>
+            </div>
+          </div>
+          <Button onClick={handleLogout} variant="destructive" className="w-full rounded-full">
+            Logout
+          </Button>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

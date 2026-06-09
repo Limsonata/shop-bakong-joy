@@ -4,16 +4,16 @@ This guide takes you from local demo to a real, production website.
 
 ## What You Have Now (Demo Mode)
 
-| Feature | Current State | Production Need |
-|---|---|---|
-| Products | Hardcoded JSON file | Database (Supabase / Sanity) |
-| Cart | Browser localStorage | OK as-is, or DB for logged-in users |
-| Auth | 2 hardcoded demo users | Real auth (Supabase Auth / Clerk) |
-| Admin panel | Changes don't save | Connected to real DB |
-| Images | Cloudinary URLs in JSON | Cloudinary (already production-ready) |
-| Bakong QR | Real KHQR generated | Need real Bakong merchant account |
-| Orders | Not stored anywhere | Database table + admin view |
-| Hosting | localhost | Real domain + hosting |
+| Feature     | Current State           | Production Need                       |
+| ----------- | ----------------------- | ------------------------------------- |
+| Products    | Hardcoded JSON file     | Database (Supabase / Sanity)          |
+| Cart        | Browser localStorage    | OK as-is, or DB for logged-in users   |
+| Auth        | 2 hardcoded demo users  | Real auth (Supabase Auth / Clerk)     |
+| Admin panel | Changes don't save      | Connected to real DB                  |
+| Images      | Cloudinary URLs in JSON | Cloudinary (already production-ready) |
+| Bakong QR   | Real KHQR generated     | Need real Bakong merchant account     |
+| Orders      | Not stored anywhere     | Database table + admin view           |
+| Hosting     | localhost               | Real domain + hosting                 |
 
 ---
 
@@ -22,7 +22,9 @@ This guide takes you from local demo to a real, production website.
 ### Step 1: Pick a Backend (Pick ONE)
 
 #### Option A: Supabase (Recommended - Easiest)
+
 **Free tier**: 500MB database, 50k monthly active users, 1GB file storage
+
 - Postgres database
 - Built-in auth (email, Google, etc.)
 - File storage
@@ -34,6 +36,7 @@ npm install @supabase/supabase-js
 ```
 
 **Setup**:
+
 1. Create account at https://supabase.com
 2. Create new project (takes 2 mins)
 3. Copy `URL` and `anon key` from project settings
@@ -44,6 +47,7 @@ npm install @supabase/supabase-js
    ```
 
 **Tables to create** (in Supabase SQL editor):
+
 ```sql
 -- Products
 create table products (
@@ -97,14 +101,18 @@ create trigger on_auth_user_created
 ```
 
 #### Option B: Sanity.io (Best for content-heavy sites)
+
 **Free tier**: 3 users, 10k documents, 100k API CDN requests
+
 - Headless CMS with great admin UI
 - Real-time collaboration
 - Image transformations built-in
 - Need separate auth (Clerk, Auth0)
 
 #### Option C: Firebase
+
 **Free tier**: 1GB storage, 50k reads/day
+
 - Google's offering, easy auth
 - Firestore NoSQL database
 
@@ -144,7 +152,9 @@ export async function logout() {
 }
 
 export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   return { ...user, ...profile };
@@ -152,6 +162,7 @@ export async function getCurrentUser() {
 ```
 
 **Make a user admin**: In Supabase SQL editor:
+
 ```sql
 update profiles set role = 'admin' where id = (
   select id from auth.users where email = 'you@example.com'
@@ -175,17 +186,14 @@ export async function getProducts(options = {}) {
 }
 
 export async function getProductByHandle(handle: string) {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("handle", handle)
-    .single();
+  const { data, error } = await supabase.from("products").select("*").eq("handle", handle).single();
   if (error) throw error;
   return data;
 }
 ```
 
 Then make the admin panel actually save changes:
+
 ```typescript
 // In src/routes/admin/products.tsx
 async function handleAdd(product) {
@@ -203,9 +211,11 @@ In `src/routes/checkout/bakong.tsx`, replace the demo `setIsSubmitted(true)` wit
 ```typescript
 const handleSubmit = async (event) => {
   event.preventDefault();
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { error } = await supabase.from("orders").insert({
     user_id: user?.id,
     customer_name: formData.name,
@@ -222,7 +232,7 @@ const handleSubmit = async (event) => {
     toast.error("Failed to submit order");
     return;
   }
-  
+
   setIsSubmitted(true);
   clearCart();
 };
@@ -238,6 +248,7 @@ const handleSubmit = async (event) => {
    - For business: register as merchant via your bank (ABA, ACLEDA, etc.)
 
 2. **Configure your env vars**:
+
    ```env
    VITE_BAKONG_MERCHANT_NAME="Your Real Shop Name"
    VITE_BAKONG_MERCHANT_ACCOUNT="your_real_id@aclb"  # from your bank
@@ -258,6 +269,7 @@ const handleSubmit = async (event) => {
 This project uses TanStack Start (SSR), so you need a host that supports Node.js or edge functions.
 
 #### Option A: Cloudflare Pages (Free, Recommended)
+
 The project is already set up for Cloudflare via Nitro.
 
 ```bash
@@ -269,18 +281,21 @@ wrangler pages deploy dist
 Or connect your Git repo at https://dash.cloudflare.com/pages and it auto-deploys.
 
 #### Option B: Vercel
+
 ```bash
 npm install -g vercel
 vercel
 ```
 
 #### Option C: Netlify
+
 ```bash
 npm install -g netlify-cli
 netlify deploy --prod
 ```
 
 **Add environment variables** in your hosting dashboard (Cloudflare/Vercel/Netlify):
+
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_BAKONG_MERCHANT_NAME`
@@ -306,23 +321,27 @@ netlify deploy --prod
 ### Step 8: Production Checklist
 
 **Security**:
+
 - [ ] Never commit `.env` files (already in `.gitignore`)
 - [ ] Use Supabase Row Level Security (RLS) policies
 - [ ] Only use `anon` keys on the client, never `service_role`
 - [ ] Validate all forms server-side too
 
 **Performance**:
+
 - [ ] Optimize images via Cloudinary transformations
 - [ ] Enable Cloudflare CDN caching
 - [ ] Run `npm run build` and check the output size
 
 **Legal**:
+
 - [ ] Add Terms of Service page
 - [ ] Add Privacy Policy page
 - [ ] If selling in EU - GDPR compliance
 - [ ] If in Cambodia - register your business
 
 **Analytics & Monitoring**:
+
 - [ ] Add Plausible or Google Analytics
 - [ ] Set up Sentry for error tracking (free tier)
 - [ ] Monitor Bakong payments daily until automated
@@ -331,14 +350,14 @@ netlify deploy --prod
 
 ## Cost Summary (Monthly)
 
-| Item | Free Tier | If You Outgrow It |
-|---|---|---|
-| Supabase | $0 (500MB DB, 50k users) | $25/mo |
-| Cloudflare Pages | $0 (unlimited) | Stays free |
-| Cloudinary | $0 (25GB storage) | $89/mo |
-| Domain | $10-15/year | Same |
-| Bakong | $0 | $0 (free for merchants) |
-| **Total** | **~$1/month** (just domain) | ~$30/month at scale |
+| Item             | Free Tier                   | If You Outgrow It       |
+| ---------------- | --------------------------- | ----------------------- |
+| Supabase         | $0 (500MB DB, 50k users)    | $25/mo                  |
+| Cloudflare Pages | $0 (unlimited)              | Stays free              |
+| Cloudinary       | $0 (25GB storage)           | $89/mo                  |
+| Domain           | $10-15/year                 | Same                    |
+| Bakong           | $0                          | $0 (free for merchants) |
+| **Total**        | **~$1/month** (just domain) | ~$30/month at scale     |
 
 ---
 
@@ -358,6 +377,7 @@ netlify deploy --prod
 ## Need Help With a Specific Step?
 
 Just ask! For example:
+
 - "Set up Supabase and migrate products"
 - "Build a real signup/login with Supabase Auth"
 - "Make admin panel save to database"

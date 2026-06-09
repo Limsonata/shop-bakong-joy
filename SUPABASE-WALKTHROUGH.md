@@ -46,6 +46,7 @@ VITE_BAKONG_CURRENCY="USD"
 ```
 
 After creating `.env`, **restart the dev server**:
+
 ```bash
 # Press Ctrl+C in the terminal running `npm run dev`
 npm run dev
@@ -190,11 +191,13 @@ Make yourself admin in Supabase:
 
 1. Back in Supabase, click **SQL Editor** → **New query**
 2. Run:
+
    ```sql
    update profiles
    set role = 'admin'
    where id = (select id from auth.users where email = 'YOUR-EMAIL@example.com');
    ```
+
    (Replace YOUR-EMAIL with the email you just signed up with)
 
 3. On your site, log out and log back in
@@ -228,6 +231,7 @@ insert into products (handle, title, description, product_type, price, currency,
 ## Done!
 
 You now have:
+
 - ✅ Real user accounts
 - ✅ Real product database
 - ✅ Real order persistence
@@ -237,14 +241,17 @@ You now have:
 ## What If Something Breaks?
 
 **"Invalid email or password"** when logging in
+
 - Check that **Confirm email** is OFF in Supabase Auth settings
 - Try registering again
 
 **"new row violates row-level security policy"** when creating products
+
 - Make sure you ran the admin role UPDATE SQL
 - Log out and back in to refresh your session
 
 **Login form spinning forever**
+
 - Open the browser console (F12) and check for errors
 - Verify `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set correctly in `.env`
 - Make sure you restarted the dev server after creating `.env`

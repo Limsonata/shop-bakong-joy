@@ -62,91 +62,96 @@ After Sanity is installed, create the schema:
 ### **Create file:** `sanity/schemas/product.ts`
 
 ```typescript
-import {defineField, defineType} from 'sanity'
+import { defineField, defineType } from "sanity";
 
 export default defineType({
-  name: 'product',
-  title: 'Product',
-  type: 'document',
+  name: "product",
+  title: "Product",
+  type: "document",
   fields: [
     defineField({
-      name: 'title',
-      title: 'Title',
-      type: 'string',
+      name: "title",
+      title: "Title",
+      type: "string",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
+      name: "slug",
+      title: "Slug",
+      type: "slug",
       options: {
-        source: 'title',
+        source: "title",
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'description',
-      title: 'Description',
-      type: 'text',
+      name: "description",
+      title: "Description",
+      type: "text",
     }),
     defineField({
-      name: 'productType',
-      title: 'Product Type',
-      type: 'string',
+      name: "productType",
+      title: "Product Type",
+      type: "string",
       options: {
         list: [
-          {title: 'Clothing', value: 'Clothing'},
-          {title: 'Accessories', value: 'Accessories'},
-          {title: 'Electronics', value: 'Electronics'},
-          {title: 'Home & Kitchen', value: 'Home & Kitchen'},
-          {title: 'Sports & Fitness', value: 'Sports & Fitness'},
+          { title: "Clothing", value: "Clothing" },
+          { title: "Accessories", value: "Accessories" },
+          { title: "Electronics", value: "Electronics" },
+          { title: "Home & Kitchen", value: "Home & Kitchen" },
+          { title: "Sports & Fitness", value: "Sports & Fitness" },
         ],
       },
     }),
     defineField({
-      name: 'price',
-      title: 'Price',
-      type: 'number',
+      name: "price",
+      title: "Price",
+      type: "number",
       validation: (Rule) => Rule.required().positive(),
     }),
     defineField({
-      name: 'images',
-      title: 'Images',
-      type: 'array',
+      name: "images",
+      title: "Images",
+      type: "array",
       of: [
         {
-          type: 'image',
+          type: "image",
           options: {
             hotspot: true,
           },
           fields: [
             {
-              name: 'alt',
-              type: 'string',
-              title: 'Alternative text',
+              name: "alt",
+              type: "string",
+              title: "Alternative text",
             },
           ],
         },
       ],
     }),
     defineField({
-      name: 'collections',
-      title: 'Collections',
-      type: 'array',
-      of: [{type: 'reference', to: {type: 'collection'}}],
+      name: "collections",
+      title: "Collections",
+      type: "array",
+      of: [{ type: "reference", to: { type: "collection" } }],
     }),
     defineField({
-      name: 'variants',
-      title: 'Variants',
-      type: 'array',
+      name: "variants",
+      title: "Variants",
+      type: "array",
       of: [
         {
-          type: 'object',
+          type: "object",
           fields: [
-            {name: 'title', type: 'string', title: 'Variant Title'},
-            {name: 'price', type: 'number', title: 'Price'},
-            {name: 'availableForSale', type: 'boolean', title: 'Available for Sale', initialValue: true},
+            { name: "title", type: "string", title: "Variant Title" },
+            { name: "price", type: "number", title: "Price" },
+            {
+              name: "availableForSale",
+              type: "boolean",
+              title: "Available for Sale",
+              initialValue: true,
+            },
           ],
         },
       ],
@@ -154,64 +159,64 @@ export default defineType({
   ],
   preview: {
     select: {
-      title: 'title',
-      media: 'images.0',
-      price: 'price',
+      title: "title",
+      media: "images.0",
+      price: "price",
     },
     prepare(selection) {
-      const {title, media, price} = selection
+      const { title, media, price } = selection;
       return {
         title: title,
-        subtitle: price ? `$${price}` : 'No price set',
+        subtitle: price ? `$${price}` : "No price set",
         media: media,
-      }
+      };
     },
   },
-})
+});
 ```
 
 ### **Create file:** `sanity/schemas/collection.ts`
 
 ```typescript
-import {defineField, defineType} from 'sanity'
+import { defineField, defineType } from "sanity";
 
 export default defineType({
-  name: 'collection',
-  title: 'Collection',
-  type: 'document',
+  name: "collection",
+  title: "Collection",
+  type: "document",
   fields: [
     defineField({
-      name: 'title',
-      title: 'Title',
-      type: 'string',
+      name: "title",
+      title: "Title",
+      type: "string",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
+      name: "slug",
+      title: "Slug",
+      type: "slug",
       options: {
-        source: 'title',
+        source: "title",
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'description',
-      title: 'Description',
-      type: 'text',
+      name: "description",
+      title: "Description",
+      type: "text",
     }),
   ],
-})
+});
 ```
 
 ### **Update:** `sanity/schemas/index.ts`
 
 ```typescript
-import product from './product'
-import collection from './collection'
+import product from "./product";
+import collection from "./collection";
 
-export const schemaTypes = [product, collection]
+export const schemaTypes = [product, collection];
 ```
 
 ---
@@ -243,20 +248,20 @@ npm install @sanity/client @sanity/image-url
 ### **Create file:** `src/lib/sanity.ts`
 
 ```typescript
-import { createClient } from '@sanity/client'
-import imageUrlBuilder from '@sanity/image-url'
+import { createClient } from "@sanity/client";
+import imageUrlBuilder from "@sanity/image-url";
 
 export const sanityClient = createClient({
-  projectId: 'YOUR_PROJECT_ID', // Find in sanity.json or manage.sanity.io
-  dataset: 'production',
+  projectId: "YOUR_PROJECT_ID", // Find in sanity.json or manage.sanity.io
+  dataset: "production",
   useCdn: true,
-  apiVersion: '2024-01-01',
-})
+  apiVersion: "2024-01-01",
+});
 
-const builder = imageUrlBuilder(sanityClient)
+const builder = imageUrlBuilder(sanityClient);
 
 export function urlFor(source: any) {
-  return builder.image(source)
+  return builder.image(source);
 }
 
 // Fetch all products
@@ -276,12 +281,13 @@ export async function getProducts() {
       variants,
       "collections": collections[]->title
     }
-  `)
+  `);
 }
 
 // Fetch product by slug
 export async function getProductBySlug(slug: string) {
-  return sanityClient.fetch(`
+  return sanityClient.fetch(
+    `
     *[_type == "product" && slug.current == $slug][0] {
       _id,
       title,
@@ -296,7 +302,9 @@ export async function getProductBySlug(slug: string) {
       variants,
       "collections": collections[]->title
     }
-  `, { slug })
+  `,
+    { slug },
+  );
 }
 
 // Fetch all collections
@@ -308,7 +316,7 @@ export async function getCollections() {
       "slug": slug.current,
       description
     }
-  `)
+  `);
 }
 ```
 
@@ -317,15 +325,18 @@ export async function getCollections() {
 ## 🔑 **Step 8: Get Your Project ID**
 
 ### **Method 1: From Sanity Studio**
+
 1. Go to `http://localhost:3333`
 2. Look at the URL or check `sanity/sanity.config.ts`
 
 ### **Method 2: From Sanity Dashboard**
+
 1. Go to [manage.sanity.io](https://manage.sanity.io)
 2. Click your project
 3. Copy the **Project ID**
 
 ### **Update the client:**
+
 Replace `YOUR_PROJECT_ID` in `src/lib/sanity.ts` with your actual project ID.
 
 ---
@@ -352,8 +363,13 @@ Replace `YOUR_PROJECT_ID` in `src/lib/sanity.ts` with your actual project ID.
 ### **Update:** `src/lib/localStore.ts`
 
 Add at the top:
+
 ```typescript
-import { getProducts as getSanityProducts, getProductBySlug as getSanityProductBySlug, getCollections as getSanityCollections } from './sanity'
+import {
+  getProducts as getSanityProducts,
+  getProductBySlug as getSanityProductBySlug,
+  getCollections as getSanityCollections,
+} from "./sanity";
 ```
 
 Replace the functions with Sanity versions or create new ones.
@@ -392,7 +408,7 @@ Your studio will be at: `https://YOUR_PROJECT.sanity.studio`
 ✅ **Free tier** - 100k API requests/month  
 ✅ **Collaborative** - Multiple users  
 ✅ **Version history** - Track all changes  
-✅ **Custom workflows** - Approval processes  
+✅ **Custom workflows** - Approval processes
 
 ---
 

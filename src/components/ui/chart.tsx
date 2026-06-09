@@ -61,6 +61,25 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Escape CSS identifiers to prevent injection
+function escapeCssIdentifier(str: string): string {
+  return str.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+// Validate CSS color values
+function isValidCssColor(color: string): boolean {
+  // Allow hex, rgb, rgba, hsl, hsla, and CSS variables
+  return (
+    /^#[0-9a-fA-F]{3,8}$/.test(color) ||
+    /^rgb\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/.test(color) ||
+    /^rgba\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)$/.test(color) ||
+    /^hsl\s*\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*\)$/.test(color) ||
+    /^hsla\s*\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*,\s*[\d.]+\s*\)$/.test(color) ||
+    /^var\s*\(\s*--[a-zA-Z0-9_-]+\s*\)$/.test(color) ||
+    /^(oklch|lab|color-mix)\s*\(/.test(color)
+  );
+}
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([, config]) => config.theme || config.color);
 
@@ -68,23 +87,27 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Sanitize the chart ID
+  const safeId = escapeCssIdentifier(id);
+
+  // Build CSS string safely
+  let cssText = "";
+  for (const [theme, prefix] of Object.entries(THEMES)) {
+    cssText += `${prefix} [data-chart=${safeId}] {\n`;
+    for (const [key, itemConfig] of colorConfig) {
+      const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+      if (color && isValidCssColor(color)) {
+        const safeKey = escapeCssIdentifier(key);
+        cssText += `  --color-${safeKey}: ${color};\n`;
+      }
+    }
+    cssText += "}\n";
+  }
+
   return (
     <style
       dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
+        __html: cssText,
       }}
     />
   );

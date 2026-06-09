@@ -30,6 +30,7 @@ export interface DbProduct {
   image_url: string | null;
   in_stock: boolean;
   collections: string[] | null;
+  variants: Array<{ id: string; title: string; option: string; price: number; availableForSale: boolean }> | null;
   created_at: string;
 }
 

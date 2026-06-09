@@ -17,6 +17,7 @@ I've added console logging to the order flow. Here's how to diagnose what's happ
 ```
 
 If you DON'T see this:
+
 - The order isn't saving. Check for any red errors above it.
 - The form submission is failing. Look for an error toast.
 
@@ -42,10 +43,11 @@ If you see `0 of 1`, the filter is excluding your order — most likely a user I
 In the DevTools Console, paste:
 
 ```js
-JSON.parse(localStorage.getItem('local-orders') || '[]')
+JSON.parse(localStorage.getItem("local-orders") || "[]");
 ```
 
 This shows you the raw array of saved orders. You should see your order with:
+
 - `id`
 - `userId` (or null if placed as guest)
 - `items`
@@ -80,9 +82,9 @@ This shows you the raw array of saved orders. You should see your order with:
 If you want a clean slate, paste this in the console:
 
 ```js
-localStorage.removeItem('local-orders');
-localStorage.removeItem('local-cart');
-localStorage.removeItem('bakong-cart-store');
+localStorage.removeItem("local-orders");
+localStorage.removeItem("local-cart");
+localStorage.removeItem("bakong-cart-store");
 location.reload();
 ```
 

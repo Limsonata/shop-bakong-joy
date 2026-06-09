@@ -193,6 +193,7 @@ Or use the admin panel UI (when you build the product editor) to add them throug
 ### Cloudflare Pages (Recommended - Free)
 
 1. Push your code to GitHub:
+
    ```bash
    git init
    git add .
@@ -235,13 +236,13 @@ For automated payment confirmation (instead of customers entering transaction ID
 
 ## Cost Summary
 
-| Item | Free Tier | When You Outgrow |
-|---|---|---|
-| Supabase | 500MB DB, 50k MAU | $25/mo at scale |
-| Cloudflare Pages | Unlimited bandwidth | Stays free |
-| Cloudinary | 25GB images | $89/mo |
-| Domain | $10-15/year | Same |
-| Bakong | Free for merchants | Free |
+| Item             | Free Tier           | When You Outgrow |
+| ---------------- | ------------------- | ---------------- |
+| Supabase         | 500MB DB, 50k MAU   | $25/mo at scale  |
+| Cloudflare Pages | Unlimited bandwidth | Stays free       |
+| Cloudinary       | 25GB images         | $89/mo           |
+| Domain           | $10-15/year         | Same             |
+| Bakong           | Free for merchants  | Free             |
 
 **Total**: ~$1/month (just the domain) until you have significant traffic.
 

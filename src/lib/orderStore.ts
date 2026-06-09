@@ -96,10 +96,8 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       .select("*")
       .single();
     if (error || !data) {
-      console.error("[orderStore] Supabase insert failed:", error);
       throw new Error(error?.message || "Failed to create order");
     }
-    console.log("[orderStore] Order saved to Supabase:", data.id);
     return dbOrderToOrder(data as DbOrder);
   }
 
@@ -122,8 +120,6 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   const orders = getLocalOrders();
   orders.unshift(order);
   saveLocalOrders(orders);
-  console.log("[orderStore] Order saved to localStorage:", order.id, "for user:", user?.id ?? "(guest)");
-  console.log("[orderStore] Total orders in storage now:", orders.length);
   return order;
 }
 
@@ -137,7 +133,6 @@ export async function getMyOrders(): Promise<Order[]> {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error || !data) {
-      console.error("[orderStore] Supabase getMyOrders failed:", error);
       return [];
     }
     return data.map((row) => dbOrderToOrder(row as DbOrder));
@@ -151,9 +146,6 @@ export async function getMyOrders(): Promise<Order[]> {
   const mine = user
     ? all.filter((o) => o.userId === user.id || o.userId === null)
     : all.filter((o) => o.userId === null);
-  console.log(
-    `[orderStore] getMyOrders: ${mine.length} of ${all.length} for user ${user?.id ?? "(guest)"}`,
-  );
   return mine;
 }
 

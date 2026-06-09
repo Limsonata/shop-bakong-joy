@@ -6,6 +6,11 @@ export function formatPrice(value: number | string): string {
   }).format(isNaN(n) ? 0 : n);
 }
 
+// Alias for formatPrice used in admin dashboard
+export function formatCurrency(value: number | string): string {
+  return formatPrice(value);
+}
+
 export function slugify(s: string): string {
   return s
     .toLowerCase()

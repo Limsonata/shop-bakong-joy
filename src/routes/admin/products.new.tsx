@@ -19,10 +19,7 @@ function NewProductPage() {
         <header className="border-b">
           <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6">
             <div className="flex items-center gap-4">
-              <Link
-                to="/admin/products"
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <Link to="/admin/products" className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <h1 className="text-xl font-semibold">New Product</h1>
@@ -39,9 +36,7 @@ function NewProductPage() {
                 toast.success(`Created "${input.title}"`);
                 navigate({ to: "/admin/products" });
               } catch (error) {
-                toast.error(
-                  error instanceof Error ? error.message : "Failed to create product",
-                );
+                toast.error(error instanceof Error ? error.message : "Failed to create product");
               }
             }}
           />

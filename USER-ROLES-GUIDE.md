@@ -12,11 +12,13 @@ Your store now has **2 types of users**:
 ## 🔐 Demo Accounts
 
 ### **Admin Account:**
+
 - **Email:** `admin@shop.com`
 - **Password:** `admin123`
 - **Access:** Full admin panel + shopping
 
 ### **Regular User Account:**
+
 - **Email:** `user@shop.com`
 - **Password:** `user123`
 - **Access:** Shopping only (no admin panel)
@@ -26,6 +28,7 @@ Your store now has **2 types of users**:
 ## 👤 Regular User Features
 
 ### **What Users Can Do:**
+
 - ✅ Browse products
 - ✅ Search and filter
 - ✅ Add to cart
@@ -35,12 +38,14 @@ Your store now has **2 types of users**:
 - ✅ See order history (coming soon)
 
 ### **What Users CANNOT Do:**
+
 - ❌ Access admin panel
 - ❌ Add/edit/delete products
 - ❌ Manage categories
 - ❌ View admin dashboard
 
 ### **User Pages:**
+
 - `/` - Home page
 - `/shop` - Shop page
 - `/product/:handle` - Product details
@@ -52,6 +57,7 @@ Your store now has **2 types of users**:
 ## 🛡️ Admin Features
 
 ### **What Admins Can Do:**
+
 - ✅ Everything users can do, PLUS:
 - ✅ Access admin dashboard
 - ✅ Add/edit/delete products
@@ -60,6 +66,7 @@ Your store now has **2 types of users**:
 - ✅ Manage store configuration
 
 ### **Admin Pages:**
+
 - `/admin` - Admin dashboard
 - `/admin/products` - Manage products
 - `/admin/categories` - Manage categories
@@ -96,19 +103,23 @@ Your store now has **2 types of users**:
 ## 📱 User Interface
 
 ### **Navbar (Not Logged In):**
+
 ```
 [Logo] [Home] [Shop] [Categories] [Search] [Login] [Cart] [Menu]
 ```
 
 ### **Navbar (Logged In as User):**
+
 ```
 [Logo] [Home] [Shop] [Categories] [Search] [👤] [Cart] [Menu]
 ```
 
 ### **Navbar (Logged In as Admin):**
+
 ```
 [Logo] [Home] [Shop] [Categories] [Search] [👤] [Cart] [Menu]
 ```
+
 (Admin icon shows in account page)
 
 ---
@@ -116,6 +127,7 @@ Your store now has **2 types of users**:
 ## 🔄 User Flow
 
 ### **New Customer:**
+
 1. Visit website
 2. Browse products
 3. Click "Login" or "Register"
@@ -123,6 +135,7 @@ Your store now has **2 types of users**:
 5. Shop and checkout
 
 ### **Admin:**
+
 1. Login with admin credentials
 2. Go to `/admin` dashboard
 3. Manage products and categories
@@ -133,11 +146,13 @@ Your store now has **2 types of users**:
 ## 🎨 Account Page
 
 ### **For Regular Users:**
+
 - Profile information
 - Order history
 - Logout button
 
 ### **For Admins:**
+
 - Profile information
 - Order history
 - **Admin Access card** (link to admin dashboard)
@@ -148,16 +163,19 @@ Your store now has **2 types of users**:
 ## 🔒 Security
 
 ### **Authentication:**
+
 - Stored in localStorage
 - Session persists across page refreshes
 - Logout clears session
 
 ### **Role-Based Access:**
+
 - Admin pages check for admin role
 - Redirects to login if not authenticated
 - Redirects to home if user tries to access admin
 
 ### **Password Protection:**
+
 - Admin panel requires admin role
 - Regular users cannot access admin pages
 - Separate login for admin and users
@@ -201,6 +219,7 @@ const DEMO_USERS = [
 ```
 
 ### **In Production:**
+
 - Use a real database (MongoDB, PostgreSQL)
 - Implement proper authentication (JWT, sessions)
 - Add password hashing (bcrypt)
@@ -212,12 +231,14 @@ const DEMO_USERS = [
 ## 🎯 Quick Test
 
 ### **Test Regular User:**
+
 1. Go to `http://localhost:3000/admin/login`
 2. Login as: `user@shop.com` / `user123`
 3. Try to go to `/admin` - Should redirect to home
 4. Can shop normally
 
 ### **Test Admin:**
+
 1. Go to `http://localhost:3000/admin/login`
 2. Login as: `admin@shop.com` / `admin123`
 3. Go to `/admin` - Should see dashboard
@@ -246,17 +267,17 @@ const DEMO_USERS = [
 
 ## 🚀 URLs Summary
 
-| Page | URL | Access |
-|------|-----|--------|
-| **Home** | `/` | Everyone |
-| **Shop** | `/shop` | Everyone |
-| **Product** | `/product/:handle` | Everyone |
-| **Login** | `/admin/login` | Everyone |
-| **Account** | `/account` | Logged in users |
-| **Admin Dashboard** | `/admin` | Admins only |
-| **Manage Products** | `/admin/products` | Admins only |
-| **Manage Categories** | `/admin/categories` | Admins only |
-| **Settings** | `/admin/settings` | Admins only |
+| Page                  | URL                 | Access          |
+| --------------------- | ------------------- | --------------- |
+| **Home**              | `/`                 | Everyone        |
+| **Shop**              | `/shop`             | Everyone        |
+| **Product**           | `/product/:handle`  | Everyone        |
+| **Login**             | `/admin/login`      | Everyone        |
+| **Account**           | `/account`          | Logged in users |
+| **Admin Dashboard**   | `/admin`            | Admins only     |
+| **Manage Products**   | `/admin/products`   | Admins only     |
+| **Manage Categories** | `/admin/categories` | Admins only     |
+| **Settings**          | `/admin/settings`   | Admins only     |
 
 ---
 

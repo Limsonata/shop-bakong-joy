@@ -114,8 +114,7 @@ export function generateBakongQR(
   // Field 29 - Merchant Account Information for Bakong
   // Sub-tag 00 = Globally Unique Identifier ("kh.gov.nbc.bakong")
   // Sub-tag 01 = Merchant Bakong Account ID
-  const merchantAccountInfo =
-    tlv("00", "kh.gov.nbc.bakong") + tlv("01", config.merchantAccount);
+  const merchantAccountInfo = tlv("00", "kh.gov.nbc.bakong") + tlv("01", config.merchantAccount);
   qrString += tlv("29", merchantAccountInfo);
 
   // Field 52 - Merchant Category Code (5999 = general retail)

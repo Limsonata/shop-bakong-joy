@@ -133,6 +133,7 @@ Add to the `collections` array in `products.json`:
 ```
 
 Then reference it in products:
+
 ```json
 "collections": ["Your Collection", "Best Sellers"]
 ```
@@ -140,11 +141,13 @@ Then reference it in products:
 ## 🎨 Finding Product Images
 
 Use free image sources:
+
 - [Unsplash](https://unsplash.com/) - High-quality free photos
 - [Pexels](https://pexels.com/) - Free stock photos
 - [Pixabay](https://pixabay.com/) - Free images and videos
 
 Example Unsplash URL format:
+
 ```
 https://images.unsplash.com/photo-1234567890?w=800&q=80
 ```
@@ -152,6 +155,7 @@ https://images.unsplash.com/photo-1234567890?w=800&q=80
 ## 🛍️ Current Products
 
 The store comes with 8 sample products:
+
 1. Classic White T-Shirt (Clothing)
 2. Leather Backpack (Accessories)
 3. Wireless Headphones (Electronics)
@@ -187,6 +191,7 @@ The store comes with 8 sample products:
 ## 💡 Features Explained
 
 ### Shopping Cart
+
 - Stored in browser localStorage
 - Persists across page refreshes
 - Add/remove items
@@ -194,11 +199,13 @@ The store comes with 8 sample products:
 - View total price
 
 ### Search & Filter
+
 - Real-time search
 - Filters by product name, description, type, and collections
 - Category navigation in navbar
 
 ### Product Pages
+
 - Image gallery
 - Variant selection (sizes, colors, etc.)
 - Add to cart
@@ -207,6 +214,7 @@ The store comes with 8 sample products:
 ## 🚀 Deployment
 
 This is a static site that can be deployed to:
+
 - **Vercel** (Recommended)
 - **Netlify**
 - **GitHub Pages**
@@ -226,13 +234,17 @@ vercel
 ## 📝 Customization
 
 ### Change Store Name
+
 Edit `src/components/site/Navbar.tsx` and `src/routes/__root.tsx`
 
 ### Change Colors
+
 Edit `src/styles.css` - modify the CSS variables
 
 ### Add Payment Processing
+
 To add real checkout:
+
 1. Integrate Stripe, PayPal, or another payment processor
 2. Update `src/lib/localStore.ts` `getCheckoutUrl()` function
 3. Create a checkout page/route

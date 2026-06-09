@@ -279,6 +279,7 @@ To add a new collection, add it to the `collections` array in `products.json`:
 ```
 
 Then reference it in your products:
+
 ```json
 "collections": ["Winter Collection", "Best Sellers"]
 ```
@@ -286,6 +287,7 @@ Then reference it in your products:
 ## 🎨 Finding Free Product Images
 
 ### Unsplash (Recommended)
+
 1. Go to [unsplash.com](https://unsplash.com)
 2. Search for your product type
 3. Click on an image
@@ -295,12 +297,14 @@ Then reference it in your products:
 Example: `https://images.unsplash.com/photo-1234567890?w=800&q=80`
 
 ### Pexels
+
 1. Go to [pexels.com](https://pexels.com)
 2. Search and select an image
 3. Click "Download" → Copy the URL
 4. Use the medium size URL
 
 ### Your Own Images
+
 1. Upload to a service like:
    - Imgur
    - Cloudinary (free tier)
