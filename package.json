@@ -3,6 +3,9 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -90,4 +93,3 @@
     "vite": "^7.3.1"
   }
 }
-   
