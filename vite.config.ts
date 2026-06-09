@@ -20,6 +20,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    build: {
+      chunkSizeWarningLimit: 1000,
+    },
     server: {
       allowedHosts: [".ngrok-free.app", ".ngrok-free.dev", ".ngrok.io"],
     },
