@@ -2,11 +2,14 @@
 // otherwise saves to localStorage so the demo flow still feels real.
 import { supabase, isSupabaseConfigured, type DbOrder } from "./supabase";
 import { getCurrentUser } from "./auth";
+import { getSupabaseAccessToken } from "./authToken";
+import { createSecureOrder, updateAdminOrderStatus } from "./api/security.functions";
 
 export type OrderStatus = "pending" | "paid" | "shipped" | "done" | "cancelled";
 
 export interface OrderItem {
   productId: string;
+  variantId?: string | null;
   title: string;
   quantity: number;
   price: number;
@@ -78,26 +81,22 @@ function saveLocalOrders(orders: Order[]): void {
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
   if (isSupabaseConfigured && supabase) {
-    const user = await getCurrentUser();
-    const { data, error } = await supabase
-      .from("orders")
-      .insert({
-        user_id: user?.id ?? null,
-        customer_name: input.customerName,
+    const accessToken = await getSupabaseAccessToken();
+    const data = await createSecureOrder({
+      data: {
+        accessToken,
+        customerName: input.customerName,
         phone: input.phone,
         address: input.address,
-        total: input.total,
-        currency: input.currency,
-        bakong_reference: input.bakongReference,
-        bakong_transaction_id: input.bakongTransactionId,
-        status: "pending",
-        items: input.items,
-      })
-      .select("*")
-      .single();
-    if (error || !data) {
-      throw new Error(error?.message || "Failed to create order");
-    }
+        bakongReference: input.bakongReference,
+        bakongTransactionId: input.bakongTransactionId,
+        items: input.items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+        })),
+      },
+    });
     return dbOrderToOrder(data as DbOrder);
   }
 
@@ -164,8 +163,13 @@ export async function getAllOrders(): Promise<Order[]> {
 
 export async function updateOrderStatus(id: string, status: OrderStatus): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-    return !error;
+    try {
+      const accessToken = await getSupabaseAccessToken();
+      await updateAdminOrderStatus({ data: { accessToken, id, status } });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   const orders = getLocalOrders();

@@ -1,15 +1,24 @@
-// Supabase client with graceful fallback to demo mode.
-// When VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set, this becomes
-// the real backend. Otherwise the app keeps using local JSON + localStorage.
+// Supabase client with a development-only demo fallback.
+// Production must be backed by Supabase; local JSON/localStorage auth is only
+// allowed while running Vite in development.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const supabasePublicKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
+const isProductionBuild = import.meta.env.PROD;
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabasePublicKey);
+export const isDemoModeAllowed = !isProductionBuild && !isSupabaseConfigured;
+
+if (isProductionBuild && !isSupabaseConfigured) {
+  throw new Error(
+    "Production builds require VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY",
+  );
+}
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(supabaseUrl!, supabaseAnonKey!, {
+  ? createClient(supabaseUrl!, supabasePublicKey!, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,

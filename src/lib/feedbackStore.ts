@@ -1,4 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { getSupabaseAccessToken } from "./authToken";
+import { deleteAdminFeedback, updateAdminFeedbackApproval } from "./api/security.functions";
 
 export interface Feedback {
   id: string;
@@ -106,8 +108,13 @@ export async function getAllFeedback(): Promise<Feedback[]> {
 
 export async function approveFeedback(id: string, approved: boolean): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase.from("feedback").update({ approved }).eq("id", id);
-    return !error;
+    try {
+      const accessToken = await getSupabaseAccessToken();
+      await updateAdminFeedbackApproval({ data: { accessToken, id, approved } });
+      return true;
+    } catch {
+      return false;
+    }
   }
   const all = getLocalFeedback();
   const item = all.find((f) => f.id === id);
@@ -119,8 +126,13 @@ export async function approveFeedback(id: string, approved: boolean): Promise<bo
 
 export async function deleteFeedback(id: string): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase.from("feedback").delete().eq("id", id);
-    return !error;
+    try {
+      const accessToken = await getSupabaseAccessToken();
+      await deleteAdminFeedback({ data: { accessToken, id } });
+      return true;
+    } catch {
+      return false;
+    }
   }
   const all = getLocalFeedback().filter((f) => f.id !== id);
   saveLocalFeedback(all);

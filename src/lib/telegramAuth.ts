@@ -2,8 +2,9 @@
 // Uses Telegram Login Widget and localStorage for demo mode
 
 import type { User, UserRole, AuthResult } from "./auth";
-import { isSupabaseConfigured, supabase } from "./supabase";
+import { isDemoModeAllowed, isSupabaseConfigured, supabase } from "./supabase";
 import { notifyWelcome } from "./telegramNotify";
+import { verifyTelegramLogin } from "./api/security.functions";
 
 const TELEGRAM_AUTH_KEY = "telegram-auth";
 const isBrowser = typeof window !== "undefined";
@@ -60,8 +61,7 @@ function clearTelegramAuth(): void {
  * In production, this should be verified server-side
  */
 export function verifyTelegramWebAppData(initData: string): TelegramUser | null {
-  // For demo purposes, we parse without server-side verification
-  // In production, send this to your backend to verify the hash
+  if (!isDemoModeAllowed) return null;
   const params = new URLSearchParams(initData);
   const userStr = params.get("user");
   if (!userStr) return null;
@@ -116,65 +116,18 @@ async function loginTelegramSupabase(telegramUser: TelegramUser): Promise<AuthRe
     return { success: false, error: "Supabase not configured" };
   }
 
-  const email = telegramUser.username
-    ? `${telegramUser.username}@telegram.local`
-    : `tg_${telegramUser.id}@telegram.local`;
-
-  // Fixed password based only on telegram ID (stable across logins)
-  const password = `tg_${telegramUser.id}_secret`;
-  const name = [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(" ");
-
-  // Try to sign in first (user may already exist)
-  const { data: signInData } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (signInData?.user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("name, role")
-      .eq("id", signInData.user.id)
-      .maybeSingle();
-
-    const user: User = {
-      id: signInData.user.id,
-      email: signInData.user.email || email,
-      name: profile?.name || name,
-      role: (profile?.role as UserRole) || "user",
-      createdAt: new Date(signInData.user.created_at).getTime(),
-    };
-
-    return { success: true, user };
+  const result = await verifyTelegramLogin({ data: telegramUser });
+  if (!result.success || !result.user || !result.session) {
+    return { success: false, error: result.error || "Telegram login failed" };
   }
 
-  // New user — create account
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        telegram_id: telegramUser.id,
-        telegram_username: telegramUser.username,
-        telegram_photo: telegramUser.photo_url,
-      },
-    },
+  const { error } = await supabase.auth.setSession({
+    access_token: result.session.accessToken,
+    refresh_token: result.session.refreshToken,
   });
+  if (error) return { success: false, error: error.message };
 
-  if (signUpError || !signUpData.user) {
-    return { success: false, error: signUpError?.message || "Failed to create Telegram account" };
-  }
-
-  // Send welcome DM for new users
-  notifyWelcome(telegramUser.id, name);
-
-  const user: User = {
-    id: signUpData.user.id,
-    email: signUpData.user.email || email,
-    name,
-    role: "user",
-    createdAt: Date.now(),
-  };
-
-  return { success: true, user };
+  return result;
 }
 
 /**
@@ -184,7 +137,10 @@ export async function loginWithTelegram(telegramUser: TelegramUser): Promise<Aut
   if (isSupabaseConfigured) {
     return loginTelegramSupabase(telegramUser);
   }
-  return loginTelegramDemo(telegramUser);
+  if (isDemoModeAllowed) {
+    return loginTelegramDemo(telegramUser);
+  }
+  return { success: false, error: "Supabase authentication is required" };
 }
 
 /**

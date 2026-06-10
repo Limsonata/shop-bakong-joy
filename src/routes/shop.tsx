@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getProducts, getCollections } from "@/lib/localStore";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const searchSchema = z.object({
   q: z.string().optional().catch(undefined),
@@ -98,35 +99,28 @@ function ShopPage() {
 
       {/* Collection filter pills */}
       {collections && collections.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            onClick={() => setActiveCollection("")}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              activeCollection === ""
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-primary/10"
-            }`}
+        <ToggleGroup
+          type="single"
+          value={activeCollection}
+          onValueChange={(val) => setActiveCollection(val)}
+          className="flex flex-wrap gap-2 mb-6 justify-start"
+        >
+          <ToggleGroupItem
+            value=""
+            className="rounded-full px-4 h-8 text-sm font-medium data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
           >
             All
-          </button>
+          </ToggleGroupItem>
           {collections.map((col) => (
-            <button
+            <ToggleGroupItem
               key={col.node.id}
-              onClick={() =>
-                setActiveCollection(
-                  activeCollection === col.node.title ? "" : col.node.title,
-                )
-              }
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                activeCollection === col.node.title
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-primary/10"
-              }`}
+              value={col.node.title}
+              className="rounded-full px-4 h-8 text-sm font-medium data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             >
               {col.node.title}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
       )}
 
       {/* Header */}

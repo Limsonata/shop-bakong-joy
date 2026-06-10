@@ -14,7 +14,7 @@ export async function notifyWelcome(telegramId: number, name: string): Promise<v
   });
 }
 
-export async function notifyOrderReceipt(telegramId: number, order: Order): Promise<void> {
+export async function notifyOrderReceipt(telegramId: number | null, order: Order): Promise<void> {
   const itemLines = order.items
     .map((i) => `  • ${i.title} × ${i.quantity} — ${i.currency} ${(i.price * i.quantity).toFixed(2)}`)
     .join("\n");

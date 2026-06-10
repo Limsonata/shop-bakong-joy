@@ -19,6 +19,7 @@ import {
   Line,
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DollarSign,
@@ -363,8 +364,8 @@ function AdminDashboard() {
                         </div>
                         <div className="text-right">
                           <p className="font-medium">{formatCurrency(order.total)}</p>
-                          <span
-                            className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                          <Badge
+                            className={`rounded-full border-transparent ${
                               order.status === "done"
                                 ? "bg-green-100 text-green-800"
                                 : order.status === "pending"
@@ -375,7 +376,7 @@ function AdminDashboard() {
                             }`}
                           >
                             {order.status}
-                          </span>
+                          </Badge>
                         </div>
                       </div>
                     ))}

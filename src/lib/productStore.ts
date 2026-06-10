@@ -4,6 +4,16 @@
 // on top of the bundled JSON so the editor UI is fully usable without Supabase.
 import productsData from "@/data/products.json";
 import { supabase, isSupabaseConfigured, type DbProduct } from "./supabase";
+import { getSupabaseAccessToken } from "./authToken";
+import {
+  createAdminCollection,
+  createAdminProduct,
+  deleteAdminCollection,
+  deleteAdminProduct,
+  updateAdminCollection,
+  updateAdminProduct,
+  updateAdminProductCollections,
+} from "./api/security.functions";
 
 export interface Product {
   id: string;
@@ -220,79 +230,10 @@ export interface ProductInput {
   variants: ProductVariantInput[];
 }
 
-function productInputToDbRow(
-  input: ProductInput,
-  includeVariants: boolean,
-): Record<string, unknown> {
-  const row: Record<string, unknown> = {
-    handle: input.handle,
-    title: input.title,
-    description: input.description,
-    product_type: input.productType,
-    price: input.price,
-    currency: input.currency,
-    image_url: input.imageUrl,
-    in_stock: input.inStock,
-    collections: input.collections,
-  };
-
-  if (includeVariants) {
-    row.variants = input.variants.map((variant, index) => ({
-      id: `${input.handle}-v${index}`,
-      ...variant,
-    }));
-  }
-
-  return row;
-}
-
-function isMissingColumnError(error: unknown, column: string): boolean {
-  if (!error || typeof error !== "object") return false;
-  const postgrestError = error as {
-    code?: string;
-    message?: string;
-    details?: string;
-    hint?: string;
-  };
-  const errorText = [
-    postgrestError.code,
-    postgrestError.message,
-    postgrestError.details,
-    postgrestError.hint,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return (
-    errorText.includes(column.toLowerCase()) &&
-    (errorText.includes("column") || errorText.includes("schema cache"))
-  );
-}
-
 export async function createProduct(input: ProductInput): Promise<Product> {
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase
-      .from("products")
-      .insert(productInputToDbRow(input, true))
-      .select("*")
-      .single();
-
-    if (error && isMissingColumnError(error, "variants")) {
-      const fallback = await supabase
-        .from("products")
-        .insert(productInputToDbRow(input, false))
-        .select("*")
-        .single();
-      if (fallback.error || !fallback.data) {
-        throw new Error(fallback.error?.message || "Failed to create product");
-      }
-      return dbProductToProduct(fallback.data as DbProduct);
-    }
-
-    if (error || !data) {
-      throw new Error(error?.message || "Failed to create product");
-    }
+    const accessToken = await getSupabaseAccessToken();
+    const data = await createAdminProduct({ data: { accessToken, input } });
     return dbProductToProduct(data as DbProduct);
   }
 
@@ -335,29 +276,8 @@ export async function createProduct(input: ProductInput): Promise<Product> {
 
 export async function updateProduct(id: string, input: ProductInput): Promise<Product> {
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase
-      .from("products")
-      .update(productInputToDbRow(input, true))
-      .eq("id", id)
-      .select("*")
-      .single();
-
-    if (error && isMissingColumnError(error, "variants")) {
-      const fallback = await supabase
-        .from("products")
-        .update(productInputToDbRow(input, false))
-        .eq("id", id)
-        .select("*")
-        .single();
-      if (fallback.error || !fallback.data) {
-        throw new Error(fallback.error?.message || "Failed to update product");
-      }
-      return dbProductToProduct(fallback.data as DbProduct);
-    }
-
-    if (error || !data) {
-      throw new Error(error?.message || "Failed to update product");
-    }
+    const accessToken = await getSupabaseAccessToken();
+    const data = await updateAdminProduct({ data: { accessToken, id, input } });
     return dbProductToProduct(data as DbProduct);
   }
 
@@ -416,8 +336,13 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
 
 export async function deleteProduct(id: string): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    return !error;
+    try {
+      const accessToken = await getSupabaseAccessToken();
+      await deleteAdminProduct({ data: { accessToken, id } });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   await delay(100);
@@ -510,18 +435,8 @@ export async function createCollection(input: CreateCollectionInput): Promise<Co
   const handle = generateHandle(input.title);
 
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase
-      .from("collections")
-      .insert({
-        title: input.title,
-        handle,
-        description: input.description || "",
-      })
-      .select("*")
-      .single();
-    if (error || !data) {
-      throw new Error(error?.message || "Failed to create collection");
-    }
+    const accessToken = await getSupabaseAccessToken();
+    const data = await createAdminCollection({ data: { accessToken, input } });
     return dbCollectionToCollection(data);
   }
 
@@ -557,15 +472,8 @@ export async function updateCollection(
   }
 
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase
-      .from("collections")
-      .update(updates)
-      .eq("id", id)
-      .select("*")
-      .single();
-    if (error || !data) {
-      throw new Error(error?.message || "Failed to update collection");
-    }
+    const accessToken = await getSupabaseAccessToken();
+    const data = await updateAdminCollection({ data: { accessToken, id, input } });
     return dbCollectionToCollection(data);
   }
 
@@ -589,20 +497,9 @@ export async function updateCollection(
 
 export async function deleteCollection(id: string): Promise<boolean> {
   if (isSupabaseConfigured && supabase) {
-    // Check if any products use this collection
-    const { data: productsWithCollection } = await supabase
-      .from("products")
-      .select("id")
-      .contains("collections", [id]);
-
-    if (productsWithCollection && productsWithCollection.length > 0) {
-      throw new Error(
-        `Cannot delete collection: ${productsWithCollection.length} product(s) are using it`,
-      );
-    }
-
-    const { error } = await supabase.from("collections").delete().eq("id", id);
-    return !error;
+    const accessToken = await getSupabaseAccessToken();
+    await deleteAdminCollection({ data: { accessToken, id } });
+    return true;
   }
 
   await delay(80);
@@ -641,13 +538,8 @@ export async function updateProductCollections(
   collectionIds: string[],
 ): Promise<void> {
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase
-      .from("products")
-      .update({ collections: collectionIds })
-      .eq("id", productId);
-    if (error) {
-      throw new Error(error.message);
-    }
+    const accessToken = await getSupabaseAccessToken();
+    await updateAdminProductCollections({ data: { accessToken, productId, collectionIds } });
     return;
   }
 

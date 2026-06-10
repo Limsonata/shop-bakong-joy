@@ -93,6 +93,7 @@ function BakongCheckout() {
         bakongTransactionId: formData.transactionId,
         items: items.map((item) => ({
           productId: item.product.node.id,
+          variantId: item.variantId,
           title: item.product.node.title,
           quantity: item.quantity,
           price: Number.parseFloat(item.price.amount),
@@ -101,11 +102,8 @@ function BakongCheckout() {
         })),
       });
 
-      // Send Telegram receipt if user logged in via Telegram
-      const telegramId = getTelegramId();
-      if (telegramId) {
-        notifyOrderReceipt(telegramId, order);
-      }
+      // Always notify admin; include telegram ID if user logged in via Telegram
+      notifyOrderReceipt(getTelegramId(), order);
 
       toast.success("Order submitted!");
       setIsSubmitted(true);

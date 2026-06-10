@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser, getCachedUser, type User } from "@/lib/auth";
 import { getTelegramUser } from "@/lib/telegramAuth";
+import { isDemoModeAllowed } from "@/lib/supabase";
 
 /**
  * React hook for the current authenticated user.
@@ -8,9 +9,8 @@ import { getTelegramUser } from "@/lib/telegramAuth";
  * Loads from cache synchronously, then refreshes from the source.
  */
 export function useAuth(): { user: User | null; isLoading: boolean } {
-  // Check both regular auth and Telegram auth
   const cachedUser = getCachedUser();
-  const telegramUser = getTelegramUser();
+  const telegramUser = isDemoModeAllowed ? getTelegramUser() : null;
   const initialUser = cachedUser || telegramUser;
 
   const [user, setUser] = useState<User | null>(initialUser);
@@ -29,7 +29,7 @@ export function useAuth(): { user: User | null; isLoading: boolean } {
       }
 
       // Then check Telegram auth (demo mode only)
-      const tgUser = getTelegramUser();
+      const tgUser = isDemoModeAllowed ? getTelegramUser() : null;
       if (tgUser) {
         if (!cancelled) setUser(tgUser);
       }

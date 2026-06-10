@@ -1,6 +1,6 @@
 // Authentication and user management.
 // Uses Supabase Auth when configured, falls back to demo mode otherwise.
-import { supabase, isSupabaseConfigured } from "./supabase";
+import { supabase, isSupabaseConfigured, isDemoModeAllowed } from "./supabase";
 
 export type UserRole = "user" | "admin";
 
@@ -21,6 +21,10 @@ export interface AuthResult {
   success: boolean;
   user?: User;
   error?: string;
+  session?: {
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
 // ----- Demo mode (used when Supabase env vars are not set) -----
@@ -236,7 +240,10 @@ export async function login(email: string, password: string): Promise<AuthResult
   if (isSupabaseConfigured) {
     return loginSupabase(email, password);
   }
-  return loginDemo(email, password);
+  if (isDemoModeAllowed) {
+    return loginDemo(email, password);
+  }
+  return { success: false, error: "Supabase authentication is required" };
 }
 
 /**
@@ -246,7 +253,10 @@ export async function register(email: string, password: string, name: string): P
   if (isSupabaseConfigured) {
     return registerSupabase(email, password, name);
   }
-  return registerDemo(email, password, name);
+  if (isDemoModeAllowed) {
+    return registerDemo(email, password, name);
+  }
+  return { success: false, error: "Supabase authentication is required" };
 }
 
 /**
@@ -257,7 +267,9 @@ export async function logout(): Promise<void> {
     await logoutSupabase();
     return;
   }
-  logoutDemo();
+  if (isDemoModeAllowed) {
+    logoutDemo();
+  }
 }
 
 /**
@@ -272,6 +284,10 @@ export async function getCurrentUser(): Promise<User | null> {
     setCachedUser(user);
     return user;
   }
+  if (!isDemoModeAllowed) {
+    setCachedUser(null);
+    return null;
+  }
   const user = getCurrentUserDemo();
   setCachedUser(user);
   return user;
@@ -285,7 +301,7 @@ export async function getCurrentUser(): Promise<User | null> {
 export function getCachedUser(): User | null {
   if (cachedUser !== undefined) return cachedUser;
   // Fall back to localStorage in demo mode for the very first sync call
-  if (!isSupabaseConfigured) {
+  if (isDemoModeAllowed) {
     const user = getCurrentUserDemo();
     cachedUser = user;
     return user;
@@ -323,14 +339,18 @@ export async function updatePassword(newPassword: string): Promise<{ success: bo
  */
 export async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
   if (isSupabaseConfigured && supabase) {
-    const redirectTo =
-      typeof window !== "undefined" ? `${window.location.origin}/login` : undefined;
+    const appUrl =
+      (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, "") ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    const redirectTo = `${appUrl}/login`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) return { success: false, error: error.message };
     return { success: true };
   }
   // Demo mode — no real email, just acknowledge
-  return { success: true };
+  return isDemoModeAllowed
+    ? { success: true }
+    : { success: false, error: "Supabase authentication is required" };
 }
 
 /**
@@ -354,6 +374,7 @@ export async function updateProfile(
   }
 
   // Demo mode
+  if (!isDemoModeAllowed) return false;
   if (!isBrowser) return false;
   const user = getCurrentUserDemo();
   if (!user) return false;
