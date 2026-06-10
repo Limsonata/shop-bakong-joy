@@ -1,333 +1,98 @@
 {
   "products": [
     {
-      "id": "1",
-      "title": "Classic White T-Shirt",
-      "description": "A timeless essential. Made from 100% organic cotton for ultimate comfort and breathability. Perfect for everyday wear.",
-      "handle": "classic-white-tshirt",
-      "productType": "Clothing",
+      "id": "hairora-led-cap-001",
+      "title": "hairora LED Laser Hair Growth Cap",
+      "description": "Advanced Low Level Laser Therapy (LLLT) cap with 272 medical-grade laser diodes. Clinically proven to stimulate hair follicles, reduce hair loss, and promote regrowth. FDA-cleared technology. Use just 6 minutes daily for visible results in 16 weeks.\n\n✓ 272 laser diodes for full scalp coverage\n✓ Hands-free, comfortable fit\n✓ Rechargeable — no cables during use\n✓ Works for all hair types",
+      "handle": "led-laser-hair-growth-cap",
+      "productType": "Device",
       "price": {
-        "amount": "29.99",
+        "amount": "299.00",
         "currencyCode": "USD"
       },
       "images": [
         {
-          "url": "https://res.cloudinary.com/demo/image/upload/w_800,q_auto,f_auto/sample.jpg",
-          "altText": "Classic White T-Shirt"
+          "url": "/led-cap.png",
+          "altText": "hairora LED Laser Hair Growth Cap — 272 laser diodes"
         }
       ],
       "variants": [
         {
-          "id": "1-s",
-          "title": "Small",
-          "price": { "amount": "29.99", "currencyCode": "USD" },
+          "id": "led-cap-one-size",
+          "title": "One Size",
+          "price": { "amount": "299.00", "currencyCode": "USD" },
           "availableForSale": true,
-          "selectedOptions": [{ "name": "Size", "value": "Small" }]
-        },
-        {
-          "id": "1-m",
-          "title": "Medium",
-          "price": { "amount": "29.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Size", "value": "Medium" }]
-        },
-        {
-          "id": "1-l",
-          "title": "Large",
-          "price": { "amount": "29.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Size", "value": "Large" }]
+          "selectedOptions": [{ "name": "Size", "value": "One Size" }]
         }
       ],
-      "collections": ["New Arrivals", "Best Sellers"]
+      "collections": ["Devices", "Best Sellers", "Featured"]
     },
     {
-      "id": "2",
-      "title": "Leather Backpack",
-      "description": "Premium leather backpack with multiple compartments. Durable construction meets timeless style. Perfect for work or travel.",
-      "handle": "leather-backpack",
-      "productType": "Accessories",
+      "id": "hairora-morr-f5-001",
+      "title": "Morr F 5% — Minoxidil & Finasteride Solution",
+      "description": "Morr F 5% combines Minoxidil (5%) with Finasteride in a lipid-based topical solution for maximum hair regrowth effectiveness. The lipid carrier enhances scalp penetration while minimising systemic absorption.\n\n✓ 5% Minoxidil + Finasteride dual-action\n✓ Lipid solution for superior absorption\n✓ 60 ml per bottle — approx. 1 month supply\n✓ For topical application only",
+      "handle": "morr-f5-minoxidil-finasteride",
+      "productType": "Topical Treatment",
       "price": {
-        "amount": "89.99",
+        "amount": "28.00",
         "currencyCode": "USD"
       },
       "images": [
         {
-          "url": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=80",
-          "altText": "Leather Backpack"
+          "url": "/morr-f5.webp",
+          "altText": "Morr F 5% Minoxidil & Finasteride Lipid Solution 60ml by INTAS"
         }
       ],
       "variants": [
         {
-          "id": "2-brown",
-          "title": "Brown",
-          "price": { "amount": "89.99", "currencyCode": "USD" },
+          "id": "morr-f5-1bottle",
+          "title": "1 Bottle (60 ml)",
+          "price": { "amount": "28.00", "currencyCode": "USD" },
           "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Brown" }]
+          "selectedOptions": [{ "name": "Pack", "value": "1 Bottle" }]
         },
         {
-          "id": "2-black",
-          "title": "Black",
-          "price": { "amount": "89.99", "currencyCode": "USD" },
+          "id": "morr-f5-3bottle",
+          "title": "3 Bottles (180 ml)",
+          "price": { "amount": "75.00", "currencyCode": "USD" },
           "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Black" }]
-        }
-      ],
-      "collections": ["Best Sellers"]
-    },
-    {
-      "id": "3",
-      "title": "Wireless Headphones",
-      "description": "Premium sound quality with active noise cancellation. 30-hour battery life and comfortable over-ear design.",
-      "handle": "wireless-headphones",
-      "productType": "Electronics",
-      "price": {
-        "amount": "149.99",
-        "currencyCode": "USD"
-      },
-      "images": [
-        {
-          "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
-          "altText": "Wireless Headphones"
-        }
-      ],
-      "variants": [
-        {
-          "id": "3-default",
-          "title": "Default",
-          "price": { "amount": "149.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": []
-        }
-      ],
-      "collections": ["Electronics", "Best Sellers"]
-    },
-    {
-      "id": "4",
-      "title": "Minimalist Watch",
-      "description": "Elegant timepiece with a clean design. Japanese quartz movement and genuine leather strap. Water resistant to 50m.",
-      "handle": "minimalist-watch",
-      "productType": "Accessories",
-      "price": {
-        "amount": "129.99",
-        "currencyCode": "USD"
-      },
-      "images": [
-        {
-          "url": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80",
-          "altText": "Minimalist Watch"
-        }
-      ],
-      "variants": [
-        {
-          "id": "4-silver",
-          "title": "Silver",
-          "price": { "amount": "129.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Silver" }]
+          "selectedOptions": [{ "name": "Pack", "value": "3 Bottles" }]
         },
         {
-          "id": "4-gold",
-          "title": "Gold",
-          "price": { "amount": "139.99", "currencyCode": "USD" },
+          "id": "morr-f5-6bottle",
+          "title": "6 Bottles (360 ml)",
+          "price": { "amount": "138.00", "currencyCode": "USD" },
           "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Gold" }]
+          "selectedOptions": [{ "name": "Pack", "value": "6 Bottles" }]
         }
       ],
-      "collections": ["New Arrivals"]
-    },
-    {
-      "id": "5",
-      "title": "Ceramic Coffee Mug",
-      "description": "Handcrafted ceramic mug with a smooth matte finish. Microwave and dishwasher safe. Holds 12oz of your favorite beverage.",
-      "handle": "ceramic-coffee-mug",
-      "productType": "Home & Kitchen",
-      "price": {
-        "amount": "24.99",
-        "currencyCode": "USD"
-      },
-      "images": [
-        {
-          "url": "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=800&q=80",
-          "altText": "Ceramic Coffee Mug"
-        }
-      ],
-      "variants": [
-        {
-          "id": "5-white",
-          "title": "White",
-          "price": { "amount": "24.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "White" }]
-        },
-        {
-          "id": "5-black",
-          "title": "Black",
-          "price": { "amount": "24.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Black" }]
-        },
-        {
-          "id": "5-blue",
-          "title": "Blue",
-          "price": { "amount": "24.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Blue" }]
-        }
-      ],
-      "collections": ["Home & Kitchen"]
-    },
-    {
-      "id": "6",
-      "title": "Yoga Mat",
-      "description": "Non-slip exercise mat with extra cushioning. Eco-friendly TPE material. Includes carrying strap. Perfect for yoga, pilates, and stretching.",
-      "handle": "yoga-mat",
-      "productType": "Sports & Fitness",
-      "price": {
-        "amount": "39.99",
-        "currencyCode": "USD"
-      },
-      "images": [
-        {
-          "url": "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800&q=80",
-          "altText": "Yoga Mat"
-        }
-      ],
-      "variants": [
-        {
-          "id": "6-purple",
-          "title": "Purple",
-          "price": { "amount": "39.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Purple" }]
-        },
-        {
-          "id": "6-green",
-          "title": "Green",
-          "price": { "amount": "39.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Color", "value": "Green" }]
-        }
-      ],
-      "collections": ["Sports & Fitness", "New Arrivals"]
-    },
-    {
-      "id": "7",
-      "title": "Denim Jacket",
-      "description": "Classic denim jacket with a modern fit. Made from premium denim with a comfortable stretch. A wardrobe staple for any season.",
-      "handle": "denim-jacket",
-      "productType": "Clothing",
-      "price": {
-        "amount": "79.99",
-        "currencyCode": "USD"
-      },
-      "images": [
-        {
-          "url": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800&q=80",
-          "altText": "Denim Jacket"
-        }
-      ],
-      "variants": [
-        {
-          "id": "7-s",
-          "title": "Small",
-          "price": { "amount": "79.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Size", "value": "Small" }]
-        },
-        {
-          "id": "7-m",
-          "title": "Medium",
-          "price": { "amount": "79.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Size", "value": "Medium" }]
-        },
-        {
-          "id": "7-l",
-          "title": "Large",
-          "price": { "amount": "79.99", "currencyCode": "USD" },
-          "availableForSale": false,
-          "selectedOptions": [{ "name": "Size", "value": "Large" }]
-        }
-      ],
-      "collections": ["Clothing", "Best Sellers"]
-    },
-    {
-      "id": "8",
-      "title": "Sunglasses",
-      "description": "UV400 protection with polarized lenses. Lightweight frame with spring hinges. Includes protective case and cleaning cloth.",
-      "handle": "sunglasses",
-      "productType": "Accessories",
-      "price": {
-        "amount": "59.99",
-        "currencyCode": "USD"
-      },
-      "images": [
-        {
-          "url": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&q=80",
-          "altText": "Sunglasses"
-        }
-      ],
-      "variants": [
-        {
-          "id": "8-default",
-          "title": "Default",
-          "price": { "amount": "59.99", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": []
-        }
-      ],
-      "collections": ["Accessories", "Summer Collection"]
+      "collections": ["Topical Treatments", "Best Sellers", "Featured"]
     }
   ],
   "collections": [
     {
-      "id": "col-1",
+      "id": "col-devices",
+      "title": "Devices",
+      "handle": "devices",
+      "description": "Medical-grade hair growth devices using laser and light therapy"
+    },
+    {
+      "id": "col-topical",
+      "title": "Topical Treatments",
+      "handle": "topical-treatments",
+      "description": "Clinically formulated topical solutions for hair regrowth"
+    },
+    {
+      "id": "col-bestsellers",
       "title": "Best Sellers",
       "handle": "best-sellers",
-      "description": "Our most popular products"
+      "description": "Our most popular hair restoration products"
     },
     {
-      "id": "col-2",
-      "title": "New Arrivals",
-      "handle": "new-arrivals",
-      "description": "Latest additions to our store"
-    },
-    {
-      "id": "col-3",
-      "title": "Summer Collection",
-      "handle": "summer-collection",
-      "description": "Perfect for the sunny season"
-    },
-    {
-      "id": "col-4",
-      "title": "Electronics",
-      "handle": "electronics",
-      "description": "Tech gadgets and accessories"
-    },
-    {
-      "id": "col-5",
-      "title": "Clothing",
-      "handle": "clothing",
-      "description": "Fashion essentials"
-    },
-    {
-      "id": "col-6",
-      "title": "Accessories",
-      "handle": "accessories",
-      "description": "Complete your look"
-    },
-    {
-      "id": "col-7",
-      "title": "Home & Kitchen",
-      "handle": "home-kitchen",
-      "description": "For your living space"
-    },
-    {
-      "id": "col-8",
-      "title": "Sports & Fitness",
-      "handle": "sports-fitness",
-      "description": "Stay active and healthy"
+      "id": "col-featured",
+      "title": "Featured",
+      "handle": "featured",
+      "description": "Handpicked featured products"
     }
   ]
 }

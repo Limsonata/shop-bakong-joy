@@ -22,21 +22,8 @@ const footerLinks = {
     { label: "Collections", to: "/shop" },
   ],
   support: [
-    { label: "Contact Us", to: "/account" },
-    { label: "Shipping Info", to: "/shop" },
-    { label: "Returns & Exchanges", to: "/shop" },
-    { label: "FAQ", to: "/shop" },
-  ],
-  company: [
-    { label: "About Us", to: "/" },
-    { label: "Careers", to: "/" },
-    { label: "Press", to: "/" },
-    { label: "Sustainability", to: "/" },
-  ],
-  legal: [
-    { label: "Privacy Policy", to: "/" },
-    { label: "Terms of Service", to: "/" },
-    { label: "Cookie Policy", to: "/" },
+    { label: "My Account", to: "/account" },
+    { label: "My Orders", to: "/orders" },
   ],
 };
 

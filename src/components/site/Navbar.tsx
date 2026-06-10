@@ -64,7 +64,7 @@ export function Navbar() {
           className="bg-foreground text-background py-2 text-center text-xs font-medium tracking-wide"
         >
           <span className="inline-flex items-center gap-2">
-            Free shipping on orders over $50
+            Free nationwide shipping in Cambodia
             <ArrowRight className="w-3 h-3" />
           </span>
         </motion.div>
@@ -109,17 +109,6 @@ export function Navbar() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {/* Search Button (Desktop) */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Button variant="ghost" size="icon" className="hidden md:flex">
-                  <Search className="h-5 w-5" />
-                </Button>
-              </motion.div>
-
               {/* Account */}
               <motion.div
                 initial={{ opacity: 0 }}

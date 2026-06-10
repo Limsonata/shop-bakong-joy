@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload, X } from "lucide-react";
 import type { Product, ProductInput, ProductVariantInput } from "@/lib/productStore";
 
 interface Props {
@@ -47,6 +47,20 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [collectionsText, setCollectionsText] = useState((initial?.collections ?? []).join(", "));
   const [variants, setVariants] = useState<ProductVariantInput[]>(initialVariants(initial));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setImageUrl(ev.target?.result as string);
+      setIsUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -179,17 +193,54 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       <Card>
         <CardHeader><CardTitle>Image</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input id="imageUrl" type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
-            <p className="text-xs text-muted-foreground">Paste a Cloudinary URL or any public image URL.</p>
-          </div>
-          {imageUrl && (
-            <div className="rounded-md border bg-muted p-3">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">Preview</p>
-              <img src={imageUrl} alt="Product preview" className="h-40 w-40 rounded-md object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          {imageUrl ? (
+            <div className="relative w-40">
+              <img
+                src={imageUrl}
+                alt="Product preview"
+                className="h-40 w-40 rounded-xl object-cover border"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+              <button
+                type="button"
+                onClick={() => { setImageUrl(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-40 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <Upload className="h-8 w-8" />
+              <span className="text-sm font-medium">Choose from device</span>
+              <span className="text-xs">PNG, JPG, WEBP</span>
+            </button>
           )}
+
+          {isUploading && <p className="text-xs text-muted-foreground">Loading image...</p>}
+
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Or paste an image URL</Label>
+            <Input
+              id="imageUrl"
+              value={imageUrl.startsWith("data:") ? "" : imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://..."
+              disabled={imageUrl.startsWith("data:")}
+            />
+          </div>
         </CardContent>
       </Card>
 

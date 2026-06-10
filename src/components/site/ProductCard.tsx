@@ -6,6 +6,7 @@ import type { LocalProductEdge } from "@/lib/localStore";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { Tilt3D } from "@/components/site/Tilt3D";
 
 export function ProductCard({ product }: { product: LocalProductEdge }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -44,7 +45,8 @@ export function ProductCard({ product }: { product: LocalProductEdge }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image Container */}
+      {/* Image Container — Tilt3D perspective effect */}
+      <Tilt3D className="rounded-2xl" maxTilt={12}>
       <Link
         to="/product/$handle"
         params={{ handle: p.handle }}
@@ -131,6 +133,7 @@ export function ProductCard({ product }: { product: LocalProductEdge }) {
           </div>
         </motion.div>
       </Link>
+      </Tilt3D>
 
       {/* Product Info */}
       <div className="flex flex-col gap-1 pt-4 px-1">

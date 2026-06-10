@@ -4,19 +4,22 @@ import { ArrowRight, ArrowUpRight, Sparkles, Truck, Shield, RotateCcw } from "lu
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/site/ProductCard";
+import { BentoFeatures } from "@/components/site/BentoFeatures";
+import { TestimonialsSection } from "@/components/site/TestimonialsSection";
+import { Tilt3D } from "@/components/site/Tilt3D";
 import { getProducts, getCollections } from "@/lib/localStore";
 import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "hairora — Premium Hair & Beauty" },
+      { title: "hairora — Hair Restoration Specialists" },
       {
         name: "description",
-        content: "Discover curated everyday goods. Premium quality, thoughtful design.",
+        content: "Clinically proven hair restoration. LED laser therapy & Minoxidil solutions, delivered in Cambodia.",
       },
-      { property: "og:title", content: "Storefront" },
-      { property: "og:description", content: "Modern essentials for everyday life." },
+      { property: "og:title", content: "hairora — Hair Restoration Specialists" },
+      { property: "og:description", content: "Clinically proven hair restoration. LED laser therapy & Minoxidil solutions." },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -58,8 +61,12 @@ function Index() {
     >
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-background" />
+        {/* Background with animated glow orbs */}
+        <div className="absolute inset-0 bg-background overflow-hidden">
+          <div className="glow-orb glow-orb-1" />
+          <div className="glow-orb glow-orb-2" />
+          <div className="glow-orb glow-orb-3" />
+        </div>
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
@@ -75,18 +82,18 @@ function Index() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
               >
                 <Sparkles className="w-4 h-4" />
-                New Collection 2025
+                Clinically Proven Hair Restoration
               </motion.div>
 
               <motion.h1
                 {...fadeInUp}
                 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[0.95]"
               >
-                <span className="block text-foreground">Less,</span>
+                <span className="block text-foreground">Restore</span>
                 <span className="block text-muted-foreground">
-                  but
+                  your
                   <span className="text-foreground ml-3 relative">
-                    better
+                    hair
                     <svg
                       className="absolute -bottom-2 left-0 w-full"
                       viewBox="0 0 200 12"
@@ -108,8 +115,8 @@ function Index() {
                 {...fadeInUp}
                 className="mt-8 text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0"
               >
-                Curated everyday goods designed with intention. Premium quality meets thoughtful
-                minimalism.
+                Medical-grade LED laser therapy and clinically proven Minoxidil solutions.
+                Real results, delivered to Cambodia.
               </motion.p>
 
               <motion.div
@@ -118,7 +125,7 @@ function Index() {
               >
                 <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg group">
                   <Link to="/shop">
-                    Shop Collection
+                    Shop Treatments
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
@@ -128,7 +135,7 @@ function Index() {
                   size="lg"
                   className="rounded-full px-8 py-6 text-lg"
                 >
-                  <Link to="/shop">Explore</Link>
+                  <Link to="/shop">Learn More</Link>
                 </Button>
               </motion.div>
 
@@ -138,9 +145,9 @@ function Index() {
                 className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto lg:mx-0"
               >
                 {[
-                  ["10K+", "Products"],
-                  ["50+", "Brands"],
-                  ["99%", "Happy Customers"],
+                  ["272", "Laser Diodes"],
+                  ["16 wks", "To Results"],
+                  ["99%", "Satisfaction"],
                 ].map(([stat, label]) => (
                   <div key={label} className="text-center lg:text-left">
                     <div className="text-2xl font-bold text-foreground">{stat}</div>
@@ -150,75 +157,62 @@ function Index() {
               </motion.div>
             </motion.div>
 
-            {/* Right - Hero Image Grid */}
+            {/* Right - 3D Hero Scene */}
             <motion.div
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
               className="relative hidden lg:block"
             >
-              <div className="relative grid grid-cols-2 gap-4">
-                <motion.div
-                  initial={{ y: 40, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                  className="space-y-4"
-                >
-                  <div className="aspect-[3/4] rounded-3xl overflow-hidden liquid-glass">
-                    <img
-                      src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80"
-                      alt="Minimal store interior"
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                    />
-                  </div>
-                  <div className="aspect-square rounded-3xl overflow-hidden liquid-glass">
-                    <img
-                      src="https://images.unsplash.com/photo-1556906781-9a412961c28c?w=600&q=80"
-                      alt="Premium sneakers"
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                    />
-                  </div>
-                </motion.div>
-                <motion.div
-                  initial={{ y: -40, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.5 }}
-                  className="space-y-4 pt-12"
-                >
-                  <div className="aspect-square rounded-3xl overflow-hidden liquid-glass">
-                    <img
-                      src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80"
-                      alt="Fashion collection"
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                    />
-                  </div>
-                  <div className="aspect-[4/3] rounded-3xl overflow-hidden liquid-glass">
-                    <img
-                      src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80"
-                      alt="Shopping experience"
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                    />
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Floating Badge */}
-              <motion.div
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.5, delay: 1 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 liquid-glass-card rounded-2xl p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Secure Payment</p>
-                    <p className="text-xs text-muted-foreground">Bakong KHQR</p>
-                  </div>
+              <Tilt3D scene perspective={1100} maxTilt={10} glare={false} className="relative">
+                <div className="relative grid grid-cols-2 gap-4">
+                  <motion.div
+                    initial={{ y: 40, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                    className="space-y-4"
+                    style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
+                  >
+                    <div className="aspect-[3/4] rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
+                      <img src="/led-cap.png" alt="hairora LED Laser Hair Growth Cap" className="w-full h-full object-contain p-4" />
+                    </div>
+                    <div className="aspect-square rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
+                      <img src="/morr-f5.webp" alt="Morr F5% Minoxidil Solution" className="w-full h-full object-contain p-4" />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    initial={{ y: -40, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.5 }}
+                    className="space-y-4 pt-12"
+                    style={{ transform: "translateZ(60px)", transformStyle: "preserve-3d" }}
+                  >
+                    <div className="aspect-square rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
+                      <img src="/morr-f5.webp" alt="Morr F5% solution" className="w-full h-full object-contain p-4" />
+                    </div>
+                    <div className="aspect-[4/3] rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
+                      <img src="/led-cap.png" alt="LED hair growth cap" className="w-full h-full object-contain p-4" />
+                    </div>
+                  </motion.div>
                 </div>
-              </motion.div>
+                <motion.div
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.5, delay: 1 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 liquid-glass-card rounded-2xl p-4"
+                  style={{ transform: "translate(-50%, -50%) translateZ(100px)" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center">
+                      <Shield className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Secure Payment</p>
+                      <p className="text-xs text-muted-foreground">Bakong KHQR</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </Tilt3D>
             </motion.div>
           </div>
         </div>
@@ -229,9 +223,9 @@ function Index() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
-              ["Free Shipping", "On orders over $50", Truck],
+              ["Free Shipping", "Nationwide in Cambodia", Truck],
               ["Secure Payment", "Bakong KHQR", Shield],
-              ["Easy Returns", "30-day policy", RotateCcw],
+              ["Authentic Products", "100% genuine", RotateCcw],
             ].map(([title, desc, Icon], i) => (
               <motion.div
                 key={title}
@@ -253,6 +247,9 @@ function Index() {
           </div>
         </div>
       </section>
+
+      {/* Why hairora — Bento Grid */}
+      <BentoFeatures />
 
       {/* Collections Section */}
       {collections && collections.length > 0 && (
@@ -358,6 +355,9 @@ function Index() {
         </div>
       </section>
 
+      {/* Testimonials — Draggable glass cards */}
+      <TestimonialsSection />
+
       {/* CTA Section */}
       <section className="py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -369,10 +369,10 @@ function Index() {
           >
             <div className="relative max-w-2xl mx-auto">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
-                Ready to elevate your everyday?
+                Start your hair restoration journey
               </h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">
-                Join thousands of customers who trust us for quality, design, and service.
+                Join customers across Cambodia who trust hairora for clinically proven, medical-grade hair restoration.
               </p>
               <Button
                 asChild
@@ -380,7 +380,7 @@ function Index() {
                 className="rounded-full px-8 py-6 text-lg"
               >
                 <Link to="/shop">
-                  Shop Now
+                  Shop Treatments
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>

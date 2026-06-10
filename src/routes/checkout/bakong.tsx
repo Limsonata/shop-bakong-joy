@@ -83,7 +83,7 @@ function BakongCheckout() {
 
     setIsSubmitting(true);
     try {
-      await createOrder({
+      const order = await createOrder({
         customerName: formData.name,
         phone: formData.phone,
         address: formData.address,
