@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartDrawer } from "@/components/site/CartDrawer";
+import { Logo } from "@/components/site/Logo";
 import { getCollections, getProductTypes } from "@/lib/localStore";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,11 +52,7 @@ export function Navbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled
-            ? "liquid-glass border-b"
-            : "bg-transparent"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "liquid-glass border-b" : "bg-transparent"}`}
       >
         {/* Top Banner */}
         <motion.div
@@ -72,9 +69,9 @@ export function Navbar() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <motion.div whileHover={{ scale: 0.7 }} whileTap={{ scale: 0.6 }}>
               <Link to="/" className="flex items-center">
-                <img src="/logo.png" alt="hairora" className="h-8 w-auto" />
+                <Logo className="h-8 w-auto" />
               </Link>
             </motion.div>
 
@@ -182,7 +179,12 @@ export function Navbar() {
               </form>
 
               <nav className="space-y-2">
-                {[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: "Orders", to: "/orders" }, { label: "Account", to: "/account" }].map((item, i) => (
+                {[
+                  { label: "Home", to: "/" },
+                  { label: "Shop", to: "/shop" },
+                  { label: "Orders", to: "/orders" },
+                  { label: "Account", to: "/account" },
+                ].map((item, i) => (
                   <motion.div
                     key={item.label}
                     initial={{ opacity: 0, x: 20 }}

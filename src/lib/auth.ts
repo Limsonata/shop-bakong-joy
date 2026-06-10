@@ -308,6 +308,32 @@ export function isAdmin(): boolean {
 }
 
 /**
+ * Set a new password after arriving from a reset email link.
+ * Must be called while a recovery session is active.
+ */
+export async function updatePassword(newPassword: string): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseConfigured || !supabase) return { success: false, error: "Not configured" };
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+/**
+ * Send a password reset email.
+ */
+export async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
+  if (isSupabaseConfigured && supabase) {
+    const redirectTo =
+      typeof window !== "undefined" ? `${window.location.origin}/login` : undefined;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  }
+  // Demo mode — no real email, just acknowledge
+  return { success: true };
+}
+
+/**
  * Update the current user's profile.
  */
 export async function updateProfile(

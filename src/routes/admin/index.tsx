@@ -389,7 +389,7 @@ function AdminDashboard() {
             </Card>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-6 grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader>
                 <CardTitle>Products</CardTitle>
@@ -410,6 +410,18 @@ function AdminDashboard() {
               <CardContent>
                 <Button asChild className="w-full" variant="outline">
                   <a href="/admin/orders">View Orders</a>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Feedback</CardTitle>
+                <CardDescription>Approve customer reviews</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className="w-full" variant="outline">
+                  <a href="/admin/feedback">View Feedback</a>
                 </Button>
               </CardContent>
             </Card>
