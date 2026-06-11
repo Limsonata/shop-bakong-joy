@@ -94,7 +94,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-background/60 mb-6 max-w-sm">
-              Premium hair &amp; beauty products with secure Bakong KHQR payment. Proudly serving Cambodia.
+              Premium hair &amp; beauty products with secure ABA PayWay payment. Proudly serving Cambodia.
             </p>
 
             {/* Contact */}

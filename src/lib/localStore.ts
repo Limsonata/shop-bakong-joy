@@ -60,7 +60,15 @@ export function getLocalCart(): LocalCart {
 
 export function saveLocalCart(cart: LocalCart): void {
   if (!isBrowser) return;
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "QuotaExceededError") {
+      // Storage full — clear the cart to recover rather than silently failing
+      const empty: LocalCart = { id: cart.id, items: [], createdAt: cart.createdAt };
+      try { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(empty)); } catch { /* ignore */ }
+    }
+  }
 }
 
 export async function addToCart(item: Omit<CartItem, "lineId">): Promise<CartItem> {

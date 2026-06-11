@@ -51,6 +51,11 @@ export default defineConfig({
         "zustand",
         "zustand/middleware",
       ],
+      esbuildOptions: {
+        alias: {
+          "node:async_hooks": path.resolve(__dirname, "src/polyfills/async_hooks.ts"),
+        },
+      },
     },
     resolve: {
       alias: {

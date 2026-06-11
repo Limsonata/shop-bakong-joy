@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Package, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import { getAllOrders, updateOrderStatus, type Order, type OrderStatus } from "@/lib/orderStore";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/orders")({
   head: () => ({ meta: [{ title: "Orders - Admin" }] }),
@@ -48,6 +49,20 @@ function OrdersAdmin() {
 
   useEffect(() => {
     loadOrders();
+
+    // Realtime: auto-refresh when any order is inserted or updated
+    const channel = supabase
+      ?.channel("admin-orders")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, () => {
+        toast.info("New order received!");
+        loadOrders();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, () => {
+        loadOrders();
+      })
+      .subscribe();
+
+    return () => { channel?.unsubscribe(); };
   }, []);
 
   const handleStatusChange = async (id: string, status: OrderStatus) => {
@@ -148,7 +163,7 @@ function OrdersAdmin() {
                         </p>
                         {order.bakongTransactionId && (
                           <p className="text-sm text-muted-foreground">
-                            Tx: {order.bakongTransactionId}
+                            ABA PayWay Tx: {order.bakongTransactionId}
                           </p>
                         )}
                       </div>

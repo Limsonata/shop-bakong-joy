@@ -4,6 +4,7 @@ import { logout } from "@/lib/auth";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import { getAllOrders, type Order } from "@/lib/orderStore";
 import { getProducts } from "@/lib/productStore";
+import { supabase } from "@/lib/supabase";
 import {
   BarChart,
   Bar,
@@ -67,6 +68,16 @@ function AdminDashboard() {
       }
     };
     loadData();
+
+    // Realtime: refresh stats when orders change
+    const channel = supabase
+      ?.channel("admin-dashboard")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        getAllOrders().then(setOrders).catch(console.error);
+      })
+      .subscribe();
+
+    return () => { channel?.unsubscribe(); };
   }, []);
 
   const stats = useMemo(() => {

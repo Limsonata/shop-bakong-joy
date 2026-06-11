@@ -183,6 +183,15 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function getCollections(options?: { first?: number }): Promise<CollectionEdge[]> {
+  if (isSupabaseConfigured && supabase) {
+    let q = supabase.from("collections").select("*").order("title");
+    if (options?.first) q = q.limit(options.first);
+    const { data, error } = await q;
+    if (!error && data) {
+      return data.map((row) => ({ node: dbCollectionToCollection(row) }));
+    }
+  }
+
   await delay(60);
   let collections = productsData.collections as Collection[];
   if (options?.first) collections = collections.slice(0, options.first);

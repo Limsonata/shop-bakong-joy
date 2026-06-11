@@ -79,7 +79,7 @@ const secureOrderSchema = z.object({
     .max(40)
     .regex(/^[A-Z0-9-]+$/)
     .optional(),
-  bakongTransactionId: z.string().trim().min(1).max(120),
+  bakongTransactionId: z.string().trim().max(120).optional().nullable(),
   items: z
     .array(
       z.object({
@@ -272,7 +272,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         total,
         currency: currency ?? "USD",
         bakong_reference: reference,
-        bakong_transaction_id: data.bakongTransactionId,
+        bakong_transaction_id: data.bakongTransactionId || null,
         status: "pending",
         items: orderItems,
       })

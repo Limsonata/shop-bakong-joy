@@ -81,6 +81,8 @@ function saveLocalOrders(orders: Order[]): void {
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
   if (isSupabaseConfigured && supabase) {
+    // Use the server function (service_role) — INSERT is revoked from the
+    // authenticated role on the orders table, so a direct client insert would fail.
     const accessToken = await getSupabaseAccessToken();
     const data = await createSecureOrder({
       data: {
@@ -88,7 +90,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         customerName: input.customerName,
         phone: input.phone,
         address: input.address,
-        bakongReference: input.bakongReference,
+        bakongReference: input.bakongReference || undefined,
         bakongTransactionId: input.bakongTransactionId,
         items: input.items.map((item) => ({
           productId: item.productId,
@@ -97,6 +99,25 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         })),
       },
     });
+
+    // Notify the user (best-effort — ignore errors)
+    const userId = (data as DbOrder).user_id;
+    if (userId) {
+      const payMethod = input.bakongReference === "COD" ? "Pay on delivery" : "ABA Pay";
+      supabase
+        .from("notifications")
+        .insert({
+          user_id: userId,
+          type: "order_update",
+          title: "Order placed!",
+          message: `Your order of ${input.currency} ${input.total.toFixed(2)} (${payMethod}) has been placed and is being prepared.`,
+          data: { orderId: (data as DbOrder).id },
+          read: false,
+        })
+        .then(() => {})
+        .catch(() => {});
+    }
+
     return dbOrderToOrder(data as DbOrder);
   }
 

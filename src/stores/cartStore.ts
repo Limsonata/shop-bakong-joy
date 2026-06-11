@@ -8,7 +8,7 @@ import {
   removeFromCart as localRemoveFromCart,
   updateCartItem as localUpdateCartItem,
 } from "@/lib/localStore";
-import { getBakongCheckoutUrl } from "@/lib/bakong";
+import { getPayWayCheckoutUrl } from "@/lib/payway";
 
 export interface CartItem {
   lineId: string;
@@ -51,7 +51,7 @@ export const useCartStore = create<CartStore>()(
           set({
             items: cart.items,
             cartId: cart.id,
-            checkoutUrl: getBakongCheckoutUrl(),
+            checkoutUrl: getPayWayCheckoutUrl(),
           });
         } catch {
           // Silently fail - cart operations are not critical
@@ -102,7 +102,7 @@ export const useCartStore = create<CartStore>()(
           set({
             items: cart.items,
             cartId: cart.id,
-            checkoutUrl: cart.items.length > 0 ? getBakongCheckoutUrl() : null,
+            checkoutUrl: cart.items.length > 0 ? getPayWayCheckoutUrl() : null,
           });
         } catch {
           // Silently fail - cart sync is not critical
@@ -114,8 +114,9 @@ export const useCartStore = create<CartStore>()(
     {
       name: "bakong-cart-store",
       storage: createJSONStorage(() => localStorage),
+      // items are already persisted in "local-cart" by localStore.ts and
+      // reloaded via syncCart() on mount — no need to duplicate them here.
       partialize: (state) => ({
-        items: state.items,
         cartId: state.cartId,
         checkoutUrl: state.checkoutUrl,
       }),

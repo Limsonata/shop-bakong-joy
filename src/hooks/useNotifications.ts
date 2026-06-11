@@ -14,14 +14,19 @@ export interface Notification {
   created_at: string;
 }
 
-async function fetchNotifications(): Promise<Notification[]> {
+async function fetchNotifications(userId: string): Promise<Notification[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from("notifications")
     .select("*")
+    .or(`user_id.eq.${userId},recipient_role.eq.all`)
     .order("created_at", { ascending: false })
     .limit(50);
-  if (error) throw error;
+  if (error) {
+    // Table not yet created — fail silently
+    if (error.code === "42P01" || error.message?.includes("does not exist")) return [];
+    throw error;
+  }
   return (data as Notification[]) ?? [];
 }
 
@@ -30,7 +35,7 @@ export function useNotifications(userId: string | undefined) {
 
   const query = useQuery({
     queryKey: ["notifications", userId],
-    queryFn: fetchNotifications,
+    queryFn: () => fetchNotifications(userId!),
     enabled: isSupabaseConfigured && !!userId,
     staleTime: 30_000,
   });

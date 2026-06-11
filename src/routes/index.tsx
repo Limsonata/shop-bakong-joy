@@ -208,7 +208,7 @@ function Index() {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">Secure Payment</p>
-                      <p className="text-xs text-muted-foreground">Bakong KHQR</p>
+                      <p className="text-xs text-muted-foreground">ABA PayWay</p>
                     </div>
                   </div>
                 </motion.div>
@@ -224,7 +224,7 @@ function Index() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
               ["Free Shipping", "Nationwide in Cambodia", Truck],
-              ["Secure Payment", "Bakong KHQR", Shield],
+              ["Secure Payment", "ABA PayWay", Shield],
               ["Authentic Products", "100% genuine", RotateCcw],
             ].map(([title, desc, Icon], i) => (
               <motion.div

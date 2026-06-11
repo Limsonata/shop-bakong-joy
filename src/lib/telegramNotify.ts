@@ -27,7 +27,7 @@ export async function notifyOrderReceipt(telegramId: number | null, order: Order
     `<b>Total:</b> ${order.currency} ${order.total.toFixed(2)}\n\n` +
     `<b>Deliver to:</b> ${order.address}\n` +
     `<b>Phone:</b> ${order.phone}\n\n` +
-    `We will confirm your Bakong payment shortly. Thank you! 🙏`;
+    `We will confirm your ABA PayWay payment shortly. Thank you!`;
 
   // Notify admin of new order
   await notifyAdmin({ data: { text } }).catch((err) => {
