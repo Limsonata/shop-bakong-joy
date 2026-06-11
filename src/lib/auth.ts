@@ -86,11 +86,16 @@ async function loginSupabase(email: string, password: string): Promise<AuthResul
     .eq("id", data.user.id)
     .maybeSingle();
 
+  const role: UserRole =
+    (data.user.app_metadata?.role as UserRole) ||
+    (profile?.role as UserRole) ||
+    "user";
+
   const user: User = {
     id: data.user.id,
     email: data.user.email || email,
     name: profile?.name || data.user.user_metadata?.name || email.split("@")[0],
-    role: (profile?.role as UserRole) || "user",
+    role,
     createdAt: new Date(data.user.created_at).getTime(),
   };
 
@@ -149,11 +154,16 @@ async function getCurrentUserSupabase(): Promise<User | null> {
     .eq("id", authUser.id)
     .maybeSingle();
 
+  const role: UserRole =
+    (authUser.app_metadata?.role as UserRole) ||
+    (profile?.role as UserRole) ||
+    "user";
+
   return {
     id: authUser.id,
     email: authUser.email || "",
     name: profile?.name || authUser.user_metadata?.name || (authUser.email || "").split("@")[0],
-    role: (profile?.role as UserRole) || "user",
+    role,
     createdAt: new Date(authUser.created_at).getTime(),
   };
 }
