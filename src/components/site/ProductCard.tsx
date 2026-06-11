@@ -93,7 +93,8 @@ export function ProductCard({ product }: { product: LocalProductEdge }) {
               <Button
                 className="w-full rounded-full py-6 shadow-xl"
                 onClick={handleAdd}
-                disabled={isLoading}
+                disabled={isLoading || !variant.availableForSale}
+                variant={!variant.availableForSale ? "outline" : "default"}
               >
                 {isLoading ? (
                   <motion.div
@@ -102,6 +103,8 @@ export function ProductCard({ product }: { product: LocalProductEdge }) {
                   >
                     <Plus className="h-5 w-5" />
                   </motion.div>
+                ) : !variant.availableForSale ? (
+                  "Out of Stock"
                 ) : (
                   <>
                     <Plus className="h-5 w-5 mr-2" />
@@ -113,8 +116,17 @@ export function ProductCard({ product }: { product: LocalProductEdge }) {
           )}
         </AnimatePresence>
 
+        {/* Out-of-stock badge */}
+        {!variant?.availableForSale && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="px-2 py-1 text-xs font-medium bg-red-500/90 text-white rounded-full">
+              Out of Stock
+            </span>
+          </div>
+        )}
+
         {/* Collection Tag */}
-        {p.collections.length > 0 && (
+        {p.collections.length > 0 && variant?.availableForSale && (
           <div className="absolute top-3 left-3">
             <span className="px-2 py-1 text-xs font-medium liquid-glass-card rounded-full">
               {p.collections[0]}
@@ -158,7 +170,7 @@ export function ProductCard({ product }: { product: LocalProductEdge }) {
             variant="ghost"
             className="h-8 w-8 rounded-full md:hidden"
             onClick={handleAdd}
-            disabled={!variant || isLoading}
+            disabled={!variant || isLoading || !variant?.availableForSale}
           >
             <Plus className="h-4 w-4" />
           </Button>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
 import { PackageSearch } from "lucide-react";
 import { ProductCard } from "@/components/site/ProductCard";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { getProducts, getCollections } from "@/lib/localStore";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Slider } from "@/components/ui/slider";
 
 const searchSchema = z.object({
   q: z.string().optional().catch(undefined),
@@ -31,6 +32,7 @@ function ShopPage() {
   const [q, setQ] = useState(initialQ ?? "");
   const [sortBy, setSortBy] = useState("default");
   const [activeCollection, setActiveCollection] = useState("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 99999]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["products", "all"],
@@ -41,6 +43,14 @@ function ShopPage() {
     queryKey: ["collections"],
     queryFn: () => getCollections({ first: 20 }),
   });
+
+  const allPrices = useMemo(() => data?.map((p) => parseFloat(p.node.price.amount)) ?? [], [data]);
+  const minPrice = allPrices.length ? Math.floor(Math.min(...allPrices)) : 0;
+  const maxPrice = allPrices.length ? Math.ceil(Math.max(...allPrices)) : 99999;
+
+  useEffect(() => {
+    if (allPrices.length) setPriceRange([minPrice, maxPrice]);
+  }, [minPrice, maxPrice]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -60,6 +70,10 @@ function ShopPage() {
         ),
       );
     }
+    result = result.filter((p) => {
+      const price = parseFloat(p.node.price.amount);
+      return price >= priceRange[0] && price <= priceRange[1];
+    });
     if (sortBy === "price-asc") {
       result = [...result].sort(
         (a, b) => parseFloat(a.node.price.amount) - parseFloat(b.node.price.amount),
@@ -72,7 +86,7 @@ function ShopPage() {
       result = [...result].sort((a, b) => a.node.title.localeCompare(b.node.title));
     }
     return result;
-  }, [data, q, activeCollection, sortBy]);
+  }, [data, q, activeCollection, sortBy, priceRange]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -121,6 +135,26 @@ function ShopPage() {
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
+      )}
+
+      {/* Price range filter */}
+      {allPrices.length > 0 && minPrice < maxPrice && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Price</span>
+            <span className="text-sm text-muted-foreground">
+              ${priceRange[0]} – ${priceRange[1]}
+            </span>
+          </div>
+          <Slider
+            min={minPrice}
+            max={maxPrice}
+            step={1}
+            value={priceRange}
+            onValueChange={(val) => setPriceRange(val as [number, number])}
+            className="w-full"
+          />
+        </div>
       )}
 
       {/* Header */}

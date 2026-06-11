@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrackRouteImport } from './routes/track'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -26,6 +28,11 @@ import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminProductsNewRouteImport } from './routes/admin/products.new'
 import { Route as AdminProductsIdRouteImport } from './routes/admin/products.$id'
 
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -39,6 +46,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountRoute = AccountRouteImport.update({
@@ -110,9 +122,11 @@ const AdminProductsIdRoute = AdminProductsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/orders': typeof OrdersRoute
   '/shop': typeof ShopRoute
+  '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/login': typeof AdminLoginRoute
@@ -128,9 +142,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/orders': typeof OrdersRoute
   '/shop': typeof ShopRoute
+  '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/login': typeof AdminLoginRoute
@@ -147,9 +163,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/orders': typeof OrdersRoute
   '/shop': typeof ShopRoute
+  '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/login': typeof AdminLoginRoute
@@ -167,9 +185,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
+    | '/faq'
     | '/login'
     | '/orders'
     | '/shop'
+    | '/track'
     | '/admin/categories'
     | '/admin/feedback'
     | '/admin/login'
@@ -185,9 +205,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/faq'
     | '/login'
     | '/orders'
     | '/shop'
+    | '/track'
     | '/admin/categories'
     | '/admin/feedback'
     | '/admin/login'
@@ -203,9 +225,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
+    | '/faq'
     | '/login'
     | '/orders'
     | '/shop'
+    | '/track'
     | '/admin/categories'
     | '/admin/feedback'
     | '/admin/login'
@@ -222,9 +246,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
+  FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   OrdersRoute: typeof OrdersRoute
   ShopRoute: typeof ShopRoute
+  TrackRoute: typeof TrackRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -238,6 +264,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
@@ -257,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -370,9 +410,11 @@ const AdminProductsRouteWithChildren = AdminProductsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
+  FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   OrdersRoute: OrdersRoute,
   ShopRoute: ShopRoute,
+  TrackRoute: TrackRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
   AdminLoginRoute: AdminLoginRoute,
