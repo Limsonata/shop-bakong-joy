@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/account")({
-  head: () => ({ meta: [{ title: "My Account — Shop Bakong Joy" }] }),
+  head: () => ({ meta: [{ title: "My Account — BillieGrace Closet" }] }),
   component: AccountPage,
 });
 

@@ -32,7 +32,7 @@ export interface BakongQRPayload {
 
 export function getBakongPaymentConfig(): BakongPaymentConfig {
   return {
-    merchantName: import.meta.env.VITE_BAKONG_MERCHANT_NAME || "Shop Bakong Joy",
+    merchantName: import.meta.env.VITE_BAKONG_MERCHANT_NAME || "BillieGrace Closet",
     merchantAccount: import.meta.env.VITE_BAKONG_MERCHANT_ACCOUNT || "mengsry_mey@bkrt",
     merchantCity: import.meta.env.VITE_BAKONG_MERCHANT_CITY || "Phnom Penh",
     qrImageUrl: import.meta.env.VITE_BAKONG_QR_IMAGE_URL || "",

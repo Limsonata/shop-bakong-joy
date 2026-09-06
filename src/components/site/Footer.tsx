@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Logo } from "@/components/site/Logo";
 
 const footerLinks = {
   shop: [
@@ -91,13 +92,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2">
             <Link to="/" className="flex items-center mb-6">
-              <span
-                className="text-2xl font-bold tracking-tight"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                <span style={{ color: "oklch(74% 0.09 15)" }}>Billie</span>
-                <span className="text-background">Grace</span>
-              </span>
+              <Logo className="h-16 w-auto" />
             </Link>
             <p className="text-background/60 mb-6 max-w-sm">
               Activewear and everyday essentials designed for women, with fast cash-on-delivery

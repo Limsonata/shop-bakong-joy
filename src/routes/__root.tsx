@@ -79,10 +79,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "BillieGrace Closet" },
-      { name: "description", content: "Activewear and everyday essentials designed for women. New arrivals dropping weekly, delivered across Cambodia." },
+      {
+        name: "description",
+        content:
+          "Activewear and everyday essentials designed for women. New arrivals dropping weekly, delivered across Cambodia.",
+      },
       { name: "author", content: "BillieGrace Closet" },
       { property: "og:title", content: "BillieGrace Closet — Made for Her" },
-      { property: "og:description", content: "Activewear and everyday essentials designed for women. New arrivals dropping weekly." },
+      {
+        property: "og:description",
+        content:
+          "Activewear and everyday essentials designed for women. New arrivals dropping weekly.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -91,6 +99,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/Billie.svg",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/Billie.svg",
       },
     ],
   }),

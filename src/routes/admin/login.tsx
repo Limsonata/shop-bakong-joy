@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { login, register } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin/login")({
-  head: () => ({ meta: [{ title: "Login - Shop Bakong Joy" }] }),
+  head: () => ({ meta: [{ title: "Admin Login — BillieGrace Closet" }] }),
   component: LoginPage,
 });
 
@@ -65,11 +65,11 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground text-xl font-bold text-background">
-            S
+          <div className="mx-auto mb-4">
+            <img src="/Billie.svg" alt="BillieGrace Closet" className="h-20 w-auto mx-auto" />
           </div>
-          <CardTitle>Shop Bakong Joy</CardTitle>
-          <CardDescription>Login or create an account</CardDescription>
+          <CardTitle>BillieGrace Closet</CardTitle>
+          <CardDescription>Admin panel — login to continue</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">

@@ -12,7 +12,7 @@ import { getProductByHandle } from "@/lib/localStore";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/product/$handle")({
-  head: ({ params }) => ({ meta: [{ title: `${params.handle} — Shop Bakong Joy` }] }),
+  head: ({ params }) => ({ meta: [{ title: `${params.handle} — BillieGrace Closet` }] }),
   component: ProductDetail,
 });
 

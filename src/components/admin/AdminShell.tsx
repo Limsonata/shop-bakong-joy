@@ -54,9 +54,14 @@ export function AdminShell({
       <div className="min-h-screen bg-background">
         <header className="border-b">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <div>
-              <h1 className="text-lg font-semibold leading-tight">{title}</h1>
-              {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+            <div className="flex items-center gap-3">
+              <img src="/Billie.svg" alt="BillieGrace Closet" className="h-9 w-auto" />
+              <div>
+                <h1 className="text-lg font-semibold leading-tight">{title}</h1>
+                {description ? (
+                  <p className="text-sm text-muted-foreground">{description}</p>
+                ) : null}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {actions}

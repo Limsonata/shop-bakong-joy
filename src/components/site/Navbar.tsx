@@ -179,9 +179,9 @@ export function Navbar() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <motion.div whileHover={{ scale: 0.7 }} whileTap={{ scale: 0.6 }}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link to="/" className="flex items-center">
-                <Logo className="h-8 w-auto" />
+                <Logo className="h-12 w-auto" />
               </Link>
             </motion.div>
 
