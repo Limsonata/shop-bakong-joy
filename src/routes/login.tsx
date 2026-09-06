@@ -17,7 +17,7 @@ import { Logo } from "@/components/site/Logo";
 import type { TelegramUser } from "@/lib/telegramAuth";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign In — hairora" }] }),
+  head: () => ({ meta: [{ title: "Sign In — VESTRA" }] }),
   component: LoginPage,
 });
 
@@ -164,7 +164,7 @@ function LoginPage() {
 
   const viewMeta: Record<View, { title: string; desc: string }> = {
     login: { title: "Welcome back", desc: "Sign in to your account" },
-    register: { title: "Create account", desc: "Join hairora today" },
+    register: { title: "Create account", desc: "Join VESTRA today" },
     forgot: { title: "Reset password", desc: "We'll send a reset link to your email" },
     "forgot-sent": { title: "Check your email", desc: `Reset link sent to ${sentTo}` },
     reset: { title: "Set new password", desc: "Choose a strong password for your account" },

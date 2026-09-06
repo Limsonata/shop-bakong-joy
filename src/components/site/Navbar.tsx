@@ -161,7 +161,7 @@ export function Navbar() {
           className="bg-foreground text-background py-2 text-center text-xs font-medium tracking-wide"
         >
           <span className="inline-flex items-center gap-2">
-            Free nationwide shipping in Cambodia
+            New arrivals weekly — free nationwide shipping in Cambodia
             <ArrowRight className="w-3 h-3" />
           </span>
         </motion.div>
@@ -179,7 +179,11 @@ export function Navbar() {
             <nav className="hidden md:flex items-center gap-8">
               {([
                 { to: "/" as const, label: "Home" },
-                { to: "/shop" as const, label: "Shop" },
+                { to: "/shop" as const, label: "Shop", search: undefined },
+                { to: "/shop" as const, label: "Women", search: { q: "Women" } },
+                { to: "/shop" as const, label: "Men", search: { q: "Men" } },
+                { to: "/shop" as const, label: "New", search: { q: "New Arrivals" } },
+                { to: "/shop" as const, label: "Sale", search: { q: "Sale" } },
               ]).map((item, index) => (
                 <motion.div
                   key={item.label}
@@ -189,7 +193,11 @@ export function Navbar() {
                 >
                   <Link
                     to={item.to}
-                    className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 group"
+                    search={item.search}
+                    className={cn(
+                      "relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 group",
+                      item.label === "Sale" && "text-secondary hover:text-secondary",
+                    )}
                   >
                     {item.label}
                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-foreground transition-all group-hover:w-full" />
@@ -330,14 +338,19 @@ export function Navbar() {
                     </form>
                     <nav className="space-y-2">
                       {([
-                        { label: "Home", to: "/" as const },
-                        { label: "Shop", to: "/shop" as const },
-                        { label: "Orders", to: "/orders" as const },
-                        { label: "Account", to: "/account" as const },
+                        { label: "Home", to: "/" as const, search: undefined },
+                        { label: "Shop", to: "/shop" as const, search: undefined },
+                        { label: "Women", to: "/shop" as const, search: { q: "Women" } },
+                        { label: "Men", to: "/shop" as const, search: { q: "Men" } },
+                        { label: "New Arrivals", to: "/shop" as const, search: { q: "New Arrivals" } },
+                        { label: "Sale", to: "/shop" as const, search: { q: "Sale" } },
+                        { label: "Orders", to: "/orders" as const, search: undefined },
+                        { label: "Account", to: "/account" as const, search: undefined },
                       ]).map((item) => (
                         <Link
                           key={item.label}
                           to={item.to}
+                          search={item.search}
                           onClick={() => setMobileMenuOpen(false)}
                           className="block py-4 text-2xl font-medium border-b border-border hover:pl-4 transition-all"
                         >

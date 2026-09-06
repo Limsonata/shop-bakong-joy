@@ -19,11 +19,13 @@ const footerLinks = {
     { label: "All Products", to: "/shop" },
     { label: "New Arrivals", to: "/shop" },
     { label: "Best Sellers", to: "/shop" },
-    { label: "Collections", to: "/shop" },
+    { label: "Sale", to: "/shop" },
   ],
   support: [
     { label: "My Account", to: "/account" },
     { label: "My Orders", to: "/orders" },
+    { label: "Track Order", to: "/track" },
+    { label: "FAQ", to: "/faq" },
   ],
 };
 
@@ -51,9 +53,9 @@ export function Footer() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h3 className="text-2xl sm:text-3xl font-bold">Stay in the loop</h3>
+              <h3 className="text-2xl sm:text-3xl font-bold">Join the VESTRA list</h3>
               <p className="text-background/60 mt-2">
-                Subscribe for exclusive offers, new arrivals, and insider-only discounts.
+                Subscribe for early access to new drops, style edits, and member-only discounts.
               </p>
             </motion.div>
             <motion.form
@@ -90,11 +92,11 @@ export function Footer() {
           <div className="col-span-2">
             <Link to="/" className="flex items-center mb-6">
               <span className="text-2xl font-bold tracking-tight">
-                <span className="text-background">hair</span><span style={{ color: "#C49A2A" }}>ora</span>
+                <span className="text-background">VE</span><span style={{ color: "oklch(64% 0.16 45)" }}>STRA</span>
               </span>
             </Link>
             <p className="text-background/60 mb-6 max-w-sm">
-              Premium hair &amp; beauty products with secure ABA PayWay payment. Proudly serving Cambodia.
+              Modern clothing for everyday movement, with fast cash-on-delivery ordering. Proudly serving Cambodia.
             </p>
 
             {/* Contact */}
@@ -158,7 +160,7 @@ export function Footer() {
       <div className="border-t border-background/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-background/60">
-            <p>© {new Date().getFullYear()} hairora. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} VESTRA. All rights reserved.</p>
             <div className="flex items-center gap-6">
               <span className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-green-500" />

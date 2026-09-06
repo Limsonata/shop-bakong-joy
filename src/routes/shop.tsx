@@ -23,7 +23,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/shop")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Shop — hairora" }] }),
+  head: () => ({ meta: [{ title: "Shop — VESTRA" }] }),
   component: ShopPage,
 });
 

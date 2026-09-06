@@ -15,24 +15,24 @@ const STATIC_FALLBACK = [
     name: "Sopheaktra M.",
     location: "Phnom Penh",
     rating: 5,
-    text: "After 3 months using the LED cap with Morr F5, I can see real regrowth. The delivery was fast and payment with Bakong was super easy.",
-    highlight: "Real regrowth in 3 months",
+    text: "The quality is amazing for the price. Fabric feels premium and the fit is exactly true to size. Delivery was fast and paying on arrival was so easy.",
+    highlight: "True to size, premium fabric",
   },
   {
     id: "s2",
     name: "Dara C.",
     location: "Siem Reap",
     rating: 5,
-    text: "I was skeptical at first but hairora's products actually work. My hair feels thicker and I have less shedding. Highly recommend!",
-    highlight: "Less shedding, thicker hair",
+    text: "I was skeptical at first but VESTRA's pieces actually hold up after multiple washes. My go-to for everyday basics now. Highly recommend!",
+    highlight: "Holds up wash after wash",
   },
   {
     id: "s3",
     name: "Vibol K.",
     location: "Battambang",
     rating: 5,
-    text: "The LED laser cap is so comfortable. I use it during my morning routine — only 30 minutes every other day. Great results after 16 weeks!",
-    highlight: "Great results in 16 weeks",
+    text: "The oversized tee is so comfortable I wear it everywhere. New drops every week keep me coming back. Great fit and fast shipping!",
+    highlight: "Comfortable, great fit",
   },
 ];
 
@@ -248,7 +248,7 @@ export function TestimonialsSection() {
                         id="fb-text"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="Tell us about your experience with hairora..."
+                        placeholder="Tell us about your experience with VESTRA..."
                         rows={4}
                         required
                         minLength={20}

@@ -144,7 +144,7 @@ function MyOrdersPage() {
 
                   {order.bakongTransactionId && (
                     <p className="text-xs text-muted-foreground">
-                      ABA PayWay transaction: {order.bakongTransactionId}
+                      Transaction ref: {order.bakongTransactionId}
                     </p>
                   )}
                 </CardContent>

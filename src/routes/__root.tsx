@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -77,11 +78,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "hairora" },
-      { name: "description", content: "Clinically proven hair restoration. LED laser therapy & Minoxidil solutions with secure ABA PayWay payment. Proudly serving Cambodia." },
-      { name: "author", content: "hairora" },
-      { property: "og:title", content: "hairora — Hair Restoration Specialists" },
-      { property: "og:description", content: "Clinically proven hair restoration. LED laser therapy & Minoxidil solutions. Secure ABA PayWay payment." },
+      { title: "VESTRA" },
+      { name: "description", content: "Contemporary clothing for everyday wear. New arrivals dropping weekly, delivered across Cambodia." },
+      { name: "author", content: "VESTRA" },
+      { property: "og:title", content: "VESTRA — Modern Clothing, Made to Move" },
+      { property: "og:description", content: "Contemporary clothing for everyday wear. New arrivals dropping weekly." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -117,15 +118,20 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useCartSync();
 
+  // The back office has its own header and navigation, so the storefront
+  // chrome is hidden there — it only gets in the way while serving customers.
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isBackOffice = pathname.startsWith("/admin");
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col bg-background">
-        <Navbar />
+        {isBackOffice ? null : <Navbar />}
         <main className="flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
-        <Footer />
+        {isBackOffice ? null : <Footer />}
       </div>
       <Toaster position="top-center" richColors />
       <SpeedInsights />

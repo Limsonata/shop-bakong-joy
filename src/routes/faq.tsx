@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export const Route = createFileRoute("/faq")({
-  head: () => ({ meta: [{ title: "FAQ — hairora" }] }),
+  head: () => ({ meta: [{ title: "FAQ — VESTRA" }] }),
   component: FaqPage,
 });
 
@@ -18,12 +18,12 @@ interface Faq {
 }
 
 const STATIC_FAQS: Faq[] = [
-  { id: "1", question: "What is hairora?", answer: "hairora is Cambodia's leading hair restoration specialist, offering clinically proven LED laser therapy and Minoxidil solutions.", category: "General", sort_order: 1 },
-  { id: "2", question: "How do I pay?", answer: "We accept ABA PayWay (Bakong QR) and Cash on Delivery (COD).", category: "Payment", sort_order: 1 },
+  { id: "1", question: "What is VESTRA?", answer: "VESTRA is a modern clothing brand offering contemporary everyday wear, delivered across Cambodia.", category: "General", sort_order: 1 },
+  { id: "2", question: "How do I pay?", answer: "We accept Cash on Delivery (COD) — pay when your order arrives.", category: "Payment", sort_order: 1 },
   { id: "3", question: "How long does delivery take?", answer: "Standard delivery within Phnom Penh is 1–2 business days. Provincial orders take 3–5 business days.", category: "Delivery", sort_order: 1 },
   { id: "4", question: "Can I return a product?", answer: "We accept returns within 7 days of delivery if the product is unused and in original packaging. Contact us via Telegram to initiate a return.", category: "Returns", sort_order: 1 },
-  { id: "5", question: "Are your products clinically proven?", answer: "Yes. Our LED laser devices and Minoxidil formulations are backed by clinical studies showing significant hair regrowth in 3–6 months of consistent use.", category: "Products", sort_order: 1 },
-  { id: "6", question: "How do I track my order?", answer: "Visit our Order Tracking page and enter your ABA reference number or order ID to see your order status.", category: "Orders", sort_order: 1 },
+  { id: "5", question: "How do I know my size?", answer: "Check the size guide on each product page. If you're between sizes, we recommend sizing up for a relaxed fit.", category: "Products", sort_order: 1 },
+  { id: "6", question: "How do I track my order?", answer: "Visit our Order Tracking page and enter your order ID to see your order status.", category: "Orders", sort_order: 1 },
 ];
 
 async function fetchFaqs(): Promise<Faq[]> {
@@ -61,7 +61,7 @@ function FaqPage() {
         </div>
         <h1 className="text-4xl font-bold tracking-tight">Frequently Asked Questions</h1>
         <p className="mt-3 text-muted-foreground">
-          Everything you need to know about hairora products and orders.
+          Everything you need to know about VESTRA products and orders.
         </p>
       </div>
 

@@ -1,19 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useMemo, useState, useCallback } from "react";
-import { ArrowLeft, CheckCircle2, Copy, CreditCard, ExternalLink, Loader2, MapPin, Navigation, QrCode, RefreshCw, Truck } from "lucide-react";
-import { QRCodeCanvas } from "qrcode.react";
+import { ArrowLeft, CheckCircle2, Loader2, MapPin, Navigation, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
-import { createOrder, type Order } from "@/lib/orderStore";
+import { createOrder } from "@/lib/orderStore";
 import { notifyOrderReceipt } from "@/lib/telegramNotify";
 import { getTelegramId } from "@/lib/telegramAuth";
-import { generatePayWayTransactionId } from "@/lib/payway";
-import { confirmPayWayOrder, createPayWayQr } from "@/lib/api/payway.functions";
 
 declare global {
   interface Window {
@@ -201,34 +197,17 @@ function LocationPicker({
   );
 }
 
-type PaymentMethod = "cod" | "aba";
-
-type PayWayPayment = {
-  tranId: string;
-  qrString: string;
-  qrImage: string;
-  deeplink: string;
-  appStore: string;
-  playStore: string;
-  amount: number;
-  currency: string;
-};
-
 export const Route = createFileRoute("/checkout/bakong")({
-  head: () => ({ meta: [{ title: "Checkout - Hairora" }] }),
+  head: () => ({ meta: [{ title: "Checkout - VESTRA" }] }),
   component: Checkout,
 });
 
 function Checkout() {
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [formData, setFormData] = useState({ name: "", phone: "", address: "", lat: 0, lng: 0 });
-  const [payWayPayment, setPayWayPayment] = useState<PayWayPayment | null>(null);
-  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
 
   const totals = useMemo(() => {
     const subtotal = items.reduce(
@@ -252,11 +231,6 @@ function Checkout() {
     [items],
   );
 
-  const handleCopy = async (value: string, label: string) => {
-    await navigator.clipboard.writeText(value);
-    toast.success(`${label} copied`);
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (items.length === 0) { toast.error("Your cart is empty"); return; }
@@ -264,39 +238,20 @@ function Checkout() {
 
     setIsSubmitting(true);
     try {
-      if (paymentMethod === "cod") {
-        const order = await createOrder({
-          customerName: formData.name,
-          phone: formData.phone,
-          address: formData.address,
-          total: totals.total,
-          currency: totals.currency,
-          bakongReference: "COD",
-          bakongTransactionId: "",
-          items: orderItems,
-        });
-        notifyOrderReceipt(getTelegramId(), order);
-        toast.success("Order placed! We'll deliver to you soon.");
-        clearCart();
-        setIsSubmitted(true);
-      } else {
-        const tranId = generatePayWayTransactionId();
-        const order = await createOrder({
-          customerName: formData.name,
-          phone: formData.phone,
-          address: formData.address,
-          total: totals.total,
-          currency: totals.currency,
-          bakongReference: tranId,
-          bakongTransactionId: tranId,
-          items: orderItems,
-        });
-        const payment = await createPayWayQr({ data: { orderId: order.id, tranId } });
-        setPendingOrder(order);
-        setPayWayPayment(payment as PayWayPayment);
-        notifyOrderReceipt(getTelegramId(), order);
-        toast.success("ABA PayWay QR generated — scan to pay");
-      }
+      const order = await createOrder({
+        customerName: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+        total: totals.total,
+        currency: totals.currency,
+        bakongReference: "COD",
+        bakongTransactionId: "",
+        items: orderItems,
+      });
+      notifyOrderReceipt(getTelegramId(), order);
+      toast.success("Order placed! We'll deliver to you soon.");
+      clearCart();
+      setIsSubmitted(true);
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : "Failed to place order");
@@ -305,40 +260,15 @@ function Checkout() {
     }
   };
 
-  const handleCheckPayment = async () => {
-    if (!pendingOrder || !payWayPayment) return;
-    setIsCheckingPayment(true);
-    try {
-      const result = await confirmPayWayOrder({
-        data: { orderId: pendingOrder.id, tranId: payWayPayment.tranId },
-      });
-      if (result.paid) {
-        toast.success("Payment received!");
-        clearCart();
-        setIsSubmitted(true);
-      } else {
-        toast.info(result.message || `Payment status: ${result.status}`);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error(error instanceof Error ? error.message : "Failed to check payment");
-    } finally {
-      setIsCheckingPayment(false);
-    }
-  };
-
   if (isSubmitted) {
-    const isCod = paymentMethod === "cod";
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-xl items-center px-4 py-12 sm:px-6">
         <Card className="w-full">
           <CardHeader className="text-center">
             <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
-            <CardTitle>{isCod ? "Order placed!" : "Payment received!"}</CardTitle>
+            <CardTitle>Order placed!</CardTitle>
             <CardDescription>
-              {isCod
-                ? "Your order is confirmed. Our delivery team will contact you shortly to arrange delivery and collect payment."
-                : "Your ABA PayWay payment is approved and your order is ready for fulfillment."}
+              Your order is confirmed. Our delivery team will contact you shortly to arrange delivery and collect payment.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-center">
@@ -355,8 +285,6 @@ function Checkout() {
       </div>
     );
   }
-
-  const isLocked = !!payWayPayment;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -382,7 +310,6 @@ function Checkout() {
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    disabled={isLocked}
                     required
                   />
                 </div>
@@ -392,7 +319,6 @@ function Checkout() {
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    disabled={isLocked}
                     required
                   />
                 </div>
@@ -416,7 +342,6 @@ function Checkout() {
                 onAddressChange={(address, lat, lng) =>
                   setFormData((f) => ({ ...f, address, lat: lat ?? f.lat, lng: lng ?? f.lng }))
                 }
-                disabled={isLocked}
               />
               {formData.lat !== 0 && formData.lng !== 0 && (
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -426,110 +351,24 @@ function Checkout() {
             </CardContent>
           </Card>
 
-          {/* Payment method selector */}
-          {!payWayPayment && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment method</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("cod")}
-                    className={cn(
-                      "rounded-lg border p-4 text-left transition-colors",
-                      paymentMethod === "cod"
-                        ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50",
-                    )}
-                  >
-                    <Truck className="mb-2 h-5 w-5 text-primary" />
-                    <p className="font-medium">Pay on delivery</p>
-                    <p className="text-xs text-muted-foreground">Cash when we arrive</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("aba")}
-                    className={cn(
-                      "rounded-lg border p-4 text-left transition-colors",
-                      paymentMethod === "aba"
-                        ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50",
-                    )}
-                  >
-                    <CreditCard className="mb-2 h-5 w-5 text-primary" />
-                    <p className="font-medium">ABA Pay</p>
-                    <p className="text-xs text-muted-foreground">ABA app or KHQR</p>
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* ABA PayWay QR (shown after submit) */}
-          {payWayPayment && (
-            <Card>
-              <CardHeader>
-                <CardTitle>ABA PayWay payment</CardTitle>
-                <CardDescription>Scan the QR with your ABA app or any KHQR-supported bank.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
-                  <div className="flex aspect-square items-center justify-center rounded-md border bg-white p-3">
-                    {payWayPayment.qrImage ? (
-                      <img src={payWayPayment.qrImage} alt="ABA PayWay QR" className="h-full w-full object-contain" />
-                    ) : payWayPayment.qrString ? (
-                      <QRCodeCanvas value={payWayPayment.qrString} size={200} level="M" marginSize={2} className="h-full w-full" />
-                    ) : (
-                      <QrCode className="h-16 w-16 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Amount</p>
-                      <p className="text-xl font-semibold">
-                        {(payWayPayment.currency || totals.currency).toUpperCase()}{" "}
-                        {(payWayPayment.amount ?? totals.total).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Transaction ID</p>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm">{payWayPayment.tranId}</p>
-                        <Button type="button" size="icon" variant="ghost" onClick={() => handleCopy(payWayPayment.tranId, "Transaction ID")}>
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    {payWayPayment.deeplink && (
-                      <Button asChild type="button" variant="outline" size="sm">
-                        <a href={payWayPayment.deeplink}>
-                          Open ABA Mobile <ExternalLink className="ml-1 h-3 w-3" />
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Payment method */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment method</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border border-primary bg-primary/5 p-4">
+                <Truck className="mb-2 h-5 w-5 text-primary" />
+                <p className="font-medium">Pay on delivery</p>
+                <p className="text-xs text-muted-foreground">Cash when we arrive</p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Action button */}
-          {payWayPayment ? (
-            <Button type="button" size="lg" className="w-full" onClick={handleCheckPayment} disabled={isCheckingPayment}>
-              <RefreshCw className={cn("mr-2 h-4 w-4", isCheckingPayment && "animate-spin")} />
-              {isCheckingPayment ? "Checking payment…" : "I've paid — confirm payment"}
-            </Button>
-          ) : (
-            <Button type="submit" size="lg" className="w-full" disabled={!items.length || isSubmitting}>
-              {isSubmitting
-                ? "Placing order…"
-                : paymentMethod === "cod"
-                  ? "Place order — pay on delivery"
-                  : "Continue to ABA Pay"}
-            </Button>
-          )}
+          <Button type="submit" size="lg" className="w-full" disabled={!items.length || isSubmitting}>
+            {isSubmitting ? "Placing order…" : "Place order — pay on delivery"}
+          </Button>
         </form>
 
         {/* Order summary sidebar */}

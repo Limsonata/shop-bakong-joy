@@ -1,457 +1,366 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { logout } from "@/lib/auth";
-import { RequireAdmin } from "@/components/admin/RequireAdmin";
-import { getAllOrders, type Order } from "@/lib/orderStore";
-import { getProducts } from "@/lib/productStore";
-import { supabase } from "@/lib/supabase";
 import {
-  BarChart,
-  Bar,
+  AlertTriangle,
+  ArrowDownCircle,
+  Boxes,
+  DollarSign,
+  PackagePlus,
+  Receipt,
+  RefreshCw,
+  ShoppingCart,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { StatCard } from "@/components/admin/StatCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DollarSign,
-  ShoppingBag,
-  TrendingUp,
-  Package,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
-import { formatPrice as formatCurrency } from "@/lib/format";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatPrice } from "@/lib/format";
+import { getAllOrders, type Order } from "@/lib/orderStore";
+import { loadShopData, type ShopData } from "@/lib/pos/store";
+import { balanceOwed, isLowStock, round2, stockLeft } from "@/lib/pos/types";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Admin Dashboard" }] }),
   component: AdminDashboard,
 });
 
-const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function AdminDashboard() {
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = "/admin/login";
+  const [data, setData] = useState<ShopData | null>(null);
+  const [webOrders, setWebOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [shop, orders] = await Promise.all([
+        loadShopData(),
+        getAllOrders().catch(() => [] as Order[]),
+      ]);
+      setData(shop);
+      setWebOrders(orders);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not load the dashboard");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [ordersData, productsData] = await Promise.all([getAllOrders(), getProducts()]);
-        setOrders(ordersData);
-        setTotalProducts(productsData.length);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-
-    // Realtime: refresh stats when orders change
-    const channel = supabase
-      ?.channel("admin-dashboard")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        getAllOrders().then(setOrders).catch(console.error);
-      })
-      .subscribe();
-
-    return () => { channel?.unsubscribe(); };
+    void load();
   }, []);
 
-  const stats = useMemo(() => {
-    const nonCancelled = orders.filter((o) => o.status !== "cancelled");
-    const totalRevenue = nonCancelled.reduce((sum, o) => sum + o.total, 0);
-    const totalOrders = orders.length;
-    const paidOrders = orders.filter(
-      (o) => o.status === "paid" || o.status === "shipped" || o.status === "done",
-    ).length;
-    const pendingOrders = orders.filter((o) => o.status === "pending").length;
-    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const today = new Date().toISOString().slice(0, 10);
 
+  const todayTotals = useMemo(() => {
+    if (!data) return { sales: 0, revenue: 0, collected: 0 };
+    const rows = data.sales.filter((sale) => sale.soldAt === today && sale.status === "confirmed");
     return {
-      totalRevenue,
-      totalOrders,
-      paidOrders,
-      pendingOrders,
-      avgOrderValue,
-      totalProducts,
+      sales: rows.length,
+      revenue: round2(rows.reduce((sum, sale) => sum + sale.total, 0)),
+      collected: round2(rows.reduce((sum, sale) => sum + sale.paid, 0)),
     };
-  }, [orders, totalProducts]);
+  }, [data, today]);
 
-  const revenueByDay = useMemo(() => {
-    const dailyMap = new Map<string, number>();
-    orders
-      .filter((o) => o.status !== "cancelled")
-      .forEach((order) => {
-        const date = new Date(order.createdAt).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        });
-        dailyMap.set(date, (dailyMap.get(date) || 0) + order.total);
+  const trend = useMemo(() => {
+    if (!data) return [];
+    const days: Array<{ date: string; label: string; revenue: number; collected: number }> = [];
+    for (let offset = 13; offset >= 0; offset -= 1) {
+      const date = new Date(Date.now() - offset * DAY_MS).toISOString().slice(0, 10);
+      days.push({ date, label: date.slice(5), revenue: 0, collected: 0 });
+    }
+    const index = new Map(days.map((day) => [day.date, day]));
+    data.sales
+      .filter((sale) => sale.status === "confirmed")
+      .forEach((sale) => {
+        const day = index.get(sale.soldAt);
+        if (!day) return;
+        day.revenue = round2(day.revenue + sale.total);
+        day.collected = round2(day.collected + sale.paid);
       });
+    return days;
+  }, [data]);
 
-    return Array.from(dailyMap.entries())
-      .slice(-14)
-      .map(([date, revenue]) => ({ date, revenue }));
-  }, [orders]);
+  const lowStock = useMemo(
+    () =>
+      (data?.stockItems ?? [])
+        .filter(isLowStock)
+        .sort((a, b) => stockLeft(a) - stockLeft(b))
+        .slice(0, 8),
+    [data],
+  );
 
-  const ordersByStatus = useMemo(() => {
-    const statusCounts: Record<string, number> = {};
-    orders.forEach((order) => {
-      statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
-    });
-    return Object.entries(statusCounts).map(([status, count]) => ({
-      status: status.charAt(0).toUpperCase() + status.slice(1),
-      value: count,
-    }));
-  }, [orders]);
+  const unpaid = useMemo(
+    () =>
+      (data?.sales ?? [])
+        .filter((sale) => sale.status === "confirmed" && balanceOwed(sale) > 0)
+        .sort((a, b) => balanceOwed(b) - balanceOwed(a))
+        .slice(0, 8),
+    [data],
+  );
 
-  const topProducts = useMemo(() => {
-    const productMap = new Map<string, { title: string; quantity: number; revenue: number }>();
-    orders.forEach((order) => {
-      order.items.forEach((item) => {
-        const existing = productMap.get(item.title) || {
-          title: item.title,
-          quantity: 0,
-          revenue: 0,
-        };
-        existing.quantity += item.quantity;
-        existing.revenue += item.price * item.quantity;
-        productMap.set(item.title, existing);
-      });
-    });
-    return Array.from(productMap.values())
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
-  }, [orders]);
+  const toPrepare = useMemo(
+    () =>
+      (data?.sales ?? []).filter(
+        (sale) => sale.status === "confirmed" && sale.deliveryStatus === "preparing",
+      ),
+    [data],
+  );
 
-  const recentOrders = useMemo(() => {
-    return [...orders].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
-  }, [orders]);
-
-  const revenueChange = useMemo(() => {
-    if (revenueByDay.length < 2) return 0;
-    const last = revenueByDay[revenueByDay.length - 1]?.revenue || 0;
-    const prev = revenueByDay[revenueByDay.length - 2]?.revenue || 0;
-    if (prev === 0) return last > 0 ? 100 : 0;
-    return ((last - prev) / prev) * 100;
-  }, [revenueByDay]);
-
-  if (isLoading) {
-    return (
-      <RequireAdmin>
-        <div className="min-h-screen bg-background">
-          <header className="border-b">
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-              <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-              <Button variant="outline" onClick={handleLogout}>
-                Logout
-              </Button>
-            </div>
-          </header>
-          <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-            <p className="text-muted-foreground">Loading dashboard...</p>
-          </main>
-        </div>
-      </RequireAdmin>
-    );
-  }
+  const recentSales = useMemo(() => (data?.sales ?? []).slice(0, 6), [data]);
+  const pendingWebOrders = webOrders.filter((order) => order.status === "pending").length;
+  const summary = data?.summary;
 
   return (
-    <RequireAdmin>
-      <div className="min-h-screen bg-background">
-        <header className="border-b">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-            <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
-                <p className="text-xs text-muted-foreground">
-                  {revenueChange >= 0 ? (
-                    <span className="text-green-600">
-                      <ArrowUpRight className="inline h-3 w-3" />+{revenueChange.toFixed(1)}%
-                    </span>
-                  ) : (
-                    <span className="text-red-600">
-                      <ArrowDownRight className="inline h-3 w-3" />
-                      {revenueChange.toFixed(1)}%
-                    </span>
-                  )}{" "}
-                  vs previous day
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Orders</CardTitle>
-                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalOrders}</div>
-                <p className="text-xs text-muted-foreground">{stats.pendingOrders} pending</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg. Order Value</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(stats.avgOrderValue)}</div>
-                <p className="text-xs text-muted-foreground">{stats.paidOrders} paid orders</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Products</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalProducts}</div>
-                <p className="text-xs text-muted-foreground">In catalog</p>
-              </CardContent>
-            </Card>
+    <AdminShell
+      title="Dashboard"
+      description="Where the shop stands right now."
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button size="sm" asChild>
+            <Link to="/admin/pos">
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              New sale
+            </Link>
+          </Button>
+        </>
+      }
+    >
+      {loading || !summary ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Today"
+              value={formatPrice(todayTotals.revenue)}
+              hint={`${todayTotals.sales} sale${todayTotals.sales === 1 ? "" : "s"} · ${formatPrice(todayTotals.collected)} collected`}
+              icon={Receipt}
+            />
+            <StatCard
+              label="Cash on hand"
+              value={formatPrice(summary.cashOnHand)}
+              hint={`${formatPrice(summary.cashIn)} in · ${formatPrice(summary.cashOut)} out`}
+              icon={Wallet}
+              tone={summary.cashOnHand >= 0 ? "good" : "bad"}
+            />
+            <StatCard
+              label="Owed by customers"
+              value={formatPrice(summary.outstanding)}
+              hint={`${unpaid.length} booking${unpaid.length === 1 ? "" : "s"} with a balance`}
+              icon={AlertTriangle}
+              tone={summary.outstanding > 0 ? "warn" : "default"}
+            />
+            <StatCard
+              label="Net profit"
+              value={formatPrice(summary.netProfit)}
+              hint={`${formatPrice(summary.revenue)} revenue − ${formatPrice(summary.cogs)} cost − ${formatPrice(summary.runningCosts)} costs`}
+              icon={TrendingUp}
+              tone={summary.netProfit >= 0 ? "good" : "bad"}
+            />
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Stock value"
+              value={formatPrice(summary.stockValue)}
+              hint={`${summary.unitsLeft} units · ${formatPrice(summary.potentialSales)} if all sells`}
+              icon={Boxes}
+            />
+            <StatCard
+              label="Low stock"
+              value={String(summary.lowStockCount)}
+              hint="Need reordering"
+              icon={AlertTriangle}
+              tone={summary.lowStockCount > 0 ? "warn" : "default"}
+            />
+            <StatCard
+              label="To prepare / send"
+              value={String(toPrepare.length)}
+              hint="Deliveries not sent yet"
+              icon={PackagePlus}
+              tone={toPrepare.length > 0 ? "warn" : "default"}
+            />
+            <StatCard
+              label="Website orders"
+              value={String(webOrders.length)}
+              hint={`${pendingWebOrders} pending online`}
+              icon={DollarSign}
+            />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Last 14 days</CardTitle>
+              <CardDescription>Billed against cash actually collected</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={trend}>
+                  <defs>
+                    <linearGradient id="billed" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" fontSize={12} />
+                  <YAxis fontSize={12} tickFormatter={(value: number) => `$${value}`} />
+                  <Tooltip formatter={(value: number) => formatPrice(value)} />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    name="Billed"
+                    stroke="#0ea5e9"
+                    fill="url(#billed)"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="collected"
+                    name="Collected"
+                    stroke="#10b981"
+                    fill="transparent"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 lg:grid-cols-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Revenue Trend</CardTitle>
-                <CardDescription>Daily revenue over the last 14 days</CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Reorder soon</CardTitle>
+                <CardDescription>At or below the alert level</CardDescription>
               </CardHeader>
               <CardContent>
-                {revenueByDay.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <LineChart data={revenueByDay}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" fontSize={12} />
-                      <YAxis fontSize={12} tickFormatter={(value) => `$${value}`} />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                      <Line
-                        type="monotone"
-                        dataKey="revenue"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                        dot={{ r: 3 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                {lowStock.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Stock levels look fine.</p>
                 ) : (
-                  <div className="flex h-[280px] items-center justify-center text-muted-foreground">
-                    No revenue data yet
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Orders by Status</CardTitle>
-                <CardDescription>Distribution of order statuses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {ordersByStatus.length > 0 ? (
-                  <div className="flex items-center gap-4">
-                    <ResponsiveContainer width="60%" height={280}>
-                      <PieChart>
-                        <Pie
-                          data={ordersByStatus}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={4}
-                          dataKey="value"
+                  <ul className="space-y-2">
+                    {lowStock.map((item) => (
+                      <li key={item.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="min-w-0">
+                          <span className="block truncate">{item.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {[item.sku, item.size, item.color].filter(Boolean).join(" · ")}
+                          </span>
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={
+                            stockLeft(item) <= 0
+                              ? "border-red-200 text-red-700"
+                              : "border-amber-200 text-amber-700"
+                          }
                         >
-                          {ordersByStatus.map((_entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="flex flex-col gap-2">
-                      {ordersByStatus.map((entry, index) => (
-                        <div key={entry.status} className="flex items-center gap-2 text-sm">
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                          />
-                          <span className="text-muted-foreground">{entry.status}</span>
-                          <span className="font-medium">{entry.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex h-[280px] items-center justify-center text-muted-foreground">
-                    No orders yet
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Products</CardTitle>
-                <CardDescription>Best selling products by revenue</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {topProducts.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={topProducts} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" fontSize={12} tickFormatter={(value) => `$${value}`} />
-                      <YAxis type="category" dataKey="title" fontSize={12} width={120} />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                      <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex h-[280px] items-center justify-center text-muted-foreground">
-                    No product data yet
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Latest 5 orders</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {recentOrders.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
-                      >
-                        <div>
-                          <p className="font-medium">{order.customerName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{formatCurrency(order.total)}</p>
-                          <Badge
-                            className={`rounded-full border-transparent ${
-                              order.status === "done"
-                                ? "bg-green-100 text-green-800"
-                                : order.status === "pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : order.status === "cancelled"
-                                    ? "bg-gray-100 text-gray-700"
-                                    : "bg-blue-100 text-blue-800"
-                            }`}
-                          >
-                            {order.status}
-                          </Badge>
-                        </div>
-                      </div>
+                          {stockLeft(item)} left
+                        </Badge>
+                      </li>
                     ))}
-                  </div>
-                ) : (
-                  <div className="flex h-[280px] items-center justify-center text-muted-foreground">
-                    No orders yet
-                  </div>
+                  </ul>
                 )}
+                <Button variant="outline" size="sm" className="mt-4 w-full" asChild>
+                  <Link to="/admin/inventory">Open stock</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Waiting for payment</CardTitle>
+                <CardDescription>Deposits with a balance left</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {unpaid.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Everyone has paid in full.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {unpaid.map((sale) => (
+                      <li key={sale.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="min-w-0">
+                          <span className="block truncate">{sale.customerName}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {sale.code} · {sale.soldAt}
+                          </span>
+                        </span>
+                        <span className="whitespace-nowrap font-medium tabular-nums text-amber-700">
+                          {formatPrice(balanceOwed(sale))}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Button variant="outline" size="sm" className="mt-4 w-full" asChild>
+                  <Link to="/admin/sales">Open sales</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Latest sales</CardTitle>
+                <CardDescription>Most recent first</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recentSales.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No sales recorded yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {recentSales.map((sale) => (
+                      <li key={sale.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="min-w-0">
+                          <span className="block truncate">{sale.customerName}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {sale.soldAt} · {sale.items.length} item
+                            {sale.items.length > 1 ? "s" : ""}
+                          </span>
+                        </span>
+                        <span className="whitespace-nowrap font-medium tabular-nums">
+                          {formatPrice(sale.total)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-4 grid gap-2">
+                  <Button size="sm" asChild>
+                    <Link to="/admin/pos">
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Record a sale
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/admin/finance">
+                      <ArrowDownCircle className="mr-2 h-4 w-4" />
+                      Record an expense
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Products</CardTitle>
-                <CardDescription>Manage your product catalog</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full" variant="outline">
-                  <a href="/admin/products">Manage Products</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Orders</CardTitle>
-                <CardDescription>Track and fulfill customer orders</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full" variant="outline">
-                  <a href="/admin/orders">View Orders</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Feedback</CardTitle>
-                <CardDescription>Approve customer reviews</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full" variant="outline">
-                  <a href="/admin/feedback">View Feedback</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Settings</CardTitle>
-                <CardDescription>Store configuration</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full" variant="outline">
-                  <a href="/admin/settings">View Settings</a>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-    </RequireAdmin>
+        </div>
+      )}
+    </AdminShell>
   );
 }

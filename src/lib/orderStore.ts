@@ -103,7 +103,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     // Notify the user (best-effort — ignore errors)
     const userId = (data as DbOrder).user_id;
     if (userId) {
-      const payMethod = input.bakongReference === "COD" ? "Pay on delivery" : "ABA Pay";
+      const payMethod = "Pay on delivery";
       supabase
         .from("notifications")
         .insert({

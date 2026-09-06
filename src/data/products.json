@@ -1,98 +1,250 @@
 {
   "products": [
     {
-      "id": "hairora-led-cap-001",
-      "title": "hairora LED Laser Hair Growth Cap",
-      "description": "Advanced Low Level Laser Therapy (LLLT) cap with 272 medical-grade laser diodes. Clinically proven to stimulate hair follicles, reduce hair loss, and promote regrowth. FDA-cleared technology. Use just 6 minutes daily for visible results in 16 weeks.\n\n✓ 272 laser diodes for full scalp coverage\n✓ Hands-free, comfortable fit\n✓ Rechargeable — no cables during use\n✓ Works for all hair types",
-      "handle": "led-laser-hair-growth-cap",
-      "productType": "Device",
-      "price": {
-        "amount": "299.00",
-        "currencyCode": "USD"
-      },
+      "id": "vestra-oversized-tee-001",
+      "title": "Oversized Cotton Tee — Ecru",
+      "description": "Heavyweight 240gsm cotton tee with a relaxed, boxy fit. Drop shoulders, ribbed collar, and a garment-dyed finish for a lived-in feel from day one.\n\n✓ 100% heavyweight combed cotton\n✓ Oversized, drop-shoulder silhouette\n✓ Garment-dyed for soft hand-feel\n✓ Pre-shrunk — true to size",
+      "handle": "oversized-cotton-tee-ecru",
+      "productType": "T-Shirts",
+      "price": { "amount": "38.00", "currencyCode": "USD" },
       "images": [
-        {
-          "url": "/led-cap.png",
-          "altText": "hairora LED Laser Hair Growth Cap — 272 laser diodes"
-        }
+        { "url": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80", "altText": "Oversized cotton tee in ecru" }
       ],
       "variants": [
-        {
-          "id": "led-cap-one-size",
-          "title": "One Size",
-          "price": { "amount": "299.00", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Size", "value": "One Size" }]
-        }
+        { "id": "tee-ecru-s", "title": "S", "price": { "amount": "38.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "tee-ecru-m", "title": "M", "price": { "amount": "38.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "tee-ecru-l", "title": "L", "price": { "amount": "38.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] },
+        { "id": "tee-ecru-xl", "title": "XL", "price": { "amount": "38.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "XL" }] }
       ],
-      "collections": ["Devices", "Best Sellers", "Featured"]
+      "collections": ["New Arrivals", "Best Sellers", "Women"]
     },
     {
-      "id": "hairora-morr-f5-001",
-      "title": "Morr F 5% — Minoxidil & Finasteride Solution",
-      "description": "Morr F 5% combines Minoxidil (5%) with Finasteride in a lipid-based topical solution for maximum hair regrowth effectiveness. The lipid carrier enhances scalp penetration while minimising systemic absorption.\n\n✓ 5% Minoxidil + Finasteride dual-action\n✓ Lipid solution for superior absorption\n✓ 60 ml per bottle — approx. 1 month supply\n✓ For topical application only",
-      "handle": "morr-f5-minoxidil-finasteride",
-      "productType": "Topical Treatment",
-      "price": {
-        "amount": "28.00",
-        "currencyCode": "USD"
-      },
+      "id": "vestra-tailored-blazer-002",
+      "title": "Tailored Wool-Blend Blazer",
+      "description": "A sharply tailored single-breasted blazer cut from an Italian wool-blend. Structured shoulders, notch lapel, and a nipped waist for a flattering, elevated silhouette.\n\n✓ Premium wool-blend fabric\n✓ Fully lined interior\n✓ Structured shoulder, notch lapel\n✓ Dry clean only",
+      "handle": "tailored-wool-blend-blazer",
+      "productType": "Outerwear",
+      "price": { "amount": "168.00", "currencyCode": "USD" },
       "images": [
-        {
-          "url": "/morr-f5.webp",
-          "altText": "Morr F 5% Minoxidil & Finasteride Lipid Solution 60ml by INTAS"
-        }
+        { "url": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=1200&q=80", "altText": "Tailored wool-blend blazer" }
       ],
       "variants": [
-        {
-          "id": "morr-f5-1bottle",
-          "title": "1 Bottle (60 ml)",
-          "price": { "amount": "28.00", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Pack", "value": "1 Bottle" }]
-        },
-        {
-          "id": "morr-f5-3bottle",
-          "title": "3 Bottles (180 ml)",
-          "price": { "amount": "75.00", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Pack", "value": "3 Bottles" }]
-        },
-        {
-          "id": "morr-f5-6bottle",
-          "title": "6 Bottles (360 ml)",
-          "price": { "amount": "138.00", "currencyCode": "USD" },
-          "availableForSale": true,
-          "selectedOptions": [{ "name": "Pack", "value": "6 Bottles" }]
-        }
+        { "id": "blazer-s", "title": "S", "price": { "amount": "168.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "blazer-m", "title": "M", "price": { "amount": "168.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "blazer-l", "title": "L", "price": { "amount": "168.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] }
       ],
-      "collections": ["Topical Treatments", "Best Sellers", "Featured"]
+      "collections": ["New Arrivals", "Featured", "Women"]
+    },
+    {
+      "id": "vestra-denim-jacket-003",
+      "title": "Classic Washed Denim Jacket",
+      "description": "A timeless trucker jacket in rigid, stonewashed denim. Button-front closure, chest flap pockets, and a slightly cropped hem for a modern street-ready fit.\n\n✓ 100% rigid cotton denim\n✓ Stonewash for a lived-in look\n✓ Chest flap pockets\n✓ Unisex regular fit",
+      "handle": "classic-washed-denim-jacket",
+      "productType": "Outerwear",
+      "price": { "amount": "89.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1601333144130-8cbb312386b6?w=1200&q=80", "altText": "Classic washed denim jacket" }
+      ],
+      "variants": [
+        { "id": "denimjkt-s", "title": "S", "price": { "amount": "89.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "denimjkt-m", "title": "M", "price": { "amount": "89.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "denimjkt-l", "title": "L", "price": { "amount": "89.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] },
+        { "id": "denimjkt-xl", "title": "XL", "price": { "amount": "89.00", "currencyCode": "USD" }, "availableForSale": false, "selectedOptions": [{ "name": "Size", "value": "XL" }] }
+      ],
+      "collections": ["Best Sellers", "Featured", "Men"]
+    },
+    {
+      "id": "vestra-pleated-trousers-004",
+      "title": "Pleated Wide-Leg Trousers",
+      "description": "Fluid wide-leg trousers with a double-pleated front and high waist. Cut from a soft drapey fabric that moves with every step — dresses up or down effortlessly.\n\n✓ Soft drape crepe fabric\n✓ Double front pleats\n✓ High-rise, wide-leg cut\n✓ Side zip closure",
+      "handle": "pleated-wide-leg-trousers",
+      "productType": "Trousers",
+      "price": { "amount": "72.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=1200&q=80", "altText": "Pleated wide-leg trousers" }
+      ],
+      "variants": [
+        { "id": "trousers-xs", "title": "XS", "price": { "amount": "72.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "XS" }] },
+        { "id": "trousers-s", "title": "S", "price": { "amount": "72.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "trousers-m", "title": "M", "price": { "amount": "72.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] }
+      ],
+      "collections": ["New Arrivals", "Women"]
+    },
+    {
+      "id": "vestra-knit-sweater-005",
+      "title": "Ribbed Merino Knit Sweater",
+      "description": "A fine-gauge merino wool sweater with a fitted rib-knit construction. Breathable, temperature-regulating, and soft against the skin — a cold-weather essential.\n\n✓ 100% merino wool\n✓ Fine-gauge rib knit\n✓ Crew neckline\n✓ Machine washable (wool cycle)",
+      "handle": "ribbed-merino-knit-sweater",
+      "productType": "Knitwear",
+      "price": { "amount": "94.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=1200&q=80", "altText": "Ribbed merino knit sweater" }
+      ],
+      "variants": [
+        { "id": "sweater-s", "title": "S", "price": { "amount": "94.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "sweater-m", "title": "M", "price": { "amount": "94.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "sweater-l", "title": "L", "price": { "amount": "94.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] }
+      ],
+      "collections": ["Best Sellers", "Women"]
+    },
+    {
+      "id": "vestra-cargo-pants-006",
+      "title": "Utility Cargo Pants",
+      "description": "Durable cotton-twill cargo pants with multiple utility pockets and an adjustable drawstring waist. Built for movement without sacrificing a clean, tapered leg line.\n\n✓ Heavyweight cotton twill\n✓ 6 utility pockets\n✓ Adjustable drawcord waist\n✓ Tapered leg fit",
+      "handle": "utility-cargo-pants",
+      "productType": "Trousers",
+      "price": { "amount": "68.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1517438476312-10d79c077509?w=1200&q=80", "altText": "Utility cargo pants" }
+      ],
+      "variants": [
+        { "id": "cargo-s", "title": "S", "price": { "amount": "68.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "cargo-m", "title": "M", "price": { "amount": "68.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "cargo-l", "title": "L", "price": { "amount": "68.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] },
+        { "id": "cargo-xl", "title": "XL", "price": { "amount": "68.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "XL" }] }
+      ],
+      "collections": ["New Arrivals", "Men"]
+    },
+    {
+      "id": "vestra-slip-dress-007",
+      "title": "Satin Slip Midi Dress",
+      "description": "A bias-cut satin slip dress that falls in a fluid midi length. Adjustable straps and a cowl neckline bring effortless evening-ready elegance to any occasion.\n\n✓ Premium satin weave\n✓ Bias-cut for fluid drape\n✓ Adjustable straps\n✓ Cowl neckline",
+      "handle": "satin-slip-midi-dress",
+      "productType": "Dresses",
+      "price": { "amount": "86.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&q=80", "altText": "Satin slip midi dress" }
+      ],
+      "variants": [
+        { "id": "slipdress-xs", "title": "XS", "price": { "amount": "86.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "XS" }] },
+        { "id": "slipdress-s", "title": "S", "price": { "amount": "86.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "slipdress-m", "title": "M", "price": { "amount": "86.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] }
+      ],
+      "collections": ["Featured", "Best Sellers", "Women"]
+    },
+    {
+      "id": "vestra-hoodie-008",
+      "title": "Heavyweight Fleece Hoodie",
+      "description": "A boxy, heavyweight fleece hoodie with a brushed interior for warmth without the bulk. Kangaroo pocket, ribbed cuffs, and a dropped hem complete the streetwear staple.\n\n✓ 420gsm brushed fleece\n✓ Boxy, dropped-hem fit\n✓ Kangaroo pocket\n✓ Ribbed cuffs and hem",
+      "handle": "heavyweight-fleece-hoodie",
+      "productType": "Hoodies",
+      "price": { "amount": "64.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=1200&q=80", "altText": "Heavyweight fleece hoodie" }
+      ],
+      "variants": [
+        { "id": "hoodie-s", "title": "S", "price": { "amount": "64.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "hoodie-m", "title": "M", "price": { "amount": "64.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "hoodie-l", "title": "L", "price": { "amount": "64.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] },
+        { "id": "hoodie-xl", "title": "XL", "price": { "amount": "64.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "XL" }] }
+      ],
+      "collections": ["New Arrivals", "Best Sellers", "Men"]
+    },
+    {
+      "id": "vestra-linen-shirt-009",
+      "title": "Relaxed Linen Shirt",
+      "description": "A breathable 100% linen shirt with a relaxed fit and camp collar. Effortlessly textured with a soft, broken-in hand — perfect layered or worn open.\n\n✓ 100% European linen\n✓ Relaxed, breathable fit\n✓ Camp collar\n✓ Coconut-shell buttons",
+      "handle": "relaxed-linen-shirt",
+      "productType": "Shirts",
+      "price": { "amount": "58.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1200&q=80", "altText": "Relaxed linen shirt" }
+      ],
+      "variants": [
+        { "id": "linenshirt-s", "title": "S", "price": { "amount": "58.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "linenshirt-m", "title": "M", "price": { "amount": "58.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "linenshirt-l", "title": "L", "price": { "amount": "58.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] }
+      ],
+      "collections": ["Featured", "Men"]
+    },
+    {
+      "id": "vestra-pleated-skirt-010",
+      "title": "Pleated Midi Skirt",
+      "description": "A crisp, accordion-pleated midi skirt with beautiful movement. High-waisted with a concealed side zip — a versatile piece that transitions from desk to dinner.\n\n✓ Accordion pleating\n✓ High-waisted fit\n✓ Concealed side zip\n✓ Fully lined",
+      "handle": "pleated-midi-skirt",
+      "productType": "Skirts",
+      "price": { "amount": "54.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1583496661160-fb5886a13d74?w=1200&q=80", "altText": "Pleated midi skirt" }
+      ],
+      "variants": [
+        { "id": "skirt-xs", "title": "XS", "price": { "amount": "54.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "XS" }] },
+        { "id": "skirt-s", "title": "S", "price": { "amount": "54.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "skirt-m", "title": "M", "price": { "amount": "54.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] }
+      ],
+      "collections": ["Sale", "Women"]
+    },
+    {
+      "id": "vestra-chino-shorts-011",
+      "title": "Tailored Chino Shorts",
+      "description": "Clean-lined chino shorts cut just above the knee from a soft brushed cotton twill. A tailored waistband and slight taper keep the silhouette sharp.\n\n✓ Brushed cotton twill\n✓ Tailored waistband\n✓ Slight tapered leg\n✓ Side seam pockets",
+      "handle": "tailored-chino-shorts",
+      "productType": "Shorts",
+      "price": { "amount": "42.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=1200&q=80", "altText": "Tailored chino shorts" }
+      ],
+      "variants": [
+        { "id": "chinoshorts-s", "title": "S", "price": { "amount": "42.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "chinoshorts-m", "title": "M", "price": { "amount": "42.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "chinoshorts-l", "title": "L", "price": { "amount": "42.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] }
+      ],
+      "collections": ["Sale", "Men"]
+    },
+    {
+      "id": "vestra-puffer-vest-012",
+      "title": "Quilted Puffer Vest",
+      "description": "A lightweight quilted vest filled with recycled insulation for warmth without weight. A stand collar and zip-through front make it an easy layering piece.\n\n✓ Recycled fill insulation\n✓ Quilted diamond stitching\n✓ Stand collar\n✓ Zip-through front, snap pockets",
+      "handle": "quilted-puffer-vest",
+      "productType": "Outerwear",
+      "price": { "amount": "76.00", "currencyCode": "USD" },
+      "images": [
+        { "url": "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=1200&q=80", "altText": "Quilted puffer vest" }
+      ],
+      "variants": [
+        { "id": "puffervest-s", "title": "S", "price": { "amount": "76.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "S" }] },
+        { "id": "puffervest-m", "title": "M", "price": { "amount": "76.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "M" }] },
+        { "id": "puffervest-l", "title": "L", "price": { "amount": "76.00", "currencyCode": "USD" }, "availableForSale": true, "selectedOptions": [{ "name": "Size", "value": "L" }] }
+      ],
+      "collections": ["New Arrivals", "Men"]
     }
   ],
   "collections": [
     {
-      "id": "col-devices",
-      "title": "Devices",
-      "handle": "devices",
-      "description": "Medical-grade hair growth devices using laser and light therapy"
+      "id": "col-new-arrivals",
+      "title": "New Arrivals",
+      "handle": "new-arrivals",
+      "description": "The latest drops, fresh off the rack"
     },
     {
-      "id": "col-topical",
-      "title": "Topical Treatments",
-      "handle": "topical-treatments",
-      "description": "Clinically formulated topical solutions for hair regrowth"
-    },
-    {
-      "id": "col-bestsellers",
+      "id": "col-best-sellers",
       "title": "Best Sellers",
       "handle": "best-sellers",
-      "description": "Our most popular hair restoration products"
+      "description": "Customer favorites, worn on repeat"
     },
     {
       "id": "col-featured",
       "title": "Featured",
       "handle": "featured",
-      "description": "Handpicked featured products"
+      "description": "Editor-picked pieces for the season"
+    },
+    {
+      "id": "col-women",
+      "title": "Women",
+      "handle": "women",
+      "description": "Womenswear edit — dresses, knitwear, tailoring"
+    },
+    {
+      "id": "col-men",
+      "title": "Men",
+      "handle": "men",
+      "description": "Menswear edit — shirting, outerwear, denim"
+    },
+    {
+      "id": "col-sale",
+      "title": "Sale",
+      "handle": "sale",
+      "description": "Limited-time markdowns"
     }
   ]
 }

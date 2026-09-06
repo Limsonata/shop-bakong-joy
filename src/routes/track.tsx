@@ -8,7 +8,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Order, OrderStatus, OrderItem } from "@/lib/orderStore";
 
 export const Route = createFileRoute("/track")({
-  head: () => ({ meta: [{ title: "Track Order — hairora" }] }),
+  head: () => ({ meta: [{ title: "Track Order — VESTRA" }] }),
   component: TrackOrderPage,
 });
 
@@ -88,7 +88,7 @@ function TrackOrderPage() {
         </div>
         <h1 className="text-4xl font-bold tracking-tight">Track Your Order</h1>
         <p className="mt-3 text-muted-foreground">
-          Enter your ABA reference number or order ID below.
+          Enter your order reference number or order ID below.
         </p>
       </div>
 

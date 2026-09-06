@@ -20,9 +20,14 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ProductHandleRouteImport } from './routes/product/$handle'
 import { Route as CheckoutBakongRouteImport } from './routes/checkout/bakong'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminSalesRouteImport } from './routes/admin/sales'
+import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
+import { Route as AdminPosRouteImport } from './routes/admin/pos'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminInventoryRouteImport } from './routes/admin/inventory'
+import { Route as AdminFinanceRouteImport } from './routes/admin/finance'
 import { Route as AdminFeedbackRouteImport } from './routes/admin/feedback'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminProductsNewRouteImport } from './routes/admin/products.new'
@@ -83,9 +88,24 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/admin/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSalesRoute = AdminSalesRouteImport.update({
+  id: '/admin/sales',
+  path: '/admin/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/admin/reports',
+  path: '/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/admin/products',
   path: '/admin/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPosRoute = AdminPosRouteImport.update({
+  id: '/admin/pos',
+  path: '/admin/pos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
@@ -96,6 +116,16 @@ const AdminOrdersRoute = AdminOrdersRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminInventoryRoute = AdminInventoryRouteImport.update({
+  id: '/admin/inventory',
+  path: '/admin/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFinanceRoute = AdminFinanceRouteImport.update({
+  id: '/admin/finance',
+  path: '/admin/finance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
@@ -129,9 +159,14 @@ export interface FileRoutesByFullPath {
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/finance': typeof AdminFinanceRoute
+  '/admin/inventory': typeof AdminInventoryRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/pos': typeof AdminPosRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/sales': typeof AdminSalesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/checkout/bakong': typeof CheckoutBakongRoute
   '/product/$handle': typeof ProductHandleRoute
@@ -149,9 +184,14 @@ export interface FileRoutesByTo {
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/finance': typeof AdminFinanceRoute
+  '/admin/inventory': typeof AdminInventoryRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/pos': typeof AdminPosRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/sales': typeof AdminSalesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/checkout/bakong': typeof CheckoutBakongRoute
   '/product/$handle': typeof ProductHandleRoute
@@ -170,9 +210,14 @@ export interface FileRoutesById {
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/finance': typeof AdminFinanceRoute
+  '/admin/inventory': typeof AdminInventoryRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/pos': typeof AdminPosRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/sales': typeof AdminSalesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/checkout/bakong': typeof CheckoutBakongRoute
   '/product/$handle': typeof ProductHandleRoute
@@ -192,9 +237,14 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin/categories'
     | '/admin/feedback'
+    | '/admin/finance'
+    | '/admin/inventory'
     | '/admin/login'
     | '/admin/orders'
+    | '/admin/pos'
     | '/admin/products'
+    | '/admin/reports'
+    | '/admin/sales'
     | '/admin/settings'
     | '/checkout/bakong'
     | '/product/$handle'
@@ -212,9 +262,14 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin/categories'
     | '/admin/feedback'
+    | '/admin/finance'
+    | '/admin/inventory'
     | '/admin/login'
     | '/admin/orders'
+    | '/admin/pos'
     | '/admin/products'
+    | '/admin/reports'
+    | '/admin/sales'
     | '/admin/settings'
     | '/checkout/bakong'
     | '/product/$handle'
@@ -232,9 +287,14 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin/categories'
     | '/admin/feedback'
+    | '/admin/finance'
+    | '/admin/inventory'
     | '/admin/login'
     | '/admin/orders'
+    | '/admin/pos'
     | '/admin/products'
+    | '/admin/reports'
+    | '/admin/sales'
     | '/admin/settings'
     | '/checkout/bakong'
     | '/product/$handle'
@@ -253,9 +313,14 @@ export interface RootRouteChildren {
   TrackRoute: typeof TrackRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
+  AdminFinanceRoute: typeof AdminFinanceRoute
+  AdminInventoryRoute: typeof AdminInventoryRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminPosRoute: typeof AdminPosRoute
   AdminProductsRoute: typeof AdminProductsRouteWithChildren
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminSalesRoute: typeof AdminSalesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   CheckoutBakongRoute: typeof CheckoutBakongRoute
   ProductHandleRoute: typeof ProductHandleRoute
@@ -341,11 +406,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/sales': {
+      id: '/admin/sales'
+      path: '/admin/sales'
+      fullPath: '/admin/sales'
+      preLoaderRoute: typeof AdminSalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/products': {
       id: '/admin/products'
       path: '/admin/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/pos': {
+      id: '/admin/pos'
+      path: '/admin/pos'
+      fullPath: '/admin/pos'
+      preLoaderRoute: typeof AdminPosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/orders': {
@@ -360,6 +446,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/inventory': {
+      id: '/admin/inventory'
+      path: '/admin/inventory'
+      fullPath: '/admin/inventory'
+      preLoaderRoute: typeof AdminInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/finance': {
+      id: '/admin/finance'
+      path: '/admin/finance'
+      fullPath: '/admin/finance'
+      preLoaderRoute: typeof AdminFinanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/feedback': {
@@ -417,9 +517,14 @@ const rootRouteChildren: RootRouteChildren = {
   TrackRoute: TrackRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
+  AdminFinanceRoute: AdminFinanceRoute,
+  AdminInventoryRoute: AdminInventoryRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminOrdersRoute: AdminOrdersRoute,
+  AdminPosRoute: AdminPosRoute,
   AdminProductsRoute: AdminProductsRouteWithChildren,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminSalesRoute: AdminSalesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   CheckoutBakongRoute: CheckoutBakongRoute,
   ProductHandleRoute: ProductHandleRoute,

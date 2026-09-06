@@ -4,22 +4,22 @@ import { Zap, FlaskConical, Truck, Clock, Shield, Star } from "lucide-react";
 const bentoItems = [
   {
     icon: Zap,
-    title: "272 Medical-Grade Laser Diodes",
-    desc: "Full scalp coverage with clinical-grade 650nm red laser diodes for maximum hair follicle stimulation.",
+    title: "Premium Fabrics",
+    desc: "Carefully sourced cotton, linen, and knit blends designed for comfort and durability in everyday wear.",
     className: "col-span-2 row-span-2",
     gradient: "from-primary/10 to-secondary/5",
   },
   {
     icon: FlaskConical,
-    title: "Clinically Proven",
-    desc: "FDA-cleared technology backed by peer-reviewed clinical studies.",
+    title: "Made to Move",
+    desc: "Tailored cuts and flexible fabrics built for everyday movement.",
     className: "col-span-1 row-span-1",
     gradient: "from-muted to-card",
   },
   {
     icon: Clock,
-    title: "Results in 16 Weeks",
-    desc: "Visible hair regrowth within 4 months of consistent use.",
+    title: "New Drops Weekly",
+    desc: "Fresh styles added to the collection every week.",
     className: "col-span-1 row-span-1",
     gradient: "from-muted to-card",
   },
@@ -32,15 +32,15 @@ const bentoItems = [
   },
   {
     icon: Shield,
-    title: "Secure Bakong KHQR",
-    desc: "Pay safely with Cambodia's national payment system.",
+    title: "Cash on Delivery",
+    desc: "Pay safely when your order arrives at your door.",
     className: "col-span-1 row-span-1",
     gradient: "from-card to-muted",
   },
   {
     icon: Star,
     title: "99% Customer Satisfaction",
-    desc: "Trusted by hundreds of customers across Cambodia who saw real results.",
+    desc: "Trusted by hundreds of shoppers across Cambodia who love the fit and quality.",
     className: "col-span-2 row-span-1",
     gradient: "from-primary/10 to-secondary/5",
   },
@@ -56,9 +56,9 @@ export function BentoFeatures() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Why hairora</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Why VESTRA</h2>
           <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-            Science-backed hair restoration combining advanced laser technology with clinically proven topicals.
+            Considered clothing design combining premium fabrics with everyday comfort.
           </p>
         </motion.div>
 

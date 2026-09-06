@@ -163,7 +163,7 @@ function OrdersAdmin() {
                         </p>
                         {order.bakongTransactionId && (
                           <p className="text-sm text-muted-foreground">
-                            ABA PayWay Tx: {order.bakongTransactionId}
+                            Transaction ref: {order.bakongTransactionId}
                           </p>
                         )}
                       </div>

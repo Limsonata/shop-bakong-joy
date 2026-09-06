@@ -1,0 +1,1537 @@
+{
+  "generatedAt": "2026-09-06T13:42:58",
+  "source": "Clothing_Shop_Management3.xlsx",
+  "stockItems": [
+    {
+      "sku": "SKU001",
+      "name": "American-Style Thin",
+      "category": "Other",
+      "size": "M",
+      "color": "Black",
+      "cost": 0.96,
+      "price": 4.0,
+      "stockIn": 3,
+      "sold": 0
+    },
+    {
+      "sku": "SKU002",
+      "name": "American-Style Thin",
+      "category": "Other",
+      "size": "M",
+      "color": "White",
+      "cost": 0.96,
+      "price": 4.0,
+      "stockIn": 3,
+      "sold": 0
+    },
+    {
+      "sku": "SKU003",
+      "name": "French-Style Lace Lingerie",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 1.84,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 1
+    },
+    {
+      "sku": "SKU004",
+      "name": "French-Style Lace Lingerie",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 1.84,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 2
+    },
+    {
+      "sku": "SKU005",
+      "name": "Black French lace sexy",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 1.84,
+      "price": 5.0,
+      "stockIn": 2,
+      "sold": 1
+    },
+    {
+      "sku": "SKU006",
+      "name": "Black French lace sexy",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 1.84,
+      "price": 5.0,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU007",
+      "name": "Black French lace sexy",
+      "category": "Bra & Lingerie",
+      "size": "36",
+      "color": "Black",
+      "cost": 1.84,
+      "price": 5.0,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU008",
+      "name": "Satin Lace",
+      "category": "Bra & Lingerie",
+      "size": "M",
+      "color": "Black",
+      "cost": 2.88,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU009",
+      "name": "French-Style Sexy Lace",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 2.19,
+      "price": 5.5,
+      "stockIn": 3,
+      "sold": 0
+    },
+    {
+      "sku": "SKU010",
+      "name": "French-Style Sexy Lace",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 2.19,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU011",
+      "name": "Summer french satin",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 1.91,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 2
+    },
+    {
+      "sku": "SKU012",
+      "name": "Summer french satin",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "White",
+      "cost": 1.91,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU013",
+      "name": "Summer french satin",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 1.91,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 1
+    },
+    {
+      "sku": "SKU014",
+      "name": "Underwear",
+      "category": "Underwear",
+      "size": "S",
+      "color": "Black",
+      "cost": 0.42,
+      "price": 1.25,
+      "stockIn": 3,
+      "sold": 1
+    },
+    {
+      "sku": "SKU015",
+      "name": "Underwear",
+      "category": "Underwear",
+      "size": "S",
+      "color": "White",
+      "cost": 0.42,
+      "price": 1.25,
+      "stockIn": 2,
+      "sold": 1
+    },
+    {
+      "sku": "SKU016",
+      "name": "Underwear",
+      "category": "Underwear",
+      "size": "M",
+      "color": "Black",
+      "cost": 0.42,
+      "price": 1.25,
+      "stockIn": 3,
+      "sold": 0
+    },
+    {
+      "sku": "SKU017",
+      "name": "Underwear",
+      "category": "Underwear",
+      "size": "M",
+      "color": "White",
+      "cost": 0.42,
+      "price": 1.25,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU018",
+      "name": "Short Jean",
+      "category": "Jeans",
+      "size": "S",
+      "color": "Dark blue",
+      "cost": 5.76,
+      "price": 8.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU019",
+      "name": "Short Jean",
+      "category": "Jeans",
+      "size": "S",
+      "color": "Light blue",
+      "cost": 5.76,
+      "price": 8.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU020",
+      "name": "Bra sbai",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 1.84,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU021",
+      "name": "Bra sbai",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "White",
+      "cost": 1.84,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU022",
+      "name": "Bra sbai",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 1.84,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU023",
+      "name": "ZARA TOP",
+      "category": "Tops",
+      "size": "M",
+      "color": "White",
+      "cost": 2.4,
+      "price": 3.5,
+      "stockIn": 3,
+      "sold": 4
+    },
+    {
+      "sku": "SKU024",
+      "name": "ZARA TOP",
+      "category": "Tops",
+      "size": "M",
+      "color": "Black",
+      "cost": 2.4,
+      "price": 3.5,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU025",
+      "name": "Tank Top",
+      "category": "Tops",
+      "size": "S",
+      "color": "Black",
+      "cost": 4.5,
+      "price": 7.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU026",
+      "name": "Satin Lace ligerie",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 2.22,
+      "price": 5.5,
+      "stockIn": 3,
+      "sold": 2
+    },
+    {
+      "sku": "SKU027",
+      "name": "Satin Lace ligerie",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "White",
+      "cost": 2.22,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU028",
+      "name": "Satin Lace ligerie",
+      "category": "Bra & Lingerie",
+      "size": "36",
+      "color": "Black",
+      "cost": 2.22,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU029",
+      "name": "Satin Lace ligerie",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 2.22,
+      "price": 5.5,
+      "stockIn": 3,
+      "sold": 3
+    },
+    {
+      "sku": "SKU030",
+      "name": "Pure Desir Bra",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 2.22,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 1
+    },
+    {
+      "sku": "SKU031",
+      "name": "White tank top",
+      "category": "Tops",
+      "size": "Free size",
+      "color": "White",
+      "cost": 2.0,
+      "price": 3.0,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU032",
+      "name": "French-Style Lace Lingerie",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 1.91,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 1
+    },
+    {
+      "sku": "SKU033",
+      "name": "French-Style Lace Lingerie",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 1.91,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU034",
+      "name": "French-Style Lace Lingerie",
+      "category": "Bra & Lingerie",
+      "size": "36",
+      "color": "Black",
+      "cost": 1.91,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 2
+    },
+    {
+      "sku": "SKU035",
+      "name": "Summer french satin",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 2.17,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU036",
+      "name": "Summer french satin",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 2.17,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU037",
+      "name": "Summer french satin",
+      "category": "Bra & Lingerie",
+      "size": "36",
+      "color": "Black",
+      "cost": 2.17,
+      "price": 5.5,
+      "stockIn": 3,
+      "sold": 1
+    },
+    {
+      "sku": "SKU038",
+      "name": "Summer french satin",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "White",
+      "cost": 2.17,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 0
+    },
+    {
+      "sku": "SKU039",
+      "name": "Blue tiffiny top bow",
+      "category": "Tops",
+      "size": "Free size",
+      "color": "Blue",
+      "cost": 2.25,
+      "price": 4.0,
+      "stockIn": 1,
+      "sold": 1
+    },
+    {
+      "sku": "SKU040",
+      "name": "Underwear",
+      "category": "Underwear",
+      "size": "M",
+      "color": "Black",
+      "cost": 0.83,
+      "price": 1.25,
+      "stockIn": 2,
+      "sold": 1
+    },
+    {
+      "sku": "SKU041",
+      "name": "Underwear",
+      "category": "Underwear",
+      "size": "M",
+      "color": "White",
+      "cost": 0.83,
+      "price": 1.25,
+      "stockIn": 1,
+      "sold": 1
+    },
+    {
+      "sku": "SKU042",
+      "name": "Satin Lace ligerie",
+      "category": "Bra & Lingerie",
+      "size": "32",
+      "color": "Black",
+      "cost": 2.0,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU043",
+      "name": "Satin Lace ligerie",
+      "category": "Bra & Lingerie",
+      "size": "34",
+      "color": "Black",
+      "cost": 2.0,
+      "price": 5.5,
+      "stockIn": 2,
+      "sold": 0
+    },
+    {
+      "sku": "SKU044",
+      "name": "Satin Lace ligerie",
+      "category": "Bra & Lingerie",
+      "size": "38",
+      "color": "Black",
+      "cost": 2.0,
+      "price": 5.5,
+      "stockIn": 1,
+      "sold": 1
+    },
+    {
+      "sku": "SKU045",
+      "name": "zara tank top",
+      "category": "Tops",
+      "size": "Free size",
+      "color": "White",
+      "cost": 2.0,
+      "price": 3.5,
+      "stockIn": 1,
+      "sold": 1
+    },
+    {
+      "sku": "SKU046",
+      "name": "zara tank top",
+      "category": "Tops",
+      "size": "Free size",
+      "color": "Blue",
+      "cost": 2.0,
+      "price": 3.5,
+      "stockIn": 1,
+      "sold": 1
+    },
+    {
+      "sku": "SKU047",
+      "name": "Short Jean",
+      "category": "Jeans",
+      "size": "Free size",
+      "color": "Black",
+      "cost": 2.5,
+      "price": 4.0,
+      "stockIn": 1,
+      "sold": 1
+    }
+  ],
+  "sales": [
+    {
+      "code": "S-0001",
+      "legacyCode": "ORD001",
+      "date": "2026-08-31",
+      "customerName": "Noch Jasmine",
+      "phone": "15848188",
+      "address": "សម្ដេចមង្គអៀប 228",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 14.5,
+      "total": 16.0,
+      "paid": 16.0,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "Jean",
+          "size": "M",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 9.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": "SKU032",
+          "name": "French-Style Lace Lingerie",
+          "size": "32",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 1.91
+        }
+      ]
+    },
+    {
+      "code": "S-0002",
+      "legacyCode": "ORD002",
+      "date": "2026-03-09",
+      "customerName": "Wang Ning",
+      "phone": "7978293111",
+      "address": "BTB ភ្នំសំពៅ (VET)",
+      "city": "Btb",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 11.0,
+      "total": 13.0,
+      "paid": 13.0,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU033",
+          "name": "French-Style Lace Lingerie",
+          "size": "34",
+          "color": "Black",
+          "qty": 2,
+          "unitPrice": 5.5,
+          "unitCost": 1.91
+        }
+      ]
+    },
+    {
+      "code": "S-0003",
+      "legacyCode": "ORD003",
+      "date": "2026-03-09",
+      "customerName": "J",
+      "phone": "88916635",
+      "address": "ARAKAWA ក្រោយពេទ្យរ៉ូយាល់",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 16.5,
+      "total": 18.0,
+      "paid": 9.0,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU032",
+          "name": "French-Style Lace Lingerie",
+          "size": "32",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 1.91
+        },
+        {
+          "sku": "SKU042",
+          "name": "Satin Lace ligerie",
+          "size": "32",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.0
+        },
+        {
+          "sku": "SKU030",
+          "name": "Pure Desir Bra",
+          "size": "34",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.22
+        }
+      ]
+    },
+    {
+      "code": "S-0004",
+      "legacyCode": "ORD004",
+      "date": "2026-03-09",
+      "customerName": "N",
+      "phone": "87226982",
+      "address": "BTB ផ្សារបឹងឈូក",
+      "city": "Btb",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 11.0,
+      "total": 13.0,
+      "paid": 7.0,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU033",
+          "name": "French-Style Lace Lingerie",
+          "size": "34",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 1.91
+        },
+        {
+          "sku": "SKU043",
+          "name": "Satin Lace ligerie",
+          "size": "34",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.0
+        }
+      ]
+    },
+    {
+      "code": "S-0005",
+      "legacyCode": "ORD005",
+      "date": "2026-03-09",
+      "customerName": "meyy xiang",
+      "phone": "969912598",
+      "address": "Borey peng hout chea sophara",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 8.5,
+      "total": 10.0,
+      "paid": 5.0,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU046",
+          "name": "ZARA tank top",
+          "size": "Free size",
+          "color": "Blue",
+          "qty": 1,
+          "unitPrice": 3.0,
+          "unitCost": 2.0
+        },
+        {
+          "sku": "SKU043",
+          "name": "Satin Lace ligerie",
+          "size": "34",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.0
+        }
+      ]
+    },
+    {
+      "code": "S-0006",
+      "legacyCode": "ORD006",
+      "date": "2026-03-09",
+      "customerName": "Jhan jing",
+      "phone": "977212399",
+      "address": "ផ្សារឈូកមាស",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 11.0,
+      "total": 12.5,
+      "paid": 12.5,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU034",
+          "name": "French-Style Lace Lingerie",
+          "size": "36",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 1.91
+        },
+        {
+          "sku": "SKU037",
+          "name": "Summer french satin",
+          "size": "36",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.17
+        }
+      ]
+    },
+    {
+      "code": "S-0007",
+      "legacyCode": "ORD007",
+      "date": "2026-03-09",
+      "customerName": "Summer",
+      "phone": "12729199",
+      "address": "Peng hout berng snor",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 8.0,
+      "total": 9.5,
+      "paid": 4.75,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU042",
+          "name": "Satin Lace ligerie",
+          "size": "32",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.0
+        },
+        {
+          "sku": null,
+          "name": "Underwar B&W",
+          "size": "S",
+          "color": "",
+          "qty": 2,
+          "unitPrice": 1.25,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0008",
+      "legacyCode": "ORD008",
+      "date": "2026-03-09",
+      "customerName": "Ka",
+      "phone": "81455593",
+      "address": "BTB",
+      "city": "Btb",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 8.5,
+      "total": 10.5,
+      "paid": 5.25,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "ZARA TOP",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": "SKU036",
+          "name": "Summer french satin",
+          "size": "34",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.17
+        }
+      ]
+    },
+    {
+      "code": "S-0009",
+      "legacyCode": "ORD009",
+      "date": "2026-04-09",
+      "customerName": "Ching",
+      "phone": "77365515",
+      "address": "Terk tla",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 10.5,
+      "total": 12.0,
+      "paid": 6.0,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU038",
+          "name": "Summer french satin",
+          "size": "32",
+          "color": "White",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.17
+        },
+        {
+          "sku": "SKU005",
+          "name": "Black French lace sexy",
+          "size": "32",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.0,
+          "unitCost": 1.84
+        }
+      ]
+    },
+    {
+      "code": "S-0010",
+      "legacyCode": "ORD0010",
+      "date": "2026-04-09",
+      "customerName": "July",
+      "phone": "87865337",
+      "address": "កំពង់ស្ពឺផ្សារត្រពាំងក្រឡឹង",
+      "city": "Kampong Spuer",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 9.0,
+      "total": 11.0,
+      "paid": 5.75,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU042",
+          "name": "Satin Lace ligerie",
+          "size": "32",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.0,
+          "unitCost": 2.0
+        },
+        {
+          "sku": "SKU039",
+          "name": "Blue tiffiny top bow",
+          "size": "Free size",
+          "color": "Blue",
+          "qty": 1,
+          "unitPrice": 4.0,
+          "unitCost": 2.25
+        }
+      ]
+    },
+    {
+      "code": "S-0011",
+      "legacyCode": "ORD0011",
+      "date": "2026-04-09",
+      "customerName": "Violet",
+      "phone": "",
+      "address": "TTP",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.0,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 7.5,
+      "total": 8.5,
+      "paid": 8.5,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "White top",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.5,
+          "unitCost": 0.0
+        },
+        {
+          "sku": null,
+          "name": "Black jean",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 4.0,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0012",
+      "legacyCode": "ORD0012",
+      "date": "2026-04-09",
+      "customerName": "Kim long",
+      "phone": "67796076",
+      "address": "KPS",
+      "city": "Kompong Soam",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 8.5,
+      "total": 10.5,
+      "paid": 10.5,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "Bra",
+          "size": "38",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 5.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": null,
+          "name": "Blue top",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.5,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0013",
+      "legacyCode": "ORD0013",
+      "date": "2026-04-09",
+      "customerName": "Pichyy",
+      "phone": "712379100",
+      "address": "Sterng mean chey",
+      "city": "Phnom Penh",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 18.5,
+      "total": 20.0,
+      "paid": 19.0,
+      "note": "",
+      "items": [
+        {
+          "sku": "SKU044",
+          "name": "Satin Lace ligerie",
+          "size": "38",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.0
+        },
+        {
+          "sku": null,
+          "name": "Jean",
+          "size": "L",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 9.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": null,
+          "name": "ZARA top",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 4.0,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0014",
+      "legacyCode": "ORD0014",
+      "date": "2026-05-09",
+      "customerName": "Walk-in customer",
+      "phone": "974750704",
+      "address": "",
+      "city": "",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 6.5,
+      "total": 8.5,
+      "paid": 8.5,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "Underwar B&W",
+          "size": "M",
+          "color": "",
+          "qty": 2,
+          "unitPrice": 1.25,
+          "unitCost": 0.0
+        },
+        {
+          "sku": null,
+          "name": "ZARA top",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 4.0,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0015",
+      "legacyCode": "ORD0015",
+      "date": "2026-05-09",
+      "customerName": "Monypich",
+      "phone": "99811356",
+      "address": "Batambong",
+      "city": "Btb",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "delivered",
+      "status": "confirmed",
+      "subtotal": 7.5,
+      "total": 9.5,
+      "paid": 9.5,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "ZARA top",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 4.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": null,
+          "name": "Tank top",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.5,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0016",
+      "legacyCode": "ORD0016",
+      "date": "2026-05-09",
+      "customerName": "Jkaa",
+      "phone": "962549929",
+      "address": "",
+      "city": "",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 1.5,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 9.5,
+      "total": 11.0,
+      "paid": 5.5,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "Top wihte",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 4.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": "SKU043",
+          "name": "Satin Lace ligerie",
+          "size": "34",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 2.0
+        }
+      ]
+    },
+    {
+      "code": "S-0017",
+      "legacyCode": "ORD0017",
+      "date": "2026-05-09",
+      "customerName": "Lee",
+      "phone": "968109036",
+      "address": "",
+      "city": "",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 10.25,
+      "total": 12.25,
+      "paid": 12.25,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "Tank top white",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.5,
+          "unitCost": 0.0
+        },
+        {
+          "sku": "SKU041",
+          "name": "Underwear",
+          "size": "M",
+          "color": "White",
+          "qty": 1,
+          "unitPrice": 1.25,
+          "unitCost": 0.83
+        },
+        {
+          "sku": null,
+          "name": "Bra",
+          "size": "38",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0018",
+      "legacyCode": "ORD0018",
+      "date": "2026-05-09",
+      "customerName": "Ching houy",
+      "phone": "965238499",
+      "address": "",
+      "city": "",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 0.0,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 12.0,
+      "total": 12.0,
+      "paid": 0.0,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "ZARA top black",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": null,
+          "name": "bra",
+          "size": "36",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 0.0
+        },
+        {
+          "sku": null,
+          "name": "blue top",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.5,
+          "unitCost": 0.0
+        }
+      ]
+    },
+    {
+      "code": "S-0019",
+      "legacyCode": "ORD0019",
+      "date": "2026-06-09",
+      "customerName": "Gek",
+      "phone": "964318774",
+      "address": "",
+      "city": "",
+      "channel": "booking",
+      "deliveryMethod": "Delivery",
+      "deliveryFee": 2.0,
+      "deliveryStatus": "preparing",
+      "status": "confirmed",
+      "subtotal": 8.5,
+      "total": 10.5,
+      "paid": 5.25,
+      "note": "",
+      "items": [
+        {
+          "sku": null,
+          "name": "Tank top white",
+          "size": "Free size",
+          "color": "",
+          "qty": 1,
+          "unitPrice": 3.0,
+          "unitCost": 0.0
+        },
+        {
+          "sku": "SKU034",
+          "name": "French-Style Lace Lingerie",
+          "size": "36",
+          "color": "Black",
+          "qty": 1,
+          "unitPrice": 5.5,
+          "unitCost": 1.91
+        }
+      ]
+    }
+  ],
+  "financeEntries": [
+    {
+      "date": "2026-01-09",
+      "kind": "expense",
+      "description": "Buy clothes from 1688",
+      "category": "Inventory",
+      "amount": 57.28,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-01-09",
+      "kind": "expense",
+      "description": "Buy Bra from 1688",
+      "category": "Inventory",
+      "amount": 10.55,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "income",
+      "description": "Customer buy Bra",
+      "category": "Sales",
+      "amount": 13.0,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "income",
+      "description": "Customer booking Bra",
+      "category": "Sales",
+      "amount": 9.0,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "income",
+      "description": "Customer booking Bra",
+      "category": "Sales",
+      "amount": 7.0,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "expense",
+      "description": "Buy bra from Loda",
+      "category": "Inventory",
+      "amount": 18.84,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "income",
+      "description": "Customer booking Bra",
+      "category": "Sales",
+      "amount": 5.0,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "expense",
+      "description": "Buy bra from loda",
+      "category": "Inventory",
+      "amount": 11.48,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "income",
+      "description": "Customer booking Bra",
+      "category": "Sales",
+      "amount": 5.25,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "income",
+      "description": "Customer booking Bra pay full",
+      "category": "Sales",
+      "amount": 12.5,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-03-09",
+      "kind": "income",
+      "description": "Customer booking Bra and under",
+      "category": "Sales",
+      "amount": 4.75,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "income",
+      "description": "Customer booking Bra",
+      "category": "Sales",
+      "amount": 6.0,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "income",
+      "description": "Customer buy clothes",
+      "category": "Sales",
+      "amount": 10.5,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "income",
+      "description": "Customer booking Bra andtop",
+      "category": "Sales",
+      "amount": 5.75,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "income",
+      "description": "Customer buy clothes",
+      "category": "Sales",
+      "amount": 8.5,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "income",
+      "description": "Customer buy clothes",
+      "category": "Sales",
+      "amount": 10.0,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "expense",
+      "description": "Buy clothes from ly",
+      "category": "Inventory",
+      "amount": 6.95,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "expense",
+      "description": "Buy bra from blue store",
+      "category": "Inventory",
+      "amount": 2.48,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-04-09",
+      "kind": "expense",
+      "description": "delivery to VET",
+      "category": "Delivery",
+      "amount": 1.49,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-05-09",
+      "kind": "income",
+      "description": "Customer buy clothes and under wear",
+      "category": "Sales",
+      "amount": 8.5,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-05-09",
+      "kind": "expense",
+      "description": "Buy bra from loda",
+      "category": "Inventory",
+      "amount": 7.11,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-05-09",
+      "kind": "expense",
+      "description": "buy Zara top",
+      "category": "Inventory",
+      "amount": 11.87,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-05-09",
+      "kind": "income",
+      "description": "Customer buy clothes",
+      "category": "Sales",
+      "amount": 9.5,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-05-09",
+      "kind": "expense",
+      "description": "Buy mini printer",
+      "category": "Inventory",
+      "amount": 18.0,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-05-09",
+      "kind": "income",
+      "description": "Customer booking clothes and bra",
+      "category": "Sales",
+      "amount": 5.5,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-05-09",
+      "kind": "income",
+      "description": "Customer buy clothes",
+      "category": "Sales",
+      "amount": 12.25,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-06-09",
+      "kind": "income",
+      "description": "Customer booking set bra",
+      "category": "Sales",
+      "amount": 5.25,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-06-09",
+      "kind": "expense",
+      "description": "Buy bra from 1688",
+      "category": "Inventory",
+      "amount": 20.55,
+      "method": "cash",
+      "source": "import"
+    },
+    {
+      "date": "2026-08-31",
+      "kind": "income",
+      "description": "Customer booking bra and Jean Pay full",
+      "category": "Sales",
+      "amount": 16.0,
+      "method": "cash",
+      "source": "import"
+    }
+  ]
+}

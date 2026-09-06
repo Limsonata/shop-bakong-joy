@@ -13,13 +13,13 @@ import { motion } from "framer-motion";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "hairora — Hair Restoration Specialists" },
+      { title: "VESTRA — Modern Clothing, Made to Move" },
       {
         name: "description",
-        content: "Clinically proven hair restoration. LED laser therapy & Minoxidil solutions, delivered in Cambodia.",
+        content: "Contemporary clothing for everyday wear. New arrivals dropping weekly, secure checkout, delivered across Cambodia.",
       },
-      { property: "og:title", content: "hairora — Hair Restoration Specialists" },
-      { property: "og:description", content: "Clinically proven hair restoration. LED laser therapy & Minoxidil solutions." },
+      { property: "og:title", content: "VESTRA — Modern Clothing, Made to Move" },
+      { property: "og:description", content: "Contemporary clothing for everyday wear. New arrivals dropping weekly." },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -40,6 +40,14 @@ const staggerContainer = {
     },
   },
 };
+
+const marqueeWords = [
+  "NEW ARRIVALS",
+  "FREE SHIPPING",
+  "SECURE CHECKOUT",
+  "SEASONAL EDIT",
+  "MADE TO MOVE",
+];
 
 function Index() {
   const { data: featuredProducts, isLoading } = useQuery({
@@ -82,18 +90,18 @@ function Index() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
               >
                 <Sparkles className="w-4 h-4" />
-                Clinically Proven Hair Restoration
+                New Season Edit — Just Dropped
               </motion.div>
 
               <motion.h1
                 {...fadeInUp}
                 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[0.95]"
               >
-                <span className="block text-foreground">Restore</span>
+                <span className="block text-foreground">Wear</span>
                 <span className="block text-muted-foreground">
                   your
                   <span className="text-foreground ml-3 relative">
-                    hair
+                    story
                     <svg
                       className="absolute -bottom-2 left-0 w-full"
                       viewBox="0 0 200 12"
@@ -115,8 +123,8 @@ function Index() {
                 {...fadeInUp}
                 className="mt-8 text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0"
               >
-                Medical-grade LED laser therapy and clinically proven Minoxidil solutions.
-                Real results, delivered to Cambodia.
+                Considered clothing for everyday movement — tailored basics, statement
+                outerwear, and elevated essentials. New drops every week, delivered across Cambodia.
               </motion.p>
 
               <motion.div
@@ -125,7 +133,7 @@ function Index() {
               >
                 <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg group">
                   <Link to="/shop">
-                    Shop Treatments
+                    Shop New Arrivals
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
@@ -135,7 +143,7 @@ function Index() {
                   size="lg"
                   className="rounded-full px-8 py-6 text-lg"
                 >
-                  <Link to="/shop">Learn More</Link>
+                  <Link to="/shop">View Lookbook</Link>
                 </Button>
               </motion.div>
 
@@ -145,9 +153,9 @@ function Index() {
                 className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto lg:mx-0"
               >
                 {[
-                  ["272", "Laser Diodes"],
-                  ["16 wks", "To Results"],
-                  ["99%", "Satisfaction"],
+                  ["12+", "New Styles"],
+                  ["48h", "Dispatch"],
+                  ["4.9★", "Rated by Shoppers"],
                 ].map(([stat, label]) => (
                   <div key={label} className="text-center lg:text-left">
                     <div className="text-2xl font-bold text-foreground">{stat}</div>
@@ -173,11 +181,19 @@ function Index() {
                     className="space-y-4"
                     style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
                   >
-                    <div className="aspect-[3/4] rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
-                      <img src="/led-cap.png" alt="hairora LED Laser Hair Growth Cap" className="w-full h-full object-contain p-4" />
+                    <div className="aspect-[3/4] rounded-3xl overflow-hidden liquid-glass bg-muted">
+                      <img
+                        src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80"
+                        alt="VESTRA oversized cotton tee"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="aspect-square rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
-                      <img src="/morr-f5.webp" alt="Morr F5% Minoxidil Solution" className="w-full h-full object-contain p-4" />
+                    <div className="aspect-square rounded-3xl overflow-hidden liquid-glass bg-muted">
+                      <img
+                        src="https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=800&q=80"
+                        alt="VESTRA ribbed knit sweater"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </motion.div>
                   <motion.div
@@ -187,11 +203,19 @@ function Index() {
                     className="space-y-4 pt-12"
                     style={{ transform: "translateZ(60px)", transformStyle: "preserve-3d" }}
                   >
-                    <div className="aspect-square rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
-                      <img src="/morr-f5.webp" alt="Morr F5% solution" className="w-full h-full object-contain p-4" />
+                    <div className="aspect-square rounded-3xl overflow-hidden liquid-glass bg-muted">
+                      <img
+                        src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&q=80"
+                        alt="VESTRA tailored blazer"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="aspect-[4/3] rounded-3xl overflow-hidden liquid-glass bg-muted flex items-center justify-center">
-                      <img src="/led-cap.png" alt="LED hair growth cap" className="w-full h-full object-contain p-4" />
+                    <div className="aspect-[4/3] rounded-3xl overflow-hidden liquid-glass bg-muted">
+                      <img
+                        src="https://images.unsplash.com/photo-1601333144130-8cbb312386b6?w=800&q=80"
+                        alt="VESTRA denim jacket"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </motion.div>
                 </div>
@@ -208,7 +232,7 @@ function Index() {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">Secure Payment</p>
-                      <p className="text-xs text-muted-foreground">ABA PayWay</p>
+                      <p className="text-xs text-muted-foreground">Cash on Delivery</p>
                     </div>
                   </div>
                 </motion.div>
@@ -218,14 +242,29 @@ function Index() {
         </div>
       </section>
 
+      {/* Marquee ticker strip */}
+      <section className="border-y border-border bg-foreground overflow-hidden py-4">
+        <div className="marquee-track">
+          {[...marqueeWords, ...marqueeWords, ...marqueeWords].map((word, i) => (
+            <span
+              key={i}
+              className="flex items-center gap-6 px-6 text-background text-sm sm:text-base font-semibold uppercase tracking-widest shrink-0"
+            >
+              {word}
+              <span className="text-secondary text-lg">✦</span>
+            </span>
+          ))}
+        </div>
+      </section>
+
       {/* Trust Badges */}
-      <section className="border-y liquid-glass">
+      <section className="border-b liquid-glass">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
               ["Free Shipping", "Nationwide in Cambodia", Truck],
-              ["Secure Payment", "ABA PayWay", Shield],
-              ["Authentic Products", "100% genuine", RotateCcw],
+              ["Secure Payment", "Cash on delivery", Shield],
+              ["Easy Returns", "14-day exchange window", RotateCcw],
             ].map(([title, desc, Icon], i) => (
               <motion.div
                 key={title}
@@ -248,7 +287,7 @@ function Index() {
         </div>
       </section>
 
-      {/* Why hairora — Bento Grid */}
+      {/* Why VESTRA — Bento Grid */}
       <BentoFeatures />
 
       {/* Collections Section */}
@@ -262,8 +301,8 @@ function Index() {
               className="flex items-end justify-between mb-12"
             >
               <div>
-                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Collections</h2>
-                <p className="text-muted-foreground mt-2">Browse by category</p>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Shop by Category</h2>
+                <p className="text-muted-foreground mt-2">Curated edits for every wardrobe</p>
               </div>
               <Link
                 to="/shop"
@@ -310,8 +349,8 @@ function Index() {
             className="flex items-end justify-between mb-12"
           >
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Featured</h2>
-              <p className="text-muted-foreground mt-2">Handpicked for you</p>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Featured Pieces</h2>
+              <p className="text-muted-foreground mt-2">Editor-picked for the season</p>
             </div>
             <Button asChild variant="ghost" className="hidden sm:flex">
               <Link to="/shop">
@@ -369,10 +408,11 @@ function Index() {
           >
             <div className="relative max-w-2xl mx-auto">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
-                Start your hair restoration journey
+                Your next favorite outfit is one click away
               </h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">
-                Join customers across Cambodia who trust hairora for clinically proven, medical-grade hair restoration.
+                Join shoppers across Cambodia who trust VESTRA for considered design,
+                quality fabrics, and easy cash-on-delivery ordering.
               </p>
               <Button
                 asChild
@@ -380,7 +420,7 @@ function Index() {
                 className="rounded-full px-8 py-6 text-lg"
               >
                 <Link to="/shop">
-                  Shop Treatments
+                  Shop the Collection
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
