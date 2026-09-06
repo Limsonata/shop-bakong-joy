@@ -1,6 +1,5 @@
-// Authentication and user management.
-// Uses Supabase Auth when configured, falls back to demo mode otherwise.
-import { supabase, isSupabaseConfigured, isDemoModeAllowed } from "./supabase";
+// Authentication and user management via Supabase Auth.
+import { supabase } from "./supabase";
 
 export type UserRole = "user" | "admin";
 
@@ -10,11 +9,6 @@ export interface User {
   name: string;
   role: UserRole;
   createdAt: number;
-}
-
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
 }
 
 export interface AuthResult {
@@ -27,27 +21,6 @@ export interface AuthResult {
   };
 }
 
-// ----- Demo mode (used when Supabase env vars are not set) -----
-const DEMO_USERS = [
-  {
-    id: "demo-admin-1",
-    email: "admin@shop.com",
-    password: "admin123",
-    name: "Admin User",
-    role: "admin" as UserRole,
-    createdAt: Date.now(),
-  },
-  {
-    id: "demo-user-1",
-    email: "user@shop.com",
-    password: "user123",
-    name: "Regular User",
-    role: "user" as UserRole,
-    createdAt: Date.now(),
-  },
-];
-
-const AUTH_STORAGE_KEY = "shop-auth";
 const CART_STORAGE_KEY = "local-cart";
 const ZUSTAND_CART_KEY = "bakong-cart-store";
 
@@ -63,7 +36,7 @@ function clearAllCartStorage(): void {
   localStorage.removeItem(ZUSTAND_CART_KEY);
 }
 
-// Cached current user (avoids hitting localStorage / network repeatedly during a render)
+// Cached current user (avoids hitting the network repeatedly during a render)
 let cachedUser: User | null | undefined = undefined;
 
 function setCachedUser(user: User | null) {
@@ -87,9 +60,7 @@ async function loginSupabase(email: string, password: string): Promise<AuthResul
     .maybeSingle();
 
   const role: UserRole =
-    (data.user.app_metadata?.role as UserRole) ||
-    (profile?.role as UserRole) ||
-    "user";
+    (data.user.app_metadata?.role as UserRole) || (profile?.role as UserRole) || "user";
 
   const user: User = {
     id: data.user.id,
@@ -155,9 +126,7 @@ async function getCurrentUserSupabase(): Promise<User | null> {
     .maybeSingle();
 
   const role: UserRole =
-    (authUser.app_metadata?.role as UserRole) ||
-    (profile?.role as UserRole) ||
-    "user";
+    (authUser.app_metadata?.role as UserRole) || (profile?.role as UserRole) || "user";
 
   return {
     id: authUser.id,
@@ -168,155 +137,47 @@ async function getCurrentUserSupabase(): Promise<User | null> {
   };
 }
 
-// ===== Demo mode =====
-function loginDemo(email: string, password: string): AuthResult {
-  if (!isBrowser) return { success: false, error: "Not in browser" };
-
-  const user = DEMO_USERS.find((u) => u.email === email && u.password === password);
-  if (!user) {
-    return { success: false, error: "Invalid email or password" };
-  }
-
-  const authUser: User = {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    createdAt: user.createdAt,
-  };
-
-  localStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({ user: authUser, isAuthenticated: true } as AuthState),
-  );
-  setCachedUser(authUser);
-  clearAllCartStorage();
-  return { success: true, user: authUser };
-}
-
-function registerDemo(email: string, password: string, name: string): AuthResult {
-  if (!isBrowser) return { success: false, error: "Not in browser" };
-
-  if (DEMO_USERS.find((u) => u.email === email)) {
-    return { success: false, error: "Email already registered" };
-  }
-
-  // Demo-mode register accepts any input (no DB to actually save it)
-  void password;
-  const newUser: User = {
-    id: `demo-${Date.now()}`,
-    email,
-    name,
-    role: "user",
-    createdAt: Date.now(),
-  };
-
-  localStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({ user: newUser, isAuthenticated: true } as AuthState),
-  );
-  setCachedUser(newUser);
-  clearAllCartStorage();
-  return { success: true, user: newUser };
-}
-
-function logoutDemo(): void {
-  if (!isBrowser) return;
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-  setCachedUser(null);
-  clearAllCartStorage();
-}
-
-function getCurrentUserDemo(): User | null {
-  if (!isBrowser) return null;
-
-  const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!stored) return null;
-
-  try {
-    const auth: AuthState = JSON.parse(stored);
-    return auth.user;
-  } catch {
-    return null;
-  }
-}
-
 // ===== Public API =====
 
 /**
- * Login (async). Works with both Supabase and demo mode.
+ * Login (async) via Supabase Auth.
  */
 export async function login(email: string, password: string): Promise<AuthResult> {
-  if (isSupabaseConfigured) {
-    return loginSupabase(email, password);
-  }
-  if (isDemoModeAllowed) {
-    return loginDemo(email, password);
-  }
-  return { success: false, error: "Supabase authentication is required" };
+  return loginSupabase(email, password);
 }
 
 /**
- * Register a new account (async). Works with both Supabase and demo mode.
+ * Register a new account (async) via Supabase Auth.
  */
 export async function register(email: string, password: string, name: string): Promise<AuthResult> {
-  if (isSupabaseConfigured) {
-    return registerSupabase(email, password, name);
-  }
-  if (isDemoModeAllowed) {
-    return registerDemo(email, password, name);
-  }
-  return { success: false, error: "Supabase authentication is required" };
+  return registerSupabase(email, password, name);
 }
 
 /**
  * Sign the current user out.
  */
 export async function logout(): Promise<void> {
-  if (isSupabaseConfigured) {
-    await logoutSupabase();
-    return;
-  }
-  if (isDemoModeAllowed) {
-    logoutDemo();
-  }
+  await logoutSupabase();
 }
 
 /**
- * Get the current user. In Supabase mode this is async (network call),
- * in demo mode this is synchronous from localStorage.
+ * Get the current user (async network call to Supabase).
  *
  * For UI-friendly synchronous access, use `getCachedUser()`.
  */
 export async function getCurrentUser(): Promise<User | null> {
-  if (isSupabaseConfigured) {
-    const user = await getCurrentUserSupabase();
-    setCachedUser(user);
-    return user;
-  }
-  if (!isDemoModeAllowed) {
-    setCachedUser(null);
-    return null;
-  }
-  const user = getCurrentUserDemo();
+  const user = await getCurrentUserSupabase();
   setCachedUser(user);
   return user;
 }
 
 /**
  * Synchronous access to the current user. Returns the cached value populated
- * by the most recent `getCurrentUser()` call, or pulls from localStorage in
- * demo mode. May return null on the first call before cache is populated.
+ * by the most recent `getCurrentUser()` call. May return null on the first
+ * call before the cache is populated.
  */
 export function getCachedUser(): User | null {
-  if (cachedUser !== undefined) return cachedUser;
-  // Fall back to localStorage in demo mode for the very first sync call
-  if (isDemoModeAllowed) {
-    const user = getCurrentUserDemo();
-    cachedUser = user;
-    return user;
-  }
-  return null;
+  return cachedUser ?? null;
 }
 
 /**
@@ -337,8 +198,10 @@ export function isAdmin(): boolean {
  * Set a new password after arriving from a reset email link.
  * Must be called while a recovery session is active.
  */
-export async function updatePassword(newPassword: string): Promise<{ success: boolean; error?: string }> {
-  if (!isSupabaseConfigured || !supabase) return { success: false, error: "Not configured" };
+export async function updatePassword(
+  newPassword: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!supabase) return { success: false, error: "Not configured" };
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -348,19 +211,14 @@ export async function updatePassword(newPassword: string): Promise<{ success: bo
  * Send a password reset email.
  */
 export async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
-  if (isSupabaseConfigured && supabase) {
-    const appUrl =
-      (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, "") ||
-      (typeof window !== "undefined" ? window.location.origin : "");
-    const redirectTo = `${appUrl}/login`;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    if (error) return { success: false, error: error.message };
-    return { success: true };
-  }
-  // Demo mode — no real email, just acknowledge
-  return isDemoModeAllowed
-    ? { success: true }
-    : { success: false, error: "Supabase authentication is required" };
+  if (!supabase) return { success: false, error: "Supabase authentication is required" };
+  const appUrl =
+    (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, "") ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const redirectTo = `${appUrl}/login`;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) return { success: false, error: error.message };
+  return { success: true };
 }
 
 /**
@@ -369,31 +227,16 @@ export async function forgotPassword(email: string): Promise<{ success: boolean;
 export async function updateProfile(
   updates: Partial<Pick<User, "name" | "email">>,
 ): Promise<boolean> {
-  if (isSupabaseConfigured && supabase) {
-    const user = await getCurrentUser();
-    if (!user) return false;
-
-    if (updates.name) {
-      await supabase.from("profiles").update({ name: updates.name }).eq("id", user.id);
-    }
-    if (updates.email) {
-      await supabase.auth.updateUser({ email: updates.email });
-    }
-    await getCurrentUser(); // Refresh cache
-    return true;
-  }
-
-  // Demo mode
-  if (!isDemoModeAllowed) return false;
-  if (!isBrowser) return false;
-  const user = getCurrentUserDemo();
+  if (!supabase) return false;
+  const user = await getCurrentUser();
   if (!user) return false;
 
-  const updatedUser: User = { ...user, ...updates };
-  localStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({ user: updatedUser, isAuthenticated: true } as AuthState),
-  );
-  setCachedUser(updatedUser);
+  if (updates.name) {
+    await supabase.from("profiles").update({ name: updates.name }).eq("id", user.id);
+  }
+  if (updates.email) {
+    await supabase.auth.updateUser({ email: updates.email });
+  }
+  await getCurrentUser(); // Refresh cache
   return true;
 }

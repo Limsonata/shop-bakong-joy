@@ -59,6 +59,9 @@ export const Route = createFileRoute("/admin/sales")({
 
 const DELIVERY_STATUSES: DeliveryStatus[] = ["preparing", "sent", "delivered", "returned"];
 
+/** How many of the most recent sales to load — the list view isn't paginated yet. */
+const SALES_LOAD_LIMIT = 300;
+
 const PAYMENT_BADGE: Record<string, string> = {
   paid: "bg-emerald-100 text-emerald-800",
   deposit: "bg-amber-100 text-amber-800",
@@ -86,7 +89,7 @@ function SalesPage() {
   const load = async () => {
     setLoading(true);
     try {
-      setSales(await listSales());
+      setSales(await listSales(SALES_LOAD_LIMIT));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load sales");
     } finally {
@@ -252,6 +255,11 @@ function SalesPage() {
 
       <Card className="mt-6">
         <CardContent className="space-y-4 pt-6">
+          {sales.length >= SALES_LOAD_LIMIT ? (
+            <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Showing the most recent {SALES_LOAD_LIMIT} sales. Older sales exist but aren't loaded — narrow your search or export a date range from Money → CSV.
+            </p>
+          ) : null}
           <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-[220px] flex-1">
               <Label htmlFor="sales-search" className="text-xs text-muted-foreground">

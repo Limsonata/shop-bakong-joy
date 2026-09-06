@@ -198,7 +198,7 @@ function LocationPicker({
 }
 
 export const Route = createFileRoute("/checkout/bakong")({
-  head: () => ({ meta: [{ title: "Checkout - VESTRA" }] }),
+  head: () => ({ meta: [{ title: "Checkout - BillieGrace Closet" }] }),
   component: Checkout,
 });
 

@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { login, register } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({ meta: [{ title: "Login - Shop Bakong Joy" }] }),
@@ -109,35 +108,6 @@ function LoginPage() {
                   {isLoading ? "Logging in..." : "Login"}
                 </Button>
               </form>
-
-              {!isSupabaseConfigured && (
-                <div className="mt-6 rounded-lg border bg-muted p-4">
-                  <p className="text-sm font-semibold">Demo Accounts</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Configure Supabase to use real accounts.
-                  </p>
-                  <div className="mt-2 space-y-2 text-xs">
-                    <div>
-                      <p className="font-medium">Admin:</p>
-                      <p>
-                        Email: <code>admin@shop.com</code>
-                      </p>
-                      <p>
-                        Password: <code>admin123</code>
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-medium">User:</p>
-                      <p>
-                        Email: <code>user@shop.com</code>
-                      </p>
-                      <p>
-                        Password: <code>user123</code>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </TabsContent>
 
             <TabsContent value="register">

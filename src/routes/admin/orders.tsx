@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Package, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,23 +29,24 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   done: "bg-green-100 text-green-800",
   cancelled: "bg-gray-100 text-gray-800",
 };
+const FALLBACK_STATUS_COLOR = "bg-slate-100 text-slate-700";
 
 function OrdersAdmin() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await getAllOrders();
       setOrders(data);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to load orders");
+      toast.error(error instanceof Error ? error.message : "Failed to load orders");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadOrders();
@@ -63,7 +64,7 @@ function OrdersAdmin() {
       .subscribe();
 
     return () => { channel?.unsubscribe(); };
-  }, []);
+  }, [loadOrders]);
 
   const handleStatusChange = async (id: string, status: OrderStatus) => {
     const ok = await updateOrderStatus(id, status);
@@ -121,7 +122,7 @@ function OrdersAdmin() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[order.status]}`}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[order.status] ?? FALLBACK_STATUS_COLOR}`}
                       >
                         {order.status}
                       </span>

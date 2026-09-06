@@ -4,59 +4,49 @@ import { Search, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import type { Order, OrderStatus, OrderItem } from "@/lib/orderStore";
 
 export const Route = createFileRoute("/track")({
-  head: () => ({ meta: [{ title: "Track Order — VESTRA" }] }),
+  head: () => ({ meta: [{ title: "Track Order — BillieGrace Closet" }] }),
   component: TrackOrderPage,
 });
 
 const STATUS_LABELS: Record<OrderStatus, { label: string; color: string }> = {
-  pending:   { label: "Pending",           color: "bg-yellow-100 text-yellow-800" },
-  paid:      { label: "Payment received",  color: "bg-blue-100 text-blue-800" },
-  shipped:   { label: "Shipped",           color: "bg-purple-100 text-purple-800" },
-  done:      { label: "Completed",         color: "bg-green-100 text-green-800" },
-  cancelled: { label: "Cancelled",         color: "bg-gray-100 text-gray-700" },
+  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
+  paid: { label: "Payment received", color: "bg-blue-100 text-blue-800" },
+  shipped: { label: "Shipped", color: "bg-purple-100 text-purple-800" },
+  done: { label: "Completed", color: "bg-green-100 text-green-800" },
+  cancelled: { label: "Cancelled", color: "bg-gray-100 text-gray-700" },
 };
 
 async function lookupOrder(ref: string): Promise<Order | null> {
   const trimmed = ref.trim();
   if (!trimmed) return null;
 
-  if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .or(`bakong_reference.eq.${trimmed},id.eq.${trimmed}`)
-      .limit(1)
-      .maybeSingle();
-    if (error || !data) return null;
-    return {
-      id: data.id,
-      userId: data.user_id,
-      customerName: data.customer_name,
-      phone: data.phone,
-      address: data.address,
-      total: Number(data.total),
-      currency: data.currency,
-      bakongReference: data.bakong_reference,
-      bakongTransactionId: data.bakong_transaction_id,
-      status: data.status,
-      items: (data.items as OrderItem[]) ?? [],
-      createdAt: new Date(data.created_at).getTime(),
-    };
-  }
+  if (!supabase) return null;
 
-  // Demo mode: search localStorage
-  try {
-    const stored = localStorage.getItem("local-orders");
-    if (!stored) return null;
-    const orders: Order[] = JSON.parse(stored);
-    return orders.find((o) => o.bakongReference === trimmed || o.id === trimmed) ?? null;
-  } catch {
-    return null;
-  }
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .or(`bakong_reference.eq.${trimmed},id.eq.${trimmed}`)
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    id: data.id,
+    userId: data.user_id,
+    customerName: data.customer_name,
+    phone: data.phone,
+    address: data.address,
+    total: Number(data.total),
+    currency: data.currency,
+    bakongReference: data.bakong_reference,
+    bakongTransactionId: data.bakong_transaction_id,
+    status: data.status,
+    items: (data.items as OrderItem[]) ?? [],
+    createdAt: new Date(data.created_at).getTime(),
+  };
 }
 
 function TrackOrderPage() {
@@ -115,7 +105,9 @@ function TrackOrderPage() {
           <p className="font-medium">Order not found</p>
           <p className="text-sm mt-1">
             Double-check your reference number, or{" "}
-            <a href="/login" className="underline underline-offset-2">log in</a>{" "}
+            <a href="/login" className="underline underline-offset-2">
+              log in
+            </a>{" "}
             to view your orders.
           </p>
         </div>
@@ -128,7 +120,9 @@ function TrackOrderPage() {
               <CardTitle className="text-base font-medium text-muted-foreground">
                 Order #{order.id.slice(0, 8).toUpperCase()}
               </CardTitle>
-              <span className={`px-2.5 py-1 text-xs font-semibold rounded-full shrink-0 ${statusInfo.color}`}>
+              <span
+                className={`px-2.5 py-1 text-xs font-semibold rounded-full shrink-0 ${statusInfo.color}`}
+              >
                 {statusInfo.label}
               </span>
             </div>
@@ -145,7 +139,9 @@ function TrackOrderPage() {
               </div>
               <div>
                 <p className="text-muted-foreground">Total</p>
-                <p className="font-medium">{order.currency} {order.total.toFixed(2)}</p>
+                <p className="font-medium">
+                  {order.currency} {order.total.toFixed(2)}
+                </p>
               </div>
               {order.bakongReference && order.bakongReference !== "COD" && (
                 <div>

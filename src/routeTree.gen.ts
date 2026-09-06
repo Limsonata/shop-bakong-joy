@@ -29,6 +29,7 @@ import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminInventoryRouteImport } from './routes/admin/inventory'
 import { Route as AdminFinanceRouteImport } from './routes/admin/finance'
 import { Route as AdminFeedbackRouteImport } from './routes/admin/feedback'
+import { Route as AdminContentRouteImport } from './routes/admin/content'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminProductsNewRouteImport } from './routes/admin/products.new'
 import { Route as AdminProductsIdRouteImport } from './routes/admin/products.$id'
@@ -133,6 +134,11 @@ const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
   path: '/admin/feedback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/admin/content',
+  path: '/admin/content',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/admin/categories',
   path: '/admin/categories',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/shop': typeof ShopRoute
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/inventory': typeof AdminInventoryRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/shop': typeof ShopRoute
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/inventory': typeof AdminInventoryRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/shop': typeof ShopRoute
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/inventory': typeof AdminInventoryRoute
@@ -236,6 +245,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/track'
     | '/admin/categories'
+    | '/admin/content'
     | '/admin/feedback'
     | '/admin/finance'
     | '/admin/inventory'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/track'
     | '/admin/categories'
+    | '/admin/content'
     | '/admin/feedback'
     | '/admin/finance'
     | '/admin/inventory'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/track'
     | '/admin/categories'
+    | '/admin/content'
     | '/admin/feedback'
     | '/admin/finance'
     | '/admin/inventory'
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   ShopRoute: typeof ShopRoute
   TrackRoute: typeof TrackRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminContentRoute: typeof AdminContentRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   AdminFinanceRoute: typeof AdminFinanceRoute
   AdminInventoryRoute: typeof AdminInventoryRoute
@@ -469,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/admin/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/admin/categories'
@@ -516,6 +536,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopRoute: ShopRoute,
   TrackRoute: TrackRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminContentRoute: AdminContentRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
   AdminFinanceRoute: AdminFinanceRoute,
   AdminInventoryRoute: AdminInventoryRoute,

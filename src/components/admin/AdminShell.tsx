@@ -8,6 +8,7 @@ import {
   ScrollText,
   Settings,
   ShoppingCart,
+  FileText,
 } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,8 @@ const NAV_ITEMS = [
   { to: "/admin/sales", label: "Sales", icon: Receipt },
   { to: "/admin/finance", label: "Money", icon: ScrollText },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { to: "/admin/products", label: "Website", icon: Package },
+  { to: "/admin/products", label: "Products", icon: Package },
+  { to: "/admin/content", label: "Content", icon: FileText },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;
 

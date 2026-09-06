@@ -27,7 +27,7 @@ const SETTINGS_STORAGE_KEY = "shop-settings";
 function loadSettings(): StoreSettings {
   if (typeof window === "undefined") {
     return {
-      storeName: "VESTRA",
+      storeName: "BillieGrace Closet",
       storeEmail: "",
       storePhone: "",
       storeAddress: "",
@@ -43,7 +43,7 @@ function loadSettings(): StoreSettings {
     }
   }
   return {
-    storeName: "VESTRA",
+    storeName: "BillieGrace Closet",
     storeEmail: "",
     storePhone: "",
     storeAddress: "",
@@ -68,7 +68,7 @@ function SettingsAdmin() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    storeName: "VESTRA",
+    storeName: "BillieGrace Closet",
     storeEmail: "",
     storePhone: "",
     storeAddress: "",

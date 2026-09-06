@@ -53,7 +53,7 @@ export function Footer() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h3 className="text-2xl sm:text-3xl font-bold">Join the VESTRA list</h3>
+              <h3 className="text-2xl sm:text-3xl font-bold">Join the BillieGrace list</h3>
               <p className="text-background/60 mt-2">
                 Subscribe for early access to new drops, style edits, and member-only discounts.
               </p>
@@ -91,12 +91,17 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2">
             <Link to="/" className="flex items-center mb-6">
-              <span className="text-2xl font-bold tracking-tight">
-                <span className="text-background">VE</span><span style={{ color: "oklch(64% 0.16 45)" }}>STRA</span>
+              <span
+                className="text-2xl font-bold tracking-tight"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                <span style={{ color: "oklch(74% 0.09 15)" }}>Billie</span>
+                <span className="text-background">Grace</span>
               </span>
             </Link>
             <p className="text-background/60 mb-6 max-w-sm">
-              Modern clothing for everyday movement, with fast cash-on-delivery ordering. Proudly serving Cambodia.
+              Activewear and everyday essentials designed for women, with fast cash-on-delivery
+              ordering. Proudly serving Cambodia.
             </p>
 
             {/* Contact */}
@@ -160,7 +165,7 @@ export function Footer() {
       <div className="border-t border-background/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-background/60">
-            <p>© {new Date().getFullYear()} VESTRA. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} BillieGrace Closet. All rights reserved.</p>
             <div className="flex items-center gap-6">
               <span className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-green-500" />

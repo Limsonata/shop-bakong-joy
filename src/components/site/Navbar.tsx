@@ -1,5 +1,16 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Search, Menu, ShoppingBag, User, ArrowRight, Bell, Package, ShieldAlert, Tag, Info } from "lucide-react";
+import {
+  Search,
+  Menu,
+  ShoppingBag,
+  User,
+  ArrowRight,
+  Bell,
+  Package,
+  ShieldAlert,
+  Tag,
+  Info,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,13 +20,7 @@ import { Logo } from "@/components/site/Logo";
 import { getCollections, getProductTypes } from "@/lib/localStore";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -42,16 +47,24 @@ function formatTimeAgo(iso: string): string {
 function notifIcon(type: Notification["type"]) {
   const cls = "h-4 w-4 shrink-0 mt-0.5";
   switch (type) {
-    case "order_update": return <Package className={cn(cls, "text-blue-500")} />;
-    case "admin_alert":  return <ShieldAlert className={cn(cls, "text-orange-500")} />;
-    case "promotion":    return <Tag className={cn(cls, "text-green-500")} />;
-    case "system":       return <Info className={cn(cls, "text-muted-foreground")} />;
+    case "order_update":
+      return <Package className={cn(cls, "text-blue-500")} />;
+    case "admin_alert":
+      return <ShieldAlert className={cn(cls, "text-orange-500")} />;
+    case "promotion":
+      return <Tag className={cn(cls, "text-green-500")} />;
+    case "system":
+      return <Info className={cn(cls, "text-muted-foreground")} />;
   }
 }
 
 function NotificationBell({ userId }: { userId: string }) {
-  const { data: notifications = [], unreadCount, markAsRead, markAllAsRead } =
-    useNotifications(userId);
+  const {
+    data: notifications = [],
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications(userId);
 
   return (
     <Popover>
@@ -91,20 +104,18 @@ function NotificationBell({ userId }: { userId: string }) {
                   onClick={() => !n.read && markAsRead.mutate(n.id)}
                   className={cn(
                     "flex gap-3 px-4 py-3 border-b last:border-0 transition-colors",
-                    !n.read
-                      ? "bg-muted/40 cursor-pointer hover:bg-muted/60"
-                      : "hover:bg-muted/20",
+                    !n.read ? "bg-muted/40 cursor-pointer hover:bg-muted/60" : "hover:bg-muted/20",
                   )}
                 >
                   {notifIcon(n.type)}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium leading-tight">{n.title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">{formatTimeAgo(n.created_at)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {formatTimeAgo(n.created_at)}
+                    </p>
                   </div>
-                  {!n.read && (
-                    <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
-                  )}
+                  {!n.read && <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />}
                 </li>
               ))}
             </ul>
@@ -145,7 +156,6 @@ export function Navbar() {
     router.navigate({ to: "/shop", search: { q } });
   };
 
-
   return (
     <>
       <motion.header
@@ -177,14 +187,14 @@ export function Navbar() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">
-              {([
+              {[
                 { to: "/" as const, label: "Home" },
                 { to: "/shop" as const, label: "Shop", search: undefined },
-                { to: "/shop" as const, label: "Women", search: { q: "Women" } },
-                { to: "/shop" as const, label: "Men", search: { q: "Men" } },
+                { to: "/shop" as const, label: "Activewear", search: { q: "Activewear" } },
+                { to: "/shop" as const, label: "Sets", search: { q: "Sets" } },
                 { to: "/shop" as const, label: "New", search: { q: "New Arrivals" } },
                 { to: "/shop" as const, label: "Sale", search: { q: "Sale" } },
-              ]).map((item, index) => (
+              ].map((item, index) => (
                 <motion.div
                   key={item.label}
                   initial={{ opacity: 0, y: -20 }}
@@ -337,16 +347,20 @@ export function Navbar() {
                       </div>
                     </form>
                     <nav className="space-y-2">
-                      {([
+                      {[
                         { label: "Home", to: "/" as const, search: undefined },
                         { label: "Shop", to: "/shop" as const, search: undefined },
-                        { label: "Women", to: "/shop" as const, search: { q: "Women" } },
-                        { label: "Men", to: "/shop" as const, search: { q: "Men" } },
-                        { label: "New Arrivals", to: "/shop" as const, search: { q: "New Arrivals" } },
+                        { label: "Activewear", to: "/shop" as const, search: { q: "Activewear" } },
+                        { label: "Sets", to: "/shop" as const, search: { q: "Sets" } },
+                        {
+                          label: "New Arrivals",
+                          to: "/shop" as const,
+                          search: { q: "New Arrivals" },
+                        },
                         { label: "Sale", to: "/shop" as const, search: { q: "Sale" } },
                         { label: "Orders", to: "/orders" as const, search: undefined },
                         { label: "Account", to: "/account" as const, search: undefined },
-                      ]).map((item) => (
+                      ].map((item) => (
                         <Link
                           key={item.label}
                           to={item.to}
@@ -378,4 +392,3 @@ export function Navbar() {
     </>
   );
 }
-

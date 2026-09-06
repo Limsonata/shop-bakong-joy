@@ -1,6 +1,4 @@
-// Supabase client with a development-only demo fallback.
-// Production must be backed by Supabase; local JSON/localStorage auth is only
-// allowed while running Vite in development.
+// Supabase client. Production builds require the env vars below.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -9,7 +7,6 @@ const supabasePublicKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
 const isProductionBuild = import.meta.env.PROD;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabasePublicKey);
-export const isDemoModeAllowed = !isProductionBuild && !isSupabaseConfigured;
 
 if (isProductionBuild && !isSupabaseConfigured) {
   throw new Error(
@@ -39,7 +36,13 @@ export interface DbProduct {
   image_url: string | null;
   in_stock: boolean;
   collections: string[] | null;
-  variants: Array<{ id: string; title: string; option: string; price: number; availableForSale: boolean }> | null;
+  variants: Array<{
+    id: string;
+    title: string;
+    option: string;
+    price: number;
+    availableForSale: boolean;
+  }> | null;
   created_at: string;
 }
 

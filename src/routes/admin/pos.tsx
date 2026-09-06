@@ -113,10 +113,13 @@ function PosPage() {
     () => round2(lines.reduce((sum, line) => sum + line.qty * line.unitCost, 0)),
     [lines],
   );
-  const discountValue = Math.max(Number(discount) || 0, 0);
-  const feeValue = Math.max(Number(deliveryFee) || 0, 0);
+  const discountValue = Math.max(Number.isFinite(Number(discount)) ? Number(discount) : 0, 0);
+  const feeValue = Math.max(Number.isFinite(Number(deliveryFee)) ? Number(deliveryFee) : 0, 0);
   const total = round2(Math.max(subtotal - discountValue + feeValue, 0));
-  const paid = paidInput === "" ? 0 : Math.max(Number(paidInput) || 0, 0);
+  const paid =
+    paidInput === "" || !Number.isFinite(Number(paidInput))
+      ? 0
+      : Math.max(Number(paidInput), 0);
   const balance = round2(Math.max(total - paid, 0));
   const profit = round2(subtotal - discountValue - cost);
 
@@ -189,9 +192,10 @@ function PosPage() {
 
   const setLinePrice = (index: number, value: string) => {
     const price = Number(value);
+    const safePrice = Number.isFinite(price) && price >= 0 ? price : 0;
     setLines((current) =>
       current.map((line, position) =>
-        position === index ? { ...line, unitPrice: Number.isFinite(price) ? price : 0 } : line,
+        position === index ? { ...line, unitPrice: safePrice } : line,
       ),
     );
   };

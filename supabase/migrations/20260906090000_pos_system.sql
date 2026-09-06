@@ -344,6 +344,69 @@ end;
 $$;
 
 -- ─────────────────────────────────────────────────────────────
+-- CANCEL A SALE ATOMICALLY
+-- Restocks every line item, posts a refund to the ledger when the
+-- sale was paid, and flips the sale to cancelled — all or nothing.
+-- ─────────────────────────────────────────────────────────────
+create or replace function public.cancel_sale(target_sale uuid)
+returns public.sales
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  updated public.sales;
+  line    public.sale_items;
+  item    public.stock_items;
+begin
+  select * into updated from public.sales where id = target_sale for update;
+  if not found then
+    raise exception 'Sale % not found', target_sale;
+  end if;
+
+  if updated.status = 'cancelled' then
+    return updated;
+  end if;
+
+  for line in select * from public.sale_items where sale_id = target_sale
+  loop
+    if line.stock_item_id is null then
+      continue;
+    end if;
+
+    select * into item from public.stock_items where id = line.stock_item_id for update;
+    if not found then
+      continue;
+    end if;
+
+    update public.stock_items
+       set sold = greatest(sold - line.qty, 0), updated_at = now()
+     where id = item.id;
+
+    insert into public.stock_movements (stock_item_id, delta, reason, reference, created_by)
+    values (item.id, line.qty, 'return', 'cancel ' || updated.code, auth.uid());
+  end loop;
+
+  if updated.paid > 0 then
+    insert into public.finance_entries
+      (entry_date, kind, description, category, amount, method, source, sale_id, created_by)
+    values (
+      current_date, 'expense',
+      'Refund ' || updated.code || ' — ' || updated.customer_name,
+      'Refund', updated.paid, updated.payment_method, 'sale', updated.id, auth.uid()
+    );
+  end if;
+
+  update public.sales
+     set status = 'cancelled', updated_at = now()
+   where id = target_sale
+  returning * into updated;
+
+  return updated;
+end;
+$$;
+
+-- ─────────────────────────────────────────────────────────────
 -- SUMMARY VIEW  (what the Profit sheet used to calculate by hand)
 -- ─────────────────────────────────────────────────────────────
 create or replace view public.shop_summary
@@ -445,8 +508,10 @@ $$;
 revoke execute on function public.record_sale(jsonb)                             from public, anon;
 revoke execute on function public.record_sale_payment(uuid, numeric, text)       from public, anon;
 revoke execute on function public.record_restock(uuid, integer, numeric, text, boolean) from public, anon;
+revoke execute on function public.cancel_sale(uuid)                             from public, anon;
 grant  execute on function public.record_sale(jsonb)                             to authenticated;
 grant  execute on function public.record_sale_payment(uuid, numeric, text)       to authenticated;
 grant  execute on function public.record_restock(uuid, integer, numeric, text, boolean) to authenticated;
+grant  execute on function public.cancel_sale(uuid)                             to authenticated;
 
 notify pgrst, 'reload schema';

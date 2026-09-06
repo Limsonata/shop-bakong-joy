@@ -20,6 +20,9 @@ function FeedbackAdmin() {
     setIsLoading(true);
     try {
       setItems(await getAllFeedback());
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : "Failed to load feedback");
     } finally {
       setIsLoading(false);
     }

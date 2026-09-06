@@ -117,10 +117,11 @@ function FinancePage() {
   );
 
   const totals = useMemo(() => {
-    const scope =
-      monthFilter === "all"
-        ? entries
-        : entries.filter((e) => monthKey(e.entryDate) === monthFilter);
+    const scope = entries.filter((e) => {
+      if (monthFilter !== "all" && monthKey(e.entryDate) !== monthFilter) return false;
+      if (kindFilter !== "all" && e.kind !== kindFilter) return false;
+      return true;
+    });
     const income = round2(
       scope.filter((e) => e.kind === "income").reduce((sum, e) => sum + e.amount, 0),
     );
@@ -133,7 +134,7 @@ function FinancePage() {
         .reduce((sum, e) => sum + e.amount, 0),
     );
     return { income, expense, inventory, net: round2(income - expense) };
-  }, [entries, monthFilter]);
+  }, [entries, monthFilter, kindFilter]);
 
   const byCategory = useMemo(() => {
     const map = new Map<string, number>();

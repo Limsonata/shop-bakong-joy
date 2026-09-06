@@ -24,6 +24,9 @@ export const Route = createFileRoute("/admin/products")({
   component: ProductsAdmin,
 });
 
+/** How many products to load — the list view isn't paginated yet. */
+const PRODUCTS_LOAD_LIMIT = 100;
+
 function ProductsAdmin() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [products, setProducts] = useState<Product[]>([]);
@@ -36,11 +39,11 @@ function ProductsAdmin() {
   const loadProducts = async () => {
     setIsLoading(true);
     try {
-      const data = await getProducts({ first: 100 });
+      const data = await getProducts({ first: PRODUCTS_LOAD_LIMIT });
       setProducts(data.map((edge) => edge.node));
     } catch (error) {
       console.error(error);
-      toast.error("Failed to load products");
+      toast.error(error instanceof Error ? error.message : "Failed to load products");
     } finally {
       setIsLoading(false);
     }
@@ -123,6 +126,13 @@ function ProductsAdmin() {
               className="pl-9 max-w-md"
             />
           </div>
+
+          {!isLoading && products.length >= PRODUCTS_LOAD_LIMIT && (
+            <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Showing the first {PRODUCTS_LOAD_LIMIT} products. There may be more — use search to
+              narrow results, since it only searches within the loaded set.
+            </p>
+          )}
 
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading products...</p>

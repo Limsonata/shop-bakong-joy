@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Package, ShoppingBag, ArrowRight } from "lucide-react";
+import { Package, ShoppingBag, ArrowRight, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +26,7 @@ function MyOrdersPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -34,15 +36,25 @@ function MyOrdersPage() {
     }
 
     let cancelled = false;
-    getMyOrders()
-      .then((data) => { if (!cancelled) setOrders(data); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
+    const fetchOrders = () => {
+      setLoadError(null);
+      getMyOrders()
+        .then((data) => { if (!cancelled) setOrders(data); })
+        .catch((error) => {
+          if (cancelled) return;
+          const message = error instanceof Error ? error.message : "Failed to load orders";
+          setLoadError(message);
+          toast.error(message);
+        })
+        .finally(() => { if (!cancelled) setIsLoading(false); });
+    };
+    fetchOrders();
 
     // Realtime: re-fetch when any of this user's orders change
     const channel = supabase
       ?.channel(`orders-user-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, () => {
-        getMyOrders().then((data) => { if (!cancelled) setOrders(data); });
+        fetchOrders();
       })
       .subscribe();
 
@@ -74,6 +86,14 @@ function MyOrdersPage() {
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading orders...</p>
+      ) : loadError ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <AlertTriangle className="mb-4 h-12 w-12 text-destructive" />
+            <p className="text-lg font-medium">Couldn't load your orders</p>
+            <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
+          </CardContent>
+        </Card>
       ) : orders.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">

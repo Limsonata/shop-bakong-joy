@@ -23,7 +23,7 @@ const STATIC_FALLBACK = [
     name: "Dara C.",
     location: "Siem Reap",
     rating: 5,
-    text: "I was skeptical at first but VESTRA's pieces actually hold up after multiple washes. My go-to for everyday basics now. Highly recommend!",
+    text: "I was skeptical at first but BillieGrace Closet's pieces actually hold up after multiple washes. My go-to for everyday basics now. Highly recommend!",
     highlight: "Holds up wash after wash",
   },
   {
@@ -248,7 +248,7 @@ export function TestimonialsSection() {
                         id="fb-text"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="Tell us about your experience with VESTRA..."
+                        placeholder="Tell us about your experience with BillieGrace Closet..."
                         rows={4}
                         required
                         minLength={20}

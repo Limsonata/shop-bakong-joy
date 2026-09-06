@@ -17,7 +17,7 @@ import { Logo } from "@/components/site/Logo";
 import type { TelegramUser } from "@/lib/telegramAuth";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign In — VESTRA" }] }),
+  head: () => ({ meta: [{ title: "Sign In — BillieGrace Closet" }] }),
   component: LoginPage,
 });
 
@@ -70,7 +70,9 @@ function LoginPage() {
       return;
     }
     // Also handle implicit flow (hash-based recovery)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setView("reset");
         window.history.replaceState({}, "", window.location.pathname);
@@ -91,7 +93,11 @@ function LoginPage() {
     const result = await login(email, password);
     if (result.success && result.user) {
       toast.success(`Welcome back, ${result.user.name}!`);
-      navigate({ to: result.user.role === "admin" ? "/admin" : "/" });
+      try {
+        await navigate({ to: result.user.role === "admin" ? "/admin" : "/" });
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       toast.error(result.error || "Login failed");
       setIsLoading(false);
@@ -113,7 +119,11 @@ function LoginPage() {
     const result = await register(regEmail, regPassword, regName);
     if (result.success && result.user) {
       toast.success(`Welcome, ${result.user.name}!`);
-      navigate({ to: "/" });
+      try {
+        await navigate({ to: "/" });
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       toast.error(result.error || "Registration failed");
       setIsLoading(false);
@@ -140,7 +150,11 @@ function LoginPage() {
     const result = await loginWithTelegram(telegramUser);
     if (result.success && result.user) {
       toast.success(`Welcome, ${result.user.name}!`);
-      navigate({ to: result.user.role === "admin" ? "/admin" : "/" });
+      try {
+        await navigate({ to: result.user.role === "admin" ? "/admin" : "/" });
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       toast.error(result.error || "Telegram login failed");
       setIsLoading(false);
@@ -149,8 +163,14 @@ function LoginPage() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== newConfirm) { toast.error("Passwords do not match"); return; }
-    if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (newPassword !== newConfirm) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
     setIsLoading(true);
     const result = await updatePassword(newPassword);
     setIsLoading(false);
@@ -164,7 +184,7 @@ function LoginPage() {
 
   const viewMeta: Record<View, { title: string; desc: string }> = {
     login: { title: "Welcome back", desc: "Sign in to your account" },
-    register: { title: "Create account", desc: "Join VESTRA today" },
+    register: { title: "Create account", desc: "Join BillieGrace Closet today" },
     forgot: { title: "Reset password", desc: "We'll send a reset link to your email" },
     "forgot-sent": { title: "Check your email", desc: `Reset link sent to ${sentTo}` },
     reset: { title: "Set new password", desc: "Choose a strong password for your account" },
@@ -251,31 +271,23 @@ function LoginPage() {
                               onClick={() => setShowPassword(!showPassword)}
                               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
 
-                        <Button type="submit" className="w-full h-11 rounded-full" disabled={isLoading}>
+                        <Button
+                          type="submit"
+                          className="w-full h-11 rounded-full"
+                          disabled={isLoading}
+                        >
                           {isLoading ? <Spinner /> : "Sign in"}
                         </Button>
                       </form>
-
-                      {!isSupabaseConfigured && (
-                        <div className="rounded-lg border bg-muted/50 p-4">
-                          <p className="text-sm font-medium mb-3">Demo Mode — Quick Login</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button type="button" variant="outline" size="sm"
-                              onClick={() => { setEmail("admin@shop.com"); setPassword("admin123"); }}>
-                              Admin Demo
-                            </Button>
-                            <Button type="button" variant="outline" size="sm"
-                              onClick={() => { setEmail("user@shop.com"); setPassword("user123"); }}>
-                              User Demo
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                     </TabsContent>
 
                     <TabsContent value="telegram">
@@ -366,7 +378,11 @@ function LoginPage() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -389,7 +405,11 @@ function LoginPage() {
                           onClick={() => setShowConfirm(!showConfirm)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showConfirm ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -430,12 +450,6 @@ function LoginPage() {
                       />
                     </div>
 
-                    {!isSupabaseConfigured && (
-                      <p className="text-xs text-muted-foreground rounded-md bg-muted p-3">
-                        Demo mode — no real email will be sent.
-                      </p>
-                    )}
-
                     <Button type="submit" className="w-full h-11 rounded-full" disabled={isLoading}>
                       {isLoading ? <Spinner /> : "Send reset link"}
                     </Button>
@@ -475,7 +489,11 @@ function LoginPage() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -498,7 +516,11 @@ function LoginPage() {
                           onClick={() => setShowConfirm(!showConfirm)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showConfirm ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -517,14 +539,10 @@ function LoginPage() {
                   <div className="space-y-2">
                     <p className="font-medium">Reset link sent!</p>
                     <p className="text-sm text-muted-foreground">
-                      Check your inbox at <span className="font-medium text-foreground">{sentTo}</span> and
-                      follow the link to reset your password.
+                      Check your inbox at{" "}
+                      <span className="font-medium text-foreground">{sentTo}</span> and follow the
+                      link to reset your password.
                     </p>
-                    {!isSupabaseConfigured && (
-                      <p className="text-xs text-muted-foreground bg-muted rounded-md p-3 mt-2">
-                        Demo mode — no real email was sent.
-                      </p>
-                    )}
                   </div>
                   <Button
                     variant="outline"

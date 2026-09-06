@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export const Route = createFileRoute("/faq")({
-  head: () => ({ meta: [{ title: "FAQ — VESTRA" }] }),
+  head: () => ({ meta: [{ title: "FAQ — BillieGrace Closet" }] }),
   component: FaqPage,
 });
 
@@ -18,7 +18,7 @@ interface Faq {
 }
 
 const STATIC_FAQS: Faq[] = [
-  { id: "1", question: "What is VESTRA?", answer: "VESTRA is a modern clothing brand offering contemporary everyday wear, delivered across Cambodia.", category: "General", sort_order: 1 },
+  { id: "1", question: "What is BillieGrace Closet?", answer: "BillieGrace Closet is an activewear and everyday essentials brand for women, delivered across Cambodia.", category: "General", sort_order: 1 },
   { id: "2", question: "How do I pay?", answer: "We accept Cash on Delivery (COD) — pay when your order arrives.", category: "Payment", sort_order: 1 },
   { id: "3", question: "How long does delivery take?", answer: "Standard delivery within Phnom Penh is 1–2 business days. Provincial orders take 3–5 business days.", category: "Delivery", sort_order: 1 },
   { id: "4", question: "Can I return a product?", answer: "We accept returns within 7 days of delivery if the product is unused and in original packaging. Contact us via Telegram to initiate a return.", category: "Returns", sort_order: 1 },
@@ -61,7 +61,7 @@ function FaqPage() {
         </div>
         <h1 className="text-4xl font-bold tracking-tight">Frequently Asked Questions</h1>
         <p className="mt-3 text-muted-foreground">
-          Everything you need to know about VESTRA products and orders.
+          Everything you need to know about BillieGrace Closet products and orders.
         </p>
       </div>
 

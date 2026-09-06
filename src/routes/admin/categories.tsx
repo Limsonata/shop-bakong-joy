@@ -29,7 +29,7 @@ import {
   createCollection,
   updateCollection,
   deleteCollection,
-  getProductsInCollection,
+  getProducts,
   type Collection,
 } from "@/lib/productStore";
 
@@ -59,17 +59,17 @@ function CategoriesAdmin() {
   const loadCollections = async () => {
     setIsLoading(true);
     try {
-      const data = await getAllCollections();
+      const [data, productEdges] = await Promise.all([getAllCollections(), getProducts()]);
       setCollections(data);
 
-      // Load product counts for each collection
+      // Count products per collection from a single fetch instead of
+      // re-scanning the full product list once per collection.
       const counts: Record<string, number> = {};
-      await Promise.all(
-        data.map(async (collection) => {
-          const products = await getProductsInCollection(collection.id);
-          counts[collection.id] = products.length;
-        }),
-      );
+      for (const { node: product } of productEdges) {
+        for (const collectionId of product.collections) {
+          counts[collectionId] = (counts[collectionId] ?? 0) + 1;
+        }
+      }
       setProductCounts(counts);
     } catch (error) {
       console.error(error);

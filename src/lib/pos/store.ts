@@ -684,54 +684,15 @@ export async function updateSale(
 /** Cancel a sale and put the goods back on the shelf. */
 export async function cancelSale(saleId: string): Promise<Sale> {
   if (usingCloud && supabase) {
-    const { data: saleRow, error: readError } = await supabase
+    const { error } = await supabase.rpc("cancel_sale", { target_sale: saleId });
+    if (error) fail("Could not cancel the sale", error);
+    const { data, error: readError } = await supabase
       .from("sales")
       .select(SALE_SELECT)
       .eq("id", saleId)
       .single();
-    if (readError) fail("Could not load the sale", readError);
-    const sale = toSale(saleRow as SaleRow);
-    if (sale.status === "cancelled") return sale;
-
-    for (const line of sale.items) {
-      if (!line.stockItemId) continue;
-      const { data: stockRow } = await supabase
-        .from("stock_items")
-        .select("*")
-        .eq("id", line.stockItemId)
-        .single();
-      if (!stockRow) continue;
-      await supabase
-        .from("stock_items")
-        .update({ sold: Math.max((stockRow as StockRow).sold - line.qty, 0) })
-        .eq("id", line.stockItemId);
-      await supabase.from("stock_movements").insert({
-        stock_item_id: line.stockItemId,
-        delta: line.qty,
-        reason: "return",
-        reference: `cancel ${sale.code}`,
-      });
-    }
-
-    if (sale.paid > 0) {
-      await supabase.from("finance_entries").insert({
-        entry_date: new Date().toISOString().slice(0, 10),
-        kind: "expense",
-        description: `Refund ${sale.code} — ${sale.customerName}`,
-        category: "Refund",
-        amount: sale.paid,
-        method: sale.paymentMethod,
-        source: "sale",
-        sale_id: sale.id,
-      });
-    }
-
-    const { error } = await supabase
-      .from("sales")
-      .update({ status: "cancelled", updated_at: new Date().toISOString() })
-      .eq("id", saleId);
-    if (error) fail("Could not cancel the sale", error);
-    return { ...sale, status: "cancelled" };
+    if (readError) fail("Could not reload the sale", readError);
+    return toSale(data as SaleRow);
   }
 
   return mutate((snapshot) => {
