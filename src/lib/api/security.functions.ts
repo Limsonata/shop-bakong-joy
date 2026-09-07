@@ -157,7 +157,13 @@ async function assertAdmin(accessToken?: string | null): Promise<string> {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profileError || profile?.role !== "admin") {
+  // Surface the real reason (e.g. RLS misconfig / recursion) instead of
+  // masking it as a generic "not an admin" message.
+  if (profileError) {
+    console.error("[assertAdmin] Could not read profile:", profileError);
+    throw new Error(`Admin check failed: ${profileError.message}`);
+  }
+  if (profile?.role !== "admin") {
     throw new Error("Admin access required");
   }
 
@@ -413,13 +419,209 @@ export const updateAdminOrderStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await assertAdmin(data.accessToken);
-    const { error } = await createServiceClient()
+    const supabase = createServiceClient();
+    const { error } = await supabase
       .from("orders")
       .update({ status: data.status satisfies OrderStatus })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    // Keep the POS in sync with the website order: record the sale and
+    // deduct stock when money is collected, cancel/refund/restock when
+    // the order is cancelled, and keep the delivery status current.
+    try {
+      await syncOrderWithPos(supabase, data.id, data.status);
+    } catch (syncError) {
+      throw new Error(
+        `Status saved, but POS sync failed: ${
+          syncError instanceof Error ? syncError.message : String(syncError)
+        }`,
+      );
+    }
+
     return { ok: true };
   });
+
+type OrderStatusDb = "pending" | "paid" | "shipped" | "done" | "cancelled";
+
+interface OrderItemJson {
+  productId?: string;
+  variantId?: string | null;
+  title?: string;
+  quantity?: number;
+  price?: number;
+}
+
+interface OrderRow {
+  id: string;
+  customer_name: string;
+  phone: string;
+  address: string;
+  total: number;
+  items: OrderItemJson[] | null;
+}
+
+/**
+ * Mirror an online order's lifecycle into the POS:
+ *  - paid / done  → record a POS sale (channel 'online', paid in cash on
+ *    delivery) via record_online_sale, which also deducts stock and posts
+ *    the cash to the ledger. Idempotent per order.
+ *  - shipped      → mark the linked sale as sent.
+ *  - done         → mark the linked sale as delivered.
+ *  - cancelled    → cancel the linked sale (restocks items, posts a refund).
+ */
+async function syncOrderWithPos(
+  serviceSupabase: SupabaseClient,
+  orderId: string,
+  status: OrderStatusDb,
+): Promise<void> {
+  const { data: existingSale, error: saleError } = await serviceSupabase
+    .from("sales")
+    .select("id, status")
+    .eq("order_id", orderId)
+    .maybeSingle();
+  if (saleError) throw new Error(saleError.message);
+
+  if (status === "cancelled") {
+    if (existingSale && existingSale.status !== "cancelled") {
+      const { error } = await serviceSupabase.rpc("cancel_sale", {
+        target_sale: existingSale.id,
+      });
+      if (error) throw new Error(error.message);
+    }
+    return;
+  }
+
+  if (status === "shipped" && existingSale) {
+    const { error } = await serviceSupabase
+      .from("sales")
+      .update({ delivery_status: "sent" })
+      .eq("id", existingSale.id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  if (status === "done" && existingSale) {
+    const { error } = await serviceSupabase
+      .from("sales")
+      .update({ delivery_status: "delivered" })
+      .eq("id", existingSale.id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  // Only paid / done create a sale (pending and shipped do not).
+  if ((status !== "paid" && status !== "done") || existingSale) return;
+
+  const { data: order, error: orderError } = await serviceSupabase
+    .from("orders")
+    .select("id, customer_name, phone, address, total, items")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (orderError) throw new Error(orderError.message);
+  if (!order) throw new Error("Order not found");
+  const orderRow = order as OrderRow;
+
+  const lines = await buildSaleLines(serviceSupabase, orderRow.items ?? []);
+
+  const { error } = await serviceSupabase.rpc("record_online_sale", {
+    payload: {
+      orderId,
+      soldAt: new Date().toISOString().slice(0, 10),
+      customerName: orderRow.customer_name || "Online customer",
+      phone: orderRow.phone ?? "",
+      address: orderRow.address ?? "",
+      city: "",
+      channel: "online",
+      deliveryMethod: "Delivery",
+      deliveryFee: 0,
+      deliveryStatus: status === "done" ? "delivered" : "preparing",
+      discount: 0,
+      paid: Number(orderRow.total) || 0,
+      paymentMethod: "cash",
+      note: `Online order ${orderId.slice(0, 8)}`,
+      items: lines,
+    },
+  });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Map the order's stored items (productId / variantId / price) onto POS
+ * stock items. Stock-linked products have stock_items.sku === variantId;
+ * otherwise we fall back to stock_items.product_id. Lines with no match
+ * are still recorded (stockItemId null), they just don't move stock.
+ */
+async function buildSaleLines(
+  serviceSupabase: SupabaseClient,
+  items: OrderItemJson[],
+): Promise<
+  Array<{
+    stockItemId: string | null;
+    name: string;
+    size: string;
+    color: string;
+    qty: number;
+    unitPrice: number;
+    unitCost: number;
+  }>
+> {
+  const variantIds = [...new Set(items.map((i) => i.variantId).filter(Boolean))] as string[];
+  const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
+
+  const filters: string[] = [];
+  if (variantIds.length) filters.push(`sku.in.(${variantIds.join(",")})`);
+  if (productIds.length) filters.push(`product_id.in.(${productIds.join(",")})`);
+
+  type StockRow = {
+    id: string;
+    sku: string;
+    product_id: string | null;
+    name: string;
+    size: string;
+    color: string;
+    cost: number;
+    archived: boolean;
+  };
+  let stockRows: StockRow[] = [];
+  if (filters.length) {
+    const { data, error } = await serviceSupabase
+      .from("stock_items")
+      .select("id, sku, product_id, name, size, color, cost, archived")
+      .or(filters.join(","));
+    if (error) throw new Error(error.message);
+    stockRows = (data ?? []) as StockRow[];
+  }
+
+  const bySku = new Map(stockRows.map((row) => [row.sku, row]));
+  const byProduct = new Map<string, StockRow[]>();
+  for (const row of stockRows) {
+    if (!row.product_id) continue;
+    const list = byProduct.get(row.product_id) ?? [];
+    list.push(row);
+    byProduct.set(row.product_id, list);
+  }
+
+  return items.map((item) => {
+    const qty = Math.max(Math.round(Number(item.quantity) || 1), 1);
+    const unitPrice = Number(item.price) || 0;
+    const stock =
+      (item.variantId ? bySku.get(item.variantId) : undefined) ??
+      (item.productId
+        ? (byProduct.get(item.productId) ?? []).find((row) => !row.archived)
+        : undefined);
+
+    return {
+      stockItemId: stock?.id ?? null,
+      name: stock?.name ?? item.title ?? "Item",
+      size: stock?.size ?? "",
+      color: stock?.color ?? "",
+      qty,
+      unitPrice,
+      unitCost: stock ? Number(stock.cost) : 0,
+    };
+  });
+}
 
 export const updateAdminFeedbackApproval = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), approved: z.boolean() }))

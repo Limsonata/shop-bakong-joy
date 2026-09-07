@@ -49,7 +49,10 @@ function AdminDashboard() {
     try {
       const [shop, orders] = await Promise.all([
         loadShopData(),
-        getAllOrders().catch(() => [] as Order[]),
+        getAllOrders().catch((error) => {
+          console.error("[admin] Failed to load website orders:", error);
+          return [] as Order[];
+        }),
       ]);
       setData(shop);
       setWebOrders(orders);
@@ -202,8 +205,9 @@ function AdminDashboard() {
             <StatCard
               label="Website orders"
               value={String(webOrders.length)}
-              hint={`${pendingWebOrders} pending online`}
+              hint={`${pendingWebOrders} pending online · click to view`}
               icon={DollarSign}
+              to="/admin/orders"
             />
           </div>
 

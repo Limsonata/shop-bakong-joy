@@ -127,14 +127,16 @@ export async function getAllOrders(): Promise<Order[]> {
   return (data ?? []).map((row) => dbOrderToOrder(row as DbOrder));
 }
 
-export async function updateOrderStatus(id: string, status: OrderStatus): Promise<boolean> {
+export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
   if (!supabase) throw new Error("Supabase is not configured");
 
+  const accessToken = await getSupabaseAccessToken();
   try {
-    const accessToken = await getSupabaseAccessToken();
     await updateAdminOrderStatus({ data: { accessToken, id, status } });
-    return true;
-  } catch {
-    return false;
+  } catch (error) {
+    // Surface the real reason (missing SUPABASE_SERVICE_ROLE_KEY, not an
+    // admin, DB error, …) instead of swallowing it into a generic failure.
+    console.error("[orderStore] Failed to update order status:", error);
+    throw error instanceof Error ? error : new Error("Failed to update order status");
   }
 }

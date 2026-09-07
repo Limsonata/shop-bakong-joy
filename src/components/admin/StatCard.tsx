@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export type StatTone = "default" | "good" | "warn" | "bad";
@@ -10,22 +11,24 @@ const TONE_CLASS: Record<StatTone, string> = {
   bad: "text-red-600",
 };
 
-/** Compact KPI tile used across the back-office pages. */
+/** Compact KPI tile used across the back-office pages. Pass `to` to make it a link. */
 export function StatCard({
   label,
   value,
   hint,
   icon: Icon,
   tone = "default",
+  to,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon?: LucideIcon;
   tone?: StatTone;
+  to?: string;
 }) {
-  return (
-    <Card>
+  const card = (
+    <Card className={to ? "transition-colors hover:border-primary/40" : undefined}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
         <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
@@ -37,5 +40,13 @@ export function StatCard({
         {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}
       </CardContent>
     </Card>
+  );
+
+  if (!to) return card;
+
+  return (
+    <Link to={to} className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+      {card}
+    </Link>
   );
 }

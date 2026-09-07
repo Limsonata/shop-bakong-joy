@@ -67,12 +67,12 @@ function OrdersAdmin() {
   }, [loadOrders]);
 
   const handleStatusChange = async (id: string, status: OrderStatus) => {
-    const ok = await updateOrderStatus(id, status);
-    if (ok) {
+    try {
+      await updateOrderStatus(id, status);
       toast.success("Status updated");
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
-    } else {
-      toast.error("Failed to update status");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update status");
     }
   };
 
