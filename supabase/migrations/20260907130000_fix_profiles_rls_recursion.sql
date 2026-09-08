@@ -36,8 +36,22 @@ $$;
 revoke execute on function public.is_admin() from public;
 grant execute on function public.is_admin() to anon, authenticated;
 
-drop policy if exists profiles_owner_or_admin_read on public.profiles;
-drop policy if exists profiles_owner_update_name on public.profiles;
+-- Drop EVERY policy on profiles, whatever it is called. This guarantees the
+-- recursive doc-style policies (e.g. "Admins can view all profiles") are gone
+-- even if the database was set up with different or unexpected policy names.
+do $$
+declare
+  r record;
+begin
+  for r in
+    select policyname
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'profiles'
+  loop
+    execute format('drop policy if exists %I on public.profiles', r.policyname);
+  end loop;
+end $$;
 
 -- Users may read their own profile. This is the recursion-free form.
 create policy profiles_owner_or_admin_read
@@ -45,11 +59,21 @@ create policy profiles_owner_or_admin_read
   to authenticated
   using (id = (select auth.uid()));
 
--- Owner may update their own name.
+-- Owner may update their own name. The `role = 'user'` guard in the WITH CHECK
+-- is essential: without it a user could PATCH their own row with
+-- {"role": "admin"} and escalate to admin (RLS privilege-escalation hole).
+-- Admins can still edit any profile via profiles_admin_update below.
 create policy profiles_owner_update_name
   on public.profiles for update
   to authenticated
   using (id = (select auth.uid()))
-  with check (id = (select auth.uid()));
+  with check (id = (select auth.uid()) and role = 'user');
+
+-- Admins may update any profile (permissive OR with the owner policy above).
+create policy profiles_admin_update
+  on public.profiles for update
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
 
 commit;

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { Logo } from "@/components/site/Logo";
-import { getCollections, getProductTypes } from "@/lib/localStore";
+import { getCollections, getProductTypes } from "@/lib/productStore";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";

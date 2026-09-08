@@ -46,7 +46,7 @@ const NAV_GROUPS = [
     label: "Money",
     items: [
       { to: "/admin/sales", label: "Sales", icon: Receipt },
-      { to: "/admin/finance", label: "Money", icon: ScrollText },
+      { to: "/admin/finance", label: "Cash book", icon: ScrollText },
       { to: "/admin/reports", label: "Reports", icon: BarChart3 },
     ],
   },

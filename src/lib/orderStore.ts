@@ -42,7 +42,7 @@ export interface CreateOrderInput {
   items: OrderItem[];
 }
 
-function dbOrderToOrder(row: DbOrder): Order {
+export function dbOrderToOrder(row: DbOrder): Order {
   return {
     id: row.id,
     userId: row.user_id,

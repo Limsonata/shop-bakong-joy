@@ -157,6 +157,10 @@ export interface ProductInput {
   inStock: boolean;
   collections: string[];
   variants: ProductVariantInput[];
+  /** Optional: unit cost from the supplier — seeds the linked POS stock rows. */
+  cost?: number;
+  /** Optional: units on the shelf right now — recorded as the first stock movement. */
+  stockIn?: number;
 }
 
 export async function createProduct(input: ProductInput): Promise<Product> {

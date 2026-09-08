@@ -25,6 +25,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/format";
+import { getAllOrders, type Order } from "@/lib/orderStore";
+import { isCollected } from "@/lib/orderStatus";
 import {
   downloadFile,
   exportBackup,
@@ -44,13 +46,22 @@ export const Route = createFileRoute("/admin/reports")({
 
 function ReportsPage() {
   const [data, setData] = useState<ShopData | null>(null);
+  const [webOrders, setWebOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoading(true);
     try {
-      setData(await loadShopData());
+      const [shop, orders] = await Promise.all([
+        loadShopData(),
+        getAllOrders().catch((error) => {
+          console.error("[reports] Failed to load online orders:", error);
+          return [] as Order[];
+        }),
+      ]);
+      setData(shop);
+      setWebOrders(orders);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load the data");
     } finally {
@@ -84,6 +95,15 @@ function ReportsPage() {
         );
       });
 
+    // Online orders count towards monthly revenue too (collected only;
+    // unit cost is unknown for them, so profit is revenue-driven here).
+    webOrders
+      .filter((order) => isCollected(order.status))
+      .forEach((order) => {
+        const row = bucket(new Date(order.createdAt).toISOString().slice(0, 7));
+        row.revenue = round2(row.revenue + order.total);
+      });
+
     data.financeEntries
       .filter((entry) => entry.kind === "expense" && isRunningCost(entry.category))
       .forEach((entry) => {
@@ -94,7 +114,12 @@ function ReportsPage() {
     return Array.from(map.values())
       .sort((a, b) => a.month.localeCompare(b.month))
       .map((row) => ({ ...row, profit: round2(row.revenue - row.cost - row.expenses) }));
-  }, [data]);
+  }, [data, webOrders]);
+
+  const webRevenue = useMemo(
+    () => round2(webOrders.filter((order) => isCollected(order.status)).reduce((sum, order) => sum + order.total, 0)),
+    [webOrders],
+  );
 
   const bestSellers = useMemo(() => {
     if (!data) return [];
@@ -191,8 +216,12 @@ function ReportsPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 label="Revenue"
-                value={formatPrice(summary.revenue)}
-                hint="Goods sold, no delivery"
+                value={formatPrice(summary.revenue + webRevenue)}
+                hint={
+                  webRevenue > 0
+                    ? `includes ${formatPrice(webRevenue)} online orders`
+                    : "Goods sold, no delivery"
+                }
               />
               <StatCard
                 label="Cost of goods"

@@ -41,6 +41,8 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [description, setDescription] = useState(initial?.description ?? "");
   const [productType, setProductType] = useState(initial?.productType ?? "");
   const [price, setPrice] = useState(initial?.price.amount ?? "");
+  const [cost, setCost] = useState("");
+  const [startingStock, setStartingStock] = useState("");
   const [currency, setCurrency] = useState(initial?.price.currencyCode ?? "USD");
   const [imageUrl, setImageUrl] = useState(initial?.images[0]?.url ?? "");
   const [inStock, setInStock] = useState(initial?.variants[0]?.availableForSale ?? true);
@@ -90,6 +92,8 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
     setIsSubmitting(true);
     try {
+      const costNumber = Number.parseFloat(cost);
+      const stockNumber = Number.parseInt(startingStock, 10);
       await onSubmit({
         handle: handle || slugify(title),
         title,
@@ -101,6 +105,8 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         inStock,
         collections: collectionsText.split(",").map((c) => c.trim()).filter(Boolean),
         variants,
+        ...(Number.isFinite(costNumber) && costNumber >= 0 ? { cost: costNumber } : {}),
+        ...(Number.isFinite(stockNumber) && stockNumber > 0 ? { stockIn: stockNumber } : {}),
       });
     } finally {
       setIsSubmitting(false);
@@ -119,7 +125,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           <div className="space-y-2">
             <Label htmlFor="handle">URL handle</Label>
             <Input id="handle" value={handle} onChange={(e) => setHandle(slugify(e.target.value))} placeholder="hair-spray" required />
-            <p className="text-xs text-muted-foreground">The product will be available at /product/{handle || "your-handle"}</p>
+            <p className="text-xs text-muted-foreground">Managed for you — kept in sync with the Stock page.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
@@ -134,7 +140,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
       <Card>
         <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="price">Base price</Label>
@@ -143,6 +149,18 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Input id="currency" value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} placeholder="USD" maxLength={3} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cost">Cost per unit (optional)</Label>
+              <Input id="cost" type="number" min="0" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0.00" />
+              <p className="text-xs text-muted-foreground">What you pay your supplier — used for profit reports in the Stock page.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="startingStock">Starting stock (optional)</Label>
+              <Input id="startingStock" type="number" min="0" step="1" value={startingStock} onChange={(e) => setStartingStock(e.target.value)} placeholder="0" />
+              <p className="text-xs text-muted-foreground">
+                Units on the shelf right now. With sizes/colours this goes to the first one — restock the rest in Stock.
+              </p>
             </div>
           </div>
         </CardContent>

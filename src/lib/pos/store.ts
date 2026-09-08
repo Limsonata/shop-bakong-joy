@@ -55,6 +55,7 @@ interface StockRow {
   archived: boolean;
   note: string | null;
   updated_at: string;
+  product_id: string | null;
 }
 
 function toStockItem(row: StockRow): StockItem {
@@ -73,6 +74,7 @@ function toStockItem(row: StockRow): StockItem {
     archived: row.archived,
     note: row.note ?? "",
     updatedAt: row.updated_at,
+    productId: row.product_id ?? null,
   };
 }
 
@@ -342,9 +344,16 @@ export async function restockItem(input: RestockInput): Promise<StockItem> {
   return mutate((snapshot) => {
     const item = snapshot.stockItems.find((candidate) => candidate.id === input.stockItemId);
     if (!item) throw new Error("Stock item not found");
-    const unitCost = input.unitCost ?? item.cost;
+    // Actual price paid for this batch (defaults to the current average).
+    const purchaseCost = input.unitCost ?? item.cost;
+    // Weighted average cost: blend units on hand with the new batch,
+    // matching the record_restock RPC.
+    const unitsLeft = Math.max(item.stockIn - item.sold, 0);
+    const avgCost = round2(
+      (unitsLeft * item.cost + input.quantity * purchaseCost) / (unitsLeft + input.quantity),
+    );
     item.stockIn += input.quantity;
-    item.cost = unitCost;
+    item.cost = avgCost;
     item.updatedAt = new Date().toISOString();
 
     snapshot.movements.unshift({
@@ -352,12 +361,12 @@ export async function restockItem(input: RestockInput): Promise<StockItem> {
       stockItemId: item.id,
       delta: input.quantity,
       reason: "restock",
-      unitCost,
+      unitCost: purchaseCost,
       reference: input.supplier ?? null,
       createdAt: new Date().toISOString(),
     });
 
-    if (input.postExpense && unitCost > 0) {
+    if (input.postExpense && purchaseCost > 0) {
       const today = new Date().toISOString().slice(0, 10);
       snapshot.financeEntries.unshift({
         id: newId("fe"),
@@ -365,7 +374,7 @@ export async function restockItem(input: RestockInput): Promise<StockItem> {
         kind: "expense",
         description: `Restock ${input.quantity} x ${item.name}${input.supplier ? ` (${input.supplier})` : ""}`,
         category: "Inventory",
-        amount: round2(unitCost * input.quantity),
+        amount: round2(purchaseCost * input.quantity),
         method: "cash",
         source: "manual",
         saleId: null,

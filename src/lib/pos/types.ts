@@ -28,6 +28,8 @@ export interface StockItem {
   archived: boolean;
   note: string;
   updatedAt: string;
+  /** Website product this row is linked to (set by the product↔stock sync). */
+  productId?: string | null;
 }
 
 /** stockIn - sold, never below zero for display purposes. */

@@ -18,6 +18,8 @@ import {
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { deleteProduct, getProducts, type Product } from "@/lib/productStore";
+import { listStockItems } from "@/lib/pos/store";
+import { stockLeft } from "@/lib/pos/types";
 
 export const Route = createFileRoute("/admin/products")({
   head: () => ({ meta: [{ title: "Products - Admin" }] }),
@@ -30,6 +32,8 @@ const PRODUCTS_LOAD_LIMIT = 100;
 function ProductsAdmin() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [products, setProducts] = useState<Product[]>([]);
+  /** productId → units on the shelf, summed across the product's stock rows. */
+  const [stockByProduct, setStockByProduct] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -39,8 +43,20 @@ function ProductsAdmin() {
   const loadProducts = async () => {
     setIsLoading(true);
     try {
-      const data = await getProducts({ first: PRODUCTS_LOAD_LIMIT });
+      const [data, stockItems] = await Promise.all([
+        getProducts({ first: PRODUCTS_LOAD_LIMIT }),
+        listStockItems().catch((error) => {
+          console.error("[products] Failed to load stock levels:", error);
+          return [];
+        }),
+      ]);
       setProducts(data.map((edge) => edge.node));
+      const map = new Map<string, number>();
+      for (const item of stockItems) {
+        if (!item.productId) continue;
+        map.set(item.productId, (map.get(item.productId) ?? 0) + Math.max(stockLeft(item), 0));
+      }
+      setStockByProduct(map);
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : "Failed to load products");
@@ -205,7 +221,17 @@ function ProductsAdmin() {
                         {product.price.currencyCode} {Number(product.price.amount).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {product.variants[0]?.availableForSale ? (
+                        {stockByProduct.has(product.id) ? (
+                          (stockByProduct.get(product.id) ?? 0) > 0 ? (
+                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                              {stockByProduct.get(product.id)} in stock
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">
+                              Out of stock — restock in Stock
+                            </span>
+                          )
+                        ) : product.variants[0]?.availableForSale ? (
                           <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
                             In stock
                           </span>

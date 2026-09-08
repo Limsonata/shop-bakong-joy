@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import { getAllOrders, updateOrderStatus, type Order, type OrderStatus } from "@/lib/orderStore";
+import { ORDER_STATUS } from "@/lib/orderStatus";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/orders")({
@@ -22,13 +23,6 @@ export const Route = createFileRoute("/admin/orders")({
 
 const STATUS_OPTIONS: OrderStatus[] = ["pending", "paid", "shipped", "done", "cancelled"];
 
-const STATUS_COLORS: Record<OrderStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  paid: "bg-blue-100 text-blue-800",
-  shipped: "bg-purple-100 text-purple-800",
-  done: "bg-green-100 text-green-800",
-  cancelled: "bg-gray-100 text-gray-800",
-};
 const FALLBACK_STATUS_COLOR = "bg-slate-100 text-slate-700";
 
 function OrdersAdmin() {
@@ -122,9 +116,9 @@ function OrdersAdmin() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[order.status] ?? FALLBACK_STATUS_COLOR}`}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${ORDER_STATUS[order.status]?.color ?? FALLBACK_STATUS_COLOR}`}
                       >
-                        {order.status}
+                        {ORDER_STATUS[order.status]?.label ?? order.status}
                       </span>
                       <Select
                         value={order.status}
@@ -132,13 +126,13 @@ function OrdersAdmin() {
                           handleStatusChange(order.id, value as OrderStatus)
                         }
                       >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[170px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {STATUS_OPTIONS.map((status) => (
                             <SelectItem key={status} value={status}>
-                              {status}
+                              {ORDER_STATUS[status].label}
                             </SelectItem>
                           ))}
                         </SelectContent>

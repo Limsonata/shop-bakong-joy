@@ -5,21 +5,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { getMyOrders, type Order, type OrderStatus } from "@/lib/orderStore";
+import { getMyOrders, type Order } from "@/lib/orderStore";
+import { ORDER_STATUS } from "@/lib/orderStatus";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/orders")({
   head: () => ({ meta: [{ title: "My Orders" }] }),
   component: MyOrdersPage,
 });
-
-const STATUS_LABELS: Record<OrderStatus, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-  paid: { label: "Payment received", color: "bg-blue-100 text-blue-800" },
-  shipped: { label: "Shipped", color: "bg-purple-100 text-purple-800" },
-  done: { label: "Completed", color: "bg-green-100 text-green-800" },
-  cancelled: { label: "Cancelled", color: "bg-gray-100 text-gray-700" },
-};
 
 function MyOrdersPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -112,7 +105,7 @@ function MyOrdersPage() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => {
-            const statusInfo = STATUS_LABELS[order.status];
+            const statusInfo = ORDER_STATUS[order.status];
             return (
               <Card key={order.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">

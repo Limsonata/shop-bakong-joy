@@ -5,20 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
-import type { Order, OrderStatus, OrderItem } from "@/lib/orderStore";
+import { dbOrderToOrder, type Order } from "@/lib/orderStore";
+import { ORDER_STATUS } from "@/lib/orderStatus";
 
 export const Route = createFileRoute("/track")({
   head: () => ({ meta: [{ title: "Track Order — BillieGrace Closet" }] }),
   component: TrackOrderPage,
 });
-
-const STATUS_LABELS: Record<OrderStatus, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-  paid: { label: "Payment received", color: "bg-blue-100 text-blue-800" },
-  shipped: { label: "Shipped", color: "bg-purple-100 text-purple-800" },
-  done: { label: "Completed", color: "bg-green-100 text-green-800" },
-  cancelled: { label: "Cancelled", color: "bg-gray-100 text-gray-700" },
-};
 
 async function lookupOrder(ref: string): Promise<Order | null> {
   const trimmed = ref.trim();
@@ -33,20 +26,7 @@ async function lookupOrder(ref: string): Promise<Order | null> {
     .limit(1)
     .maybeSingle();
   if (error || !data) return null;
-  return {
-    id: data.id,
-    userId: data.user_id,
-    customerName: data.customer_name,
-    phone: data.phone,
-    address: data.address,
-    total: Number(data.total),
-    currency: data.currency,
-    bakongReference: data.bakong_reference,
-    bakongTransactionId: data.bakong_transaction_id,
-    status: data.status,
-    items: (data.items as OrderItem[]) ?? [],
-    createdAt: new Date(data.created_at).getTime(),
-  };
+  return dbOrderToOrder(data);
 }
 
 function TrackOrderPage() {
@@ -66,7 +46,7 @@ function TrackOrderPage() {
     setLoading(false);
   };
 
-  const statusInfo = order ? STATUS_LABELS[order.status] : null;
+  const statusInfo = order ? ORDER_STATUS[order.status] : null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">

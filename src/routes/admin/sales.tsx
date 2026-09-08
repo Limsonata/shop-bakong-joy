@@ -2,10 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Ban,
+  Banknote,
   ChevronDown,
   ChevronRight,
   Download,
   Plus,
+  Printer,
   RefreshCw,
   Search,
   Wallet,
@@ -34,10 +36,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatPrice } from "@/lib/format";
+import { printEndOfDayReport, printSaleReceipt } from "@/lib/pos/receipt";
 import {
+  addFinanceEntry,
   addSalePayment,
   cancelSale,
   downloadFile,
+  listFinanceEntries,
   listSales,
   toCsv,
   updateSale,
@@ -49,6 +54,7 @@ import {
   round2,
   saleProfit,
   type DeliveryStatus,
+  type FinanceEntry,
   type Sale,
 } from "@/lib/pos/types";
 
@@ -85,6 +91,17 @@ function SalesPage() {
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState<string>("cash");
   const [saving, setSaving] = useState(false);
+
+  // ── End-of-day cash up (drawer reconciliation) ──
+  const [cashUpOpen, setCashUpOpen] = useState(false);
+  const [cashDate, setCashDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [openingFloat, setOpeningFloat] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("pos-opening-float") ?? "" : "",
+  );
+  const [countedCash, setCountedCash] = useState("");
+  const [financeEntries, setFinanceEntries] = useState<FinanceEntry[]>([]);
+  const [cashLoading, setCashLoading] = useState(false);
+  const [posting, setPosting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -182,6 +199,107 @@ function SalesPage() {
     }
   };
 
+  const doPrintReceipt = (sale: Sale) => {
+    try {
+      printSaleReceipt(sale);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not open the print window");
+    }
+  };
+
+  const cashUp = useMemo(() => {
+    const daySales = sales.filter(
+      (sale) => sale.status === "confirmed" && sale.soldAt === cashDate,
+    );
+    const float = Number.parseFloat(openingFloat) || 0;
+    const byMethod = new Map<string, number>();
+    let cashIn = 0;
+    let cashOut = 0;
+    let refunds = 0;
+    for (const entry of financeEntries) {
+      if (entry.entryDate !== cashDate) continue;
+      byMethod.set(
+        entry.method,
+        (byMethod.get(entry.method) ?? 0) + (entry.kind === "income" ? entry.amount : -entry.amount),
+      );
+      if (entry.method === "cash") {
+        if (entry.kind === "income") cashIn += entry.amount;
+        else cashOut += entry.amount;
+      }
+      if (entry.kind === "expense" && entry.category === "Refund") refunds += entry.amount;
+    }
+    const counted =
+      countedCash.trim() === "" ? null : Number.parseFloat(countedCash);
+    return {
+      salesCount: daySales.length,
+      billed: round2(daySales.reduce((sum, sale) => sum + sale.total, 0)),
+      byMethod: Array.from(byMethod.entries()).sort((a, b) => b[1] - a[1]),
+      refunds: round2(refunds),
+      float: round2(float),
+      cashIn: round2(cashIn),
+      cashOut: round2(cashOut),
+      expectedCash: round2(float + cashIn - cashOut),
+      counted: counted !== null && Number.isFinite(counted) ? round2(counted) : null,
+    };
+  }, [sales, financeEntries, cashDate, openingFloat, countedCash]);
+
+  const cashDifference =
+    cashUp.counted === null ? null : round2(cashUp.counted - cashUp.expectedCash);
+
+  const openCashUp = async () => {
+    setCashUpOpen(true);
+    setCashLoading(true);
+    try {
+      setFinanceEntries(await listFinanceEntries());
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not load cash movements");
+    } finally {
+      setCashLoading(false);
+    }
+  };
+
+  const printCashUp = () => {
+    try {
+      localStorage.setItem("pos-opening-float", openingFloat);
+      printEndOfDayReport({
+        date: cashDate,
+        salesCount: cashUp.salesCount,
+        billed: cashUp.billed,
+        collectedByMethod: cashUp.byMethod.map(([method, amount]) => ({ method, amount })),
+        refunds: cashUp.refunds,
+        openingFloat: cashUp.float,
+        cashIn: cashUp.cashIn,
+        cashOut: cashUp.cashOut,
+        expectedCash: cashUp.expectedCash,
+        countedCash: cashUp.counted,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not open the print window");
+    }
+  };
+
+  const postDifference = async () => {
+    if (cashDifference === null || Math.abs(cashDifference) < 0.005) return;
+    setPosting(true);
+    try {
+      const entry = await addFinanceEntry({
+        entryDate: cashDate,
+        kind: cashDifference > 0 ? "income" : "expense",
+        description: `Cash up adjustment (${cashDifference > 0 ? "extra cash" : "shortage"})`,
+        category: "Other",
+        amount: round2(Math.abs(cashDifference)),
+        method: "cash",
+      });
+      setFinanceEntries((current) => [entry, ...current]);
+      localStorage.setItem("pos-opening-float", openingFloat);
+      toast.success("Adjustment recorded in the cash book");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not record the adjustment");
+    } finally {
+      setPosting(false);
+    }
+  };
+
   const exportCsv = () => {
     downloadFile(
       `sales-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -218,6 +336,10 @@ function SalesPage() {
       description="Every sale and booking, who still owes money, and what each one earned."
       actions={
         <>
+          <Button variant="outline" size="sm" onClick={openCashUp}>
+            <Banknote className="mr-2 h-4 w-4" />
+            Cash up
+          </Button>
           <Button variant="outline" size="sm" onClick={exportCsv}>
             <Download className="mr-2 h-4 w-4" />
             CSV
@@ -455,6 +577,10 @@ function SalesPage() {
                               Cancel sale
                             </Button>
                           ) : null}
+                          <Button variant="ghost" size="sm" onClick={() => doPrintReceipt(sale)}>
+                            <Printer className="mr-1 h-4 w-4" />
+                            Receipt
+                          </Button>
                         </div>
                       </div>
                     ) : null}
@@ -513,6 +639,129 @@ function SalesPage() {
             <Button onClick={submitPayment} disabled={saving}>
               {saving ? "Saving…" : "Record payment"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={cashUpOpen}
+        onOpenChange={(open) => {
+          setCashUpOpen(open);
+          if (!open && typeof window !== "undefined") {
+            localStorage.setItem("pos-opening-float", openingFloat);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cash up (end of day)</DialogTitle>
+            <DialogDescription>
+              Count the drawer and check it against what the system expects.
+            </DialogDescription>
+          </DialogHeader>
+
+          {cashLoading ? (
+            <p className="py-4 text-sm text-muted-foreground">Loading cash movements…</p>
+          ) : (
+            <div className="grid gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="cash-date">Date</Label>
+                  <Input
+                    id="cash-date"
+                    type="date"
+                    value={cashDate}
+                    onChange={(event) => setCashDate(event.target.value)}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="cash-float">Opening float</Label>
+                  <Input
+                    id="cash-float"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={openingFloat}
+                    onChange={(event) => setOpeningFloat(event.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <dl className="space-y-1 rounded-md bg-muted/50 p-3 text-sm">
+                <div className="flex justify-between">
+                  <dt>Sales ({cashUp.salesCount})</dt>
+                  <dd className="tabular-nums">{formatPrice(cashUp.billed)}</dd>
+                </div>
+                {cashUp.byMethod.map(([method, amount]) => (
+                  <div key={method} className="flex justify-between">
+                    <dt className="text-muted-foreground">{method}</dt>
+                    <dd className="tabular-nums">{formatPrice(amount)}</dd>
+                  </div>
+                ))}
+                {cashUp.refunds > 0 ? (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Refunds</dt>
+                    <dd className="tabular-nums">−{formatPrice(cashUp.refunds)}</dd>
+                  </div>
+                ) : null}
+              </dl>
+
+              <dl className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Cash in</dt>
+                  <dd className="tabular-nums">+{formatPrice(cashUp.cashIn)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Cash out</dt>
+                  <dd className="tabular-nums">−{formatPrice(cashUp.cashOut)}</dd>
+                </div>
+                <div className="flex justify-between border-t pt-1 font-medium">
+                  <dt>Expected in drawer</dt>
+                  <dd className="tabular-nums">{formatPrice(cashUp.expectedCash)}</dd>
+                </div>
+              </dl>
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="cash-counted">Counted cash</Label>
+                <Input
+                  id="cash-counted"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={countedCash}
+                  onChange={(event) => setCountedCash(event.target.value)}
+                  placeholder="Count the drawer…"
+                />
+                {cashDifference !== null ? (
+                  <p
+                    className={`text-xs ${
+                      Math.abs(cashDifference) < 0.005 ? "text-emerald-600" : "text-amber-600"
+                    }`}
+                  >
+                    {Math.abs(cashDifference) < 0.005
+                      ? "Drawer is exact ✓"
+                      : `${cashDifference > 0 ? "Over" : "Short"} ${formatPrice(Math.abs(cashDifference))}`}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={printCashUp} disabled={cashLoading}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print report
+            </Button>
+            {cashDifference !== null && Math.abs(cashDifference) >= 0.005 ? (
+              <Button onClick={postDifference} disabled={posting}>
+                {posting ? "Saving…" : "Post adjustment"}
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setCashUpOpen(false)}>
+                Done
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

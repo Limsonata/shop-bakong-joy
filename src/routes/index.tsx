@@ -4,7 +4,7 @@ import { ArrowRight, ArrowUpRight, Truck, ShieldCheck, RotateCcw } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/site/ProductCard";
-import { getProducts, getCollections } from "@/lib/localStore";
+import { getProducts, getCollections } from "@/lib/productStore";
 import { getSiteContent, DEFAULT_SITE_CONTENT } from "@/lib/siteContent";
 import { motion } from "framer-motion";
 

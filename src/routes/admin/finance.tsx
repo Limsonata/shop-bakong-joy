@@ -7,6 +7,7 @@ import {
   Plus,
   RefreshCw,
   Trash2,
+  Truck,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +42,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/format";
+import { getAllOrders, type Order } from "@/lib/orderStore";
+import { isCollected } from "@/lib/orderStatus";
 import {
   addFinanceEntry,
   deleteFinanceEntry,
@@ -70,6 +73,7 @@ function monthKey(date: string): string {
 
 function FinancePage() {
   const [entries, setEntries] = useState<FinanceEntry[]>([]);
+  const [webOrders, setWebOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [monthFilter, setMonthFilter] = useState("all");
   const [kindFilter, setKindFilter] = useState<"all" | FinanceKind>("all");
@@ -86,7 +90,17 @@ function FinancePage() {
   const load = async () => {
     setLoading(true);
     try {
-      setEntries(await listFinanceEntries());
+      // Cash book + online orders, so website sales are counted here too.
+      // If orders fail to load the cash book still works.
+      const [book, orders] = await Promise.all([
+        listFinanceEntries(),
+        getAllOrders().catch((error) => {
+          console.error("[finance] Failed to load online orders:", error);
+          return [] as Order[];
+        }),
+      ]);
+      setEntries(book);
+      setWebOrders(orders);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load the cash book");
     } finally {
@@ -133,8 +147,28 @@ function FinancePage() {
         .filter((e) => e.kind === "expense" && e.category === "Inventory")
         .reduce((sum, e) => sum + e.amount, 0),
     );
-    return { income, expense, inventory, net: round2(income - expense) };
-  }, [entries, monthFilter, kindFilter]);
+
+    // Online orders: money is counted once the order is confirmed/paid
+    // (pending = pay on delivery, not yet collected; cancelled excluded).
+    const onlineInScope = webOrders.filter((order) => {
+      if (!isCollected(order.status)) return false;
+      if (kindFilter === "expense") return false; // viewing expenses only
+      if (monthFilter === "all") return true;
+      return monthKey(new Date(order.createdAt).toISOString().slice(0, 10)) === monthFilter;
+    });
+    const online = round2(onlineInScope.reduce((sum, order) => sum + order.total, 0));
+    const onlinePending = webOrders.filter((order) => order.status === "pending").length;
+
+    return {
+      income,
+      expense,
+      inventory,
+      online,
+      onlinePending,
+      incomeTotal: round2(income + online),
+      net: round2(income + online - expense),
+    };
+  }, [entries, webOrders, monthFilter, kindFilter]);
 
   const byCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -242,8 +276,8 @@ function FinancePage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Money in"
-          value={formatPrice(totals.income)}
-          hint={monthFilter === "all" ? "All time" : monthFilter}
+          value={formatPrice(totals.incomeTotal)}
+          hint={`${formatPrice(totals.income)} cash book + ${formatPrice(totals.online)} online${totals.onlinePending > 0 ? ` · ${totals.onlinePending} pending` : ""}`}
           icon={ArrowUpCircle}
           tone="good"
         />
@@ -257,11 +291,11 @@ function FinancePage() {
         <StatCard
           label="Net cash"
           value={formatPrice(totals.net)}
-          hint="In minus out"
+          hint="In minus out, incl. online orders"
           icon={Wallet}
           tone={totals.net >= 0 ? "good" : "bad"}
         />
-        <StatCard label="Entries" value={String(visible.length)} hint="In current view" />
+        <StatCard label="Entries" value={String(visible.length)} hint="In current view" icon={Truck} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[2fr_1fr]">

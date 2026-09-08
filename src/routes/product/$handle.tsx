@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/stores/cartStore";
-import { getProductByHandle } from "@/lib/localStore";
+import { getProductByHandle } from "@/lib/productStore";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/product/$handle")({

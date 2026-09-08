@@ -2,13 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { Plus, ShoppingBag, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
-import type { LocalProductEdge } from "@/lib/localStore";
+import type { ProductEdge } from "@/lib/productStore";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Tilt3D } from "@/components/site/Tilt3D";
 
-export function ProductCard({ product }: { product: LocalProductEdge }) {
+export function ProductCard({ product }: { product: ProductEdge }) {
   const [isHovered, setIsHovered] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);

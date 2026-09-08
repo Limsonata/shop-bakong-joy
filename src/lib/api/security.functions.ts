@@ -60,6 +60,10 @@ const productInputSchema = z.object({
   inStock: z.boolean(),
   collections: z.array(z.string()),
   variants: z.array(productVariantSchema),
+  // Optional POS link fields: unit cost seeds the linked stock rows and
+  // startingStock is recorded as the first stock movement.
+  cost: z.number().nonnegative().optional(),
+  stockIn: z.number().int().min(0).optional(),
 });
 
 const collectionInputSchema = z.object({
@@ -170,7 +174,11 @@ async function assertAdmin(accessToken?: string | null): Promise<string> {
   return user.id;
 }
 
-function productInputToDbRow(input: ProductInput, includeVariants = true): Record<string, unknown> {
+function productInputToDbRow(
+  input: ProductInput,
+  includeVariants = true,
+  variantIds?: string[],
+): Record<string, unknown> {
   const row: Record<string, unknown> = {
     handle: input.handle,
     title: input.title,
@@ -185,7 +193,7 @@ function productInputToDbRow(input: ProductInput, includeVariants = true): Recor
 
   if (includeVariants) {
     row.variants = input.variants.map((variant, index) => ({
-      id: `${input.handle}-v${index}`,
+      id: variantIds?.[index] ?? `${input.handle}-v${index}`,
       ...variant,
     }));
   }
@@ -292,30 +300,301 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     return order;
   });
 
+/**
+ * Handle convention shared with the stock_items→products sync trigger
+ * (supabase/migrations/20260906140000_pos_storefront_sync.sql):
+ * handle = slug(`${name}-${category}`). Keeping the product's handle on the
+ * same convention lets the trigger link stock_items.product_id back to this
+ * exact product row instead of creating a duplicate.
+ */
+function stockGroupHandle(name: string, category: string): string {
+  const raw = `${name || "product"}-${category || "other"}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return raw.substring(0, 80) || `product-${Date.now().toString(36)}`;
+}
+
+/** Map a product variant onto the size/colour columns of stock_items. */
+function variantToSizeColor(variant?: { title: string; option: string }): {
+  size: string;
+  color: string;
+} {
+  if (!variant) return { size: "Default", color: "" };
+  const option = (variant.option || "").toLowerCase();
+  const value = (variant.title || "").trim();
+  if (option === "color" || option === "colour") return { size: "", color: value };
+  return { size: value, color: "" };
+}
+
+type StockRowInsert = {
+  sku: string;
+  name: string;
+  category: string;
+  size: string;
+  color: string;
+  cost: number;
+  price: number;
+  stock_in: number;
+  low_stock_at: number;
+  archived: boolean;
+  note: string;
+  product_id: string;
+};
+
+/**
+ * Build the stock_items rows that back a product: one row per variant
+ * (sku = variant id, so online orders deduct the exact row), or a single
+ * row for products without variants. `startingStock` goes to the first row.
+ */
+function buildStockRows(
+  product: { id: string; handle: string },
+  input: ProductInput,
+  category: string,
+  skus: string[],
+): StockRowInsert[] {
+  const cost = typeof input.cost === "number" && input.cost >= 0 ? input.cost : 0;
+  const startingStock = Math.max(Math.round(input.stockIn ?? 0), 0);
+  const base = {
+    name: input.title.trim(),
+    category,
+    cost,
+    low_stock_at: 0,
+    archived: false,
+    note: "Auto-linked from Products",
+    product_id: product.id,
+  };
+
+  if (input.variants.length === 0) {
+    return [
+      {
+        ...base,
+        sku: skus[0] ?? `${product.handle}-default`,
+        size: "Default",
+        color: "",
+        price: input.price,
+        stock_in: startingStock,
+      },
+    ];
+  }
+
+  return input.variants.map((variant, index) => ({
+    ...base,
+    sku: skus[index] ?? `${product.handle}-v${index}`,
+    ...variantToSizeColor(variant),
+    price: Number(variant.price) || input.price,
+    stock_in: index === 0 ? startingStock : 0,
+  }));
+}
+
+/** Insert the stock rows for a new product (best-effort — never fails the product create). */
+async function createProductStockRows(
+  supabase: SupabaseClient,
+  product: { id: string; handle: string },
+  input: ProductInput,
+  category: string,
+): Promise<void> {
+  const rows = buildStockRows(product, input, category, []);
+  const { data: inserted, error } = await supabase
+    .from("stock_items")
+    .insert(rows)
+    .select("id, stock_in, cost");
+  if (error) throw new Error(error.message);
+
+  // Mirror createStockItem(): record initial stock as a movement.
+  const movements = ((inserted ?? []) as Array<{ id: string; stock_in: number; cost: number }>)
+    .filter((row) => row.stock_in > 0)
+    .map((row) => ({
+      stock_item_id: row.id,
+      delta: row.stock_in,
+      reason: "restock",
+      unit_cost: row.cost,
+      reference: "initial stock",
+    }));
+  if (movements.length > 0) {
+    const { error: movementError } = await supabase.from("stock_movements").insert(movements);
+    if (movementError) throw new Error(movementError.message);
+  }
+}
+
 export const createAdminProduct = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ input: productInputSchema }))
   .handler(async ({ data }) => {
     await assertAdmin(data.accessToken);
-    const { data: product, error } = await createServiceClient()
+    const supabase = createServiceClient();
+    const input = data.input as ProductInput;
+    const category = input.productType?.trim() || "Other";
+    const handle = stockGroupHandle(input.title, category);
+    const variantIds = input.variants.map((_, index) => `${handle}-v${index}`);
+
+    const { data: product, error } = await supabase
       .from("products")
-      .insert(productInputToDbRow(data.input as ProductInput))
+      .insert(productInputToDbRow({ ...input, handle }, true, variantIds))
       .select("*")
       .single();
     if (error || !product) throw new Error(error?.message || "Failed to create product");
+
+    // Link the product to the POS: one stock row per variant, so restocking,
+    // in-store sales and online-order deductions all work out of the box.
+    // Best-effort: a stock-link failure must not lose the created product.
+    try {
+      await createProductStockRows(
+        supabase,
+        product as { id: string; handle: string },
+        input,
+        category,
+      );
+    } catch (stockError) {
+      console.error("[createAdminProduct] Stock linking failed:", stockError);
+    }
+
     return product;
   });
+
+/** Reconcile a product's linked stock rows after an edit (see updateAdminProduct). */
+async function reconcileProductStock(
+  supabase: SupabaseClient,
+  product: { id: string; handle: string },
+  input: ProductInput,
+  category: string,
+  skus: string[],
+): Promise<void> {
+  const { data: linked, error } = await supabase
+    .from("stock_items")
+    .select("id, sku, size, color, product_id, archived")
+    .eq("product_id", product.id);
+  if (error) throw new Error(error.message);
+
+  type LinkedRow = { id: string; sku: string; size: string; color: string; archived: boolean };
+  const pool = ((linked ?? []) as LinkedRow[]).map((row) => ({
+    ...row,
+    size: row.size ?? "",
+    color: row.color ?? "",
+  }));
+  const unclaimed = new Set(pool.map((row) => row.id));
+  const desired = buildStockRows(product, input, category, skus);
+
+  for (const row of desired) {
+    // Match an existing row by exact sku first, then by size/colour.
+    const candidate =
+      pool.find((m) => unclaimed.has(m.id) && m.sku === row.sku) ??
+      pool.find(
+        (m) => unclaimed.has(m.id) && m.size === row.size && m.color === row.color,
+      );
+
+    if (candidate) {
+      // Update in place: SKU and stock counts stay connected to past sales.
+      unclaimed.delete(candidate.id);
+      const { error: updateError } = await supabase
+        .from("stock_items")
+        .update({
+          name: row.name,
+          category: row.category,
+          size: row.size,
+          color: row.color,
+          price: row.price,
+          ...(typeof input.cost === "number" ? { cost: input.cost } : {}),
+          archived: false,
+          product_id: product.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", candidate.id);
+      if (updateError) throw new Error(updateError.message);
+    } else {
+      const { data: insertedRow, error: insertError } = await supabase
+        .from("stock_items")
+        .insert(row)
+        .select("id, stock_in, cost")
+        .single();
+      if (insertError) throw new Error(insertError.message);
+      const inserted = insertedRow as { id: string; stock_in: number; cost: number };
+      if (inserted.stock_in > 0) {
+        await supabase.from("stock_movements").insert({
+          stock_item_id: inserted.id,
+          delta: inserted.stock_in,
+          reason: "restock",
+          unit_cost: inserted.cost,
+          reference: "initial stock",
+        });
+      }
+    }
+  }
+
+  // Anything still unclaimed is no longer part of this product: archive it
+  // (never delete — past sales keep their cost snapshots).
+  if (unclaimed.size > 0) {
+    const { error: archiveError } = await supabase
+      .from("stock_items")
+      .update({ archived: true, updated_at: new Date().toISOString() })
+      .in("id", Array.from(unclaimed));
+    if (archiveError) throw new Error(archiveError.message);
+  }
+}
 
 export const updateAdminProduct = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), input: productInputSchema }))
   .handler(async ({ data }) => {
     await assertAdmin(data.accessToken);
-    const { data: product, error } = await createServiceClient()
+    const supabase = createServiceClient();
+    const input = data.input as ProductInput;
+    const category = input.productType?.trim() || "Other";
+    const newHandle = stockGroupHandle(input.title, category);
+
+    const { data: existing, error: existingError } = await supabase
       .from("products")
-      .update(productInputToDbRow(data.input as ProductInput))
+      .select("id, handle, variants")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (existingError) throw new Error(existingError.message);
+    if (!existing) throw new Error("Product not found");
+
+    if (newHandle !== existing.handle) {
+      const { data: clash } = await supabase
+        .from("products")
+        .select("id")
+        .eq("handle", newHandle)
+        .maybeSingle();
+      if (clash && clash.id !== data.id) {
+        throw new Error(
+          `Another product already uses the URL "${newHandle}". Rename that one first, or change this product's title/type.`,
+        );
+      }
+    }
+
+    // Keep existing variant ids (they double as stock SKUs) so order history
+    // and stock rows stay connected across edits. Match by option+value, not
+    // position, so adding/removing a variant doesn't shuffle stock onto the
+    // wrong size/colour.
+    const oldVariants = (existing.variants as
+      | Array<{ id: string; title?: string; option?: string }>
+      | null) ?? [];
+    const variantIds = input.variants.map((variant, index) => {
+      const match = oldVariants.find(
+        (old) => old?.title === variant.title && old?.option === variant.option,
+      );
+      return match?.id ?? `${newHandle}-v${index}`;
+    });
+
+    const { data: product, error } = await supabase
+      .from("products")
+      .update(productInputToDbRow({ ...input, handle: newHandle }, true, variantIds))
       .eq("id", data.id)
       .select("*")
       .single();
     if (error || !product) throw new Error(error?.message || "Failed to update product");
+
+    try {
+      await reconcileProductStock(
+        supabase,
+        product as { id: string; handle: string },
+        input,
+        category,
+        variantIds,
+      );
+    } catch (stockError) {
+      console.error("[updateAdminProduct] Stock sync failed:", stockError);
+    }
+
     return product;
   });
 
@@ -323,7 +602,17 @@ export const deleteAdminProduct = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
     await assertAdmin(data.accessToken);
-    const { error } = await createServiceClient().from("products").delete().eq("id", data.id);
+    const supabase = createServiceClient();
+
+    // Archive the linked stock rows first (keeps sale history intact); the
+    // stock sync trigger then marks the product unavailable before it goes.
+    const { error: archiveError } = await supabase
+      .from("stock_items")
+      .update({ archived: true, updated_at: new Date().toISOString() })
+      .eq("product_id", data.id);
+    if (archiveError) throw new Error(archiveError.message);
+
+    const { error } = await supabase.from("products").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

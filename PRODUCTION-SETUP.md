@@ -123,14 +123,17 @@ create policy "Only admins can update orders"
     exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
 
--- Profiles: users see their own, admins see all
+-- Profiles: users see their own.
+-- ⚠️ Do NOT add "exists (select 1 from profiles ...)" here — a policy on
+-- profiles that queries profiles again causes Postgres error 42P17
+-- ("infinite recursion detected in policy for relation profiles").
+-- For admin checks in other tables' policies, use the SECURITY DEFINER
+-- function public.is_admin() (see security_hardening.sql) instead.
 create policy "Users can view their own profile"
-  on profiles for select using (
-    auth.uid() = id
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
+  on profiles for select using (auth.uid() = id);
 create policy "Users can update their own profile"
-  on profiles for update using (auth.uid() = id);
+  on profiles for update using (auth.uid() = id)
+  with check (auth.uid() = id and role = 'user');
 ```
 
 ### 3. Add Environment Variables (2 mins)
