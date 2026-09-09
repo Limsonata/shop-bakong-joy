@@ -200,7 +200,10 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
 export async function deleteProduct(id: string): Promise<boolean> {
   try {
     const accessToken = await getSupabaseAccessToken();
-    await deleteAdminProduct({ data: { accessToken, id } });
+    console.log("[deleteProduct] Access token exists:", !!accessToken);
+    console.log("[deleteProduct] Product ID:", id);
+    const result = await deleteAdminProduct({ data: { accessToken, id } });
+    console.log("[deleteProduct] Success:", result);
     return true;
   } catch (error) {
     console.error("[deleteProduct] Failed:", error);

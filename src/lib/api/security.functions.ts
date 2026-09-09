@@ -154,12 +154,14 @@ function createServiceClient(): SupabaseClient {
 }
 
 async function assertAdmin(accessToken?: string | null): Promise<string> {
+  console.log("[assertAdmin] Starting check, token exists:", !!accessToken);
   if (!accessToken) throw new Error("Authentication required");
   const supabase = createUserClient(accessToken);
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser(accessToken);
+  console.log("[assertAdmin] User check:", { userId: user?.id, error: userError?.message });
   if (userError || !user) throw new Error("Authentication required");
 
   const { data: profile, error: profileError } = await supabase
@@ -168,6 +170,8 @@ async function assertAdmin(accessToken?: string | null): Promise<string> {
     .eq("id", user.id)
     .maybeSingle();
 
+  console.log("[assertAdmin] Profile check:", { profile, error: profileError?.message });
+  
   // Surface the real reason (e.g. RLS misconfig / recursion) instead of
   // masking it as a generic "not an admin" message.
   if (profileError) {
@@ -175,9 +179,11 @@ async function assertAdmin(accessToken?: string | null): Promise<string> {
     throw new Error(`Admin check failed: ${profileError.message}`);
   }
   if (profile?.role !== "admin") {
+    console.error("[assertAdmin] Not admin, role is:", profile?.role);
     throw new Error("Admin access required");
   }
 
+  console.log("[assertAdmin] Admin verified:", user.id);
   return user.id;
 }
 
@@ -650,19 +656,34 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
 export const deleteAdminProduct = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await assertAdmin(data.accessToken);
+    console.log("[deleteAdminProduct] Starting delete for product:", data.id);
+    
+    const adminId = await assertAdmin(data.accessToken);
+    console.log("[deleteAdminProduct] Admin verified:", adminId);
+    
     const supabase = createServiceClient();
+    console.log("[deleteAdminProduct] Service client created");
 
     // Archive the linked stock rows first (keeps sale history intact); the
     // stock sync trigger then marks the product unavailable before it goes.
+    console.log("[deleteAdminProduct] Archiving stock items...");
     const { error: archiveError } = await supabase
       .from("stock_items")
       .update({ archived: true, updated_at: new Date().toISOString() })
       .eq("product_id", data.id);
-    if (archiveError) throw new Error(archiveError.message);
+    if (archiveError) {
+      console.error("[deleteAdminProduct] Archive error:", archiveError);
+      throw new Error(archiveError.message);
+    }
 
+    console.log("[deleteAdminProduct] Deleting product...");
     const { error } = await supabase.from("products").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[deleteAdminProduct] Delete error:", error);
+      throw new Error(error.message);
+    }
+    
+    console.log("[deleteAdminProduct] Delete successful");
     return { ok: true };
   });
 
