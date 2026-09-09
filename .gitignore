@@ -36,3 +36,7 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+
+# Local dashboard data backups (contain customer data)
+data-backups/

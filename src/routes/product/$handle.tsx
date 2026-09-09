@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Loader2, ArrowLeft, ShoppingBag, Check } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, ArrowLeft, ShoppingBag, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +30,25 @@ function ProductDetail() {
 
   const variant = useMemo(() => data?.variants[variantIdx], [data, variantIdx]);
   const product = useMemo(() => (data ? { node: data } : null), [data]);
+
+  // ---- Photo gallery (auto-scrolls when there is more than one photo) ----
+  const [imageIdx, setImageIdx] = useState(0);
+  const [galleryPaused, setGalleryPaused] = useState(false);
+  const images = data?.images ?? [];
+
+  // New product loaded → start from the first photo.
+  useEffect(() => {
+    setImageIdx(0);
+  }, [data?.id]);
+
+  // Auto-advance every 3.5s; pauses while the pointer is over the photo.
+  useEffect(() => {
+    if (images.length <= 1 || galleryPaused) return;
+    const timer = setInterval(() => {
+      setImageIdx((i) => (i + 1) % images.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [images.length, galleryPaused]);
 
   const handleAdd = async () => {
     if (!product || !variant) return;
@@ -74,7 +93,6 @@ function ProductDetail() {
     );
   }
 
-  const image = data?.images[0];
   const price = variant?.price ?? data?.price;
 
   return (
@@ -93,24 +111,65 @@ function ProductDetail() {
       </Link>
 
       <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
-        {/* Image */}
+        {/* Photos — auto-scrolling gallery */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ duration: 0.5 }}
           className="relative aspect-square overflow-hidden rounded-3xl liquid-glass"
+          onMouseEnter={() => setGalleryPaused(true)}
+          onMouseLeave={() => setGalleryPaused(false)}
         >
-          {image ? (
-            <img
-              src={image.url}
-              alt={image.altText ?? data.title}
+          {images.length > 0 ? (
+            <motion.img
+              key={`${imageIdx}-${images[imageIdx]?.url}`}
+              src={images[imageIdx]?.url}
+              alt={images[imageIdx]?.altText ?? data.title}
               className="h-full w-full object-cover"
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-muted">
               <ShoppingBag className="h-16 w-16 text-muted-foreground/30" />
             </div>
           )}
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous photo"
+                onClick={() => setImageIdx((i) => (i - 1 + images.length) % images.length)}
+                className="absolute top-1/2 left-3 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full liquid-glass-card text-foreground shadow transition-opacity"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next photo"
+                onClick={() => setImageIdx((i) => (i + 1) % images.length)}
+                className="absolute top-1/2 right-3 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full liquid-glass-card text-foreground shadow transition-opacity"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {images.map((img, i) => (
+                  <button
+                    key={`${i}-${img.url}`}
+                    type="button"
+                    aria-label={`Go to photo ${i + 1}`}
+                    onClick={() => setImageIdx(i)}
+                    className={`h-1.5 cursor-pointer rounded-full transition-all ${
+                      i === imageIdx ? "w-5 bg-foreground" : "w-1.5 bg-foreground/40"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
           {data.collections.length > 0 && (
             <div className="absolute top-4 left-4">
               <Badge className="liquid-glass-card text-foreground border-0 shadow-none">
@@ -137,8 +196,7 @@ function ProductDetail() {
               {data.title}
             </h1>
             <p className="mt-3 text-3xl font-bold">
-              {price.currencyCode}{" "}
-              <span>{parseFloat(price.amount).toFixed(2)}</span>
+              {price.currencyCode} <span>{parseFloat(price.amount).toFixed(2)}</span>
             </p>
           </div>
 
@@ -188,13 +246,14 @@ function ProductDetail() {
               ) : (
                 <ShoppingBag className="mr-2 h-5 w-5" />
               )}
-              {!variant?.availableForSale
-                ? "Sold out"
-                : added
-                  ? "Added!"
-                  : "Add to cart"}
+              {!variant?.availableForSale ? "Sold out" : added ? "Added!" : "Add to cart"}
             </Button>
-            <Button variant="outline" size="lg" className="w-full rounded-full py-6 text-base" asChild>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full rounded-full py-6 text-base"
+              asChild
+            >
               <Link to="/shop">Continue shopping</Link>
             </Button>
           </div>

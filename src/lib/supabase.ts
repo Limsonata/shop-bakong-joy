@@ -34,6 +34,7 @@ export interface DbProduct {
   price: number;
   currency: string;
   image_url: string | null;
+  images: string[] | null;
   in_stock: boolean;
   collections: string[] | null;
   variants: Array<{

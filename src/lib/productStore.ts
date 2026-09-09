@@ -53,6 +53,10 @@ function db() {
 function dbProductToProduct(row: DbProduct): Product {
   const price = { amount: String(row.price), currencyCode: row.currency || "USD" };
   const dbVariants = row.variants && row.variants.length > 0 ? row.variants : null;
+  // Gallery: `images` is the source of truth; fall back to the legacy single
+  // `image_url` column for products saved before multi-image support.
+  const urls = (row.images ?? []).filter(Boolean);
+  const imageUrls = urls.length > 0 ? urls : row.image_url ? [row.image_url] : [];
   return {
     id: row.id,
     title: row.title,
@@ -60,7 +64,7 @@ function dbProductToProduct(row: DbProduct): Product {
     handle: row.handle,
     productType: row.product_type ?? "",
     price,
-    images: row.image_url ? [{ url: row.image_url, altText: row.title }] : [],
+    images: imageUrls.map((url) => ({ url, altText: row.title })),
     variants: dbVariants
       ? dbVariants.map((v) => ({
           id: v.id,
@@ -87,8 +91,11 @@ function dbProductToProduct(row: DbProduct): Product {
 export async function getProducts(options?: {
   first?: number;
   query?: string | null;
+  /** Storefront use: hide drafts (Published = off). Admin pages see everything. */
+  onlyPublished?: boolean;
 }): Promise<ProductEdge[]> {
   let q = db().from("products").select("*").order("created_at", { ascending: false });
+  if (options?.onlyPublished) q = q.eq("in_stock", true);
   if (options?.first) q = q.limit(options.first);
   if (options?.query) {
     const term = options.query;
@@ -107,7 +114,8 @@ export async function getProductByHandle(handle: string): Promise<Product | null
     .select("*")
     .eq("handle", handle)
     .maybeSingle();
-  if (error || !data) return null;
+  // Unpublished (draft) products are hidden from the website entirely.
+  if (error || !data || !data.in_stock) return null;
   return dbProductToProduct(data as DbProduct);
 }
 
@@ -144,6 +152,8 @@ export interface ProductVariantInput {
   option: string; // "Size" or "Color"
   price: number;
   availableForSale: boolean;
+  /** Starting stock for this variant — creates the linked stock row's first quantity. */
+  stock?: number;
 }
 
 export interface ProductInput {
@@ -153,7 +163,9 @@ export interface ProductInput {
   productType: string;
   price: number;
   currency: string;
-  imageUrl: string;
+  /** Gallery images, first = main. `imageUrl` (legacy single image) is kept in sync. */
+  images?: string[];
+  imageUrl?: string;
   inStock: boolean;
   collections: string[];
   variants: ProductVariantInput[];

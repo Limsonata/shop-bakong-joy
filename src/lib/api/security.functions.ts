@@ -47,6 +47,8 @@ const productVariantSchema = z.object({
   option: z.string().min(1),
   price: z.number().nonnegative(),
   availableForSale: z.boolean(),
+  // Starting stock for this variant — seeds the linked stock_items row.
+  stock: z.number().int().min(0).optional(),
 });
 
 const productInputSchema = z.object({
@@ -56,7 +58,8 @@ const productInputSchema = z.object({
   productType: z.string(),
   price: z.number().nonnegative(),
   currency: z.string().min(1),
-  imageUrl: z.string(),
+  imageUrl: z.string().optional(),
+  images: z.array(z.string()).optional(),
   inStock: z.boolean(),
   collections: z.array(z.string()),
   variants: z.array(productVariantSchema),
@@ -186,16 +189,28 @@ function productInputToDbRow(
     product_type: input.productType,
     price: input.price,
     currency: input.currency,
-    image_url: input.imageUrl,
     in_stock: input.inStock,
     collections: input.collections,
   };
 
+  // Gallery: `images` is the source of truth; `image_url` mirrors the first
+  // entry so order thumbnails and old code keep working.
+  const images = (input.images ?? []).filter(Boolean);
+  const fallbackImage = input.imageUrl?.trim();
+  const resolvedImages = images.length > 0 ? images : fallbackImage ? [fallbackImage] : [];
+  row.images = resolvedImages;
+  row.image_url = resolvedImages[0] ?? null;
+
   if (includeVariants) {
-    row.variants = input.variants.map((variant, index) => ({
-      id: variantIds?.[index] ?? `${input.handle}-v${index}`,
-      ...variant,
-    }));
+    row.variants = input.variants.map((variant, index) => {
+      // `stock` is a form-only field: it seeds stock_items and is not part of
+      // the stored variant shape (stock lives in the linked stock_items rows).
+      const { stock: _stock, ...variantData } = variant;
+      return {
+        id: variantIds?.[index] ?? `${input.handle}-v${index}`,
+        ...variantData,
+      };
+    });
   }
 
   return row;
@@ -345,7 +360,9 @@ type StockRowInsert = {
 /**
  * Build the stock_items rows that back a product: one row per variant
  * (sku = variant id, so online orders deduct the exact row), or a single
- * row for products without variants. `startingStock` goes to the first row.
+ * row for products without variants. Each variant's `stock` seeds its own
+ * row; the top-level `stockIn` is the fallback for the no-variant case
+ * (and for older clients that only sent the single field).
  */
 function buildStockRows(
   product: { id: string; handle: string },
@@ -383,7 +400,7 @@ function buildStockRows(
     sku: skus[index] ?? `${product.handle}-v${index}`,
     ...variantToSizeColor(variant),
     price: Number(variant.price) || input.price,
-    stock_in: index === 0 ? startingStock : 0,
+    stock_in: Math.max(Math.round(variant.stock ?? (index === 0 ? startingStock : 0)), 0),
   }));
 }
 
@@ -478,9 +495,7 @@ async function reconcileProductStock(
     // Match an existing row by exact sku first, then by size/colour.
     const candidate =
       pool.find((m) => unclaimed.has(m.id) && m.sku === row.sku) ??
-      pool.find(
-        (m) => unclaimed.has(m.id) && m.size === row.size && m.color === row.color,
-      );
+      pool.find((m) => unclaimed.has(m.id) && m.size === row.size && m.color === row.color);
 
     if (candidate) {
       // Update in place: SKU and stock counts stay connected to past sales.
@@ -565,9 +580,8 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
     // and stock rows stay connected across edits. Match by option+value, not
     // position, so adding/removing a variant doesn't shuffle stock onto the
     // wrong size/colour.
-    const oldVariants = (existing.variants as
-      | Array<{ id: string; title?: string; option?: string }>
-      | null) ?? [];
+    const oldVariants =
+      (existing.variants as Array<{ id: string; title?: string; option?: string }> | null) ?? [];
     const variantIds = input.variants.map((variant, index) => {
       const match = oldVariants.find(
         (old) => old?.title === variant.title && old?.option === variant.option,
@@ -991,7 +1005,12 @@ async function telegramPassword(telegramId: number): Promise<string> {
 }
 
 function authUserToUser(
-  authUser: { id: string; email?: string; created_at?: string; user_metadata?: Record<string, unknown> },
+  authUser: {
+    id: string;
+    email?: string;
+    created_at?: string;
+    user_metadata?: Record<string, unknown>;
+  },
   name: string,
   role: UserRole = "user",
 ): User {
