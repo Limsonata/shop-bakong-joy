@@ -43,6 +43,7 @@ export interface DbProduct {
     option: string;
     price: number;
     availableForSale: boolean;
+    selectedOptions?: Array<{ name: string; value: string }> | null;
   }> | null;
   created_at: string;
 }

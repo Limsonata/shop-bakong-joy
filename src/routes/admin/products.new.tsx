@@ -33,7 +33,9 @@ function NewProductPage() {
             onSubmit={async (input) => {
               try {
                 await createProduct(input);
-                toast.success(`Created "${input.title}" — it's in Stock too. Add stock there if you haven't yet.`);
+                toast.success(
+                  `Created "${input.title}" — starting stock was added to the Stock page automatically.`,
+                );
                 navigate({ to: "/admin/products" });
               } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Failed to create product");

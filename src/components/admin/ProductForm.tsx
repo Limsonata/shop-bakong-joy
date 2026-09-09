@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Upload, X } from "lucide-react";
+import { Plus, Sparkles, Trash2, Upload, X } from "lucide-react";
 import {
   getProductTypes,
   type Product,
@@ -45,8 +45,8 @@ function initialVariants(product?: Product): ProductVariantInput[] {
   return product.variants
     .filter((v) => v.selectedOptions.length > 0)
     .map((v) => ({
-      title: v.selectedOptions[0].value,
-      option: v.selectedOptions[0].name,
+      size: v.selectedOptions.find((o) => o.name === "Size")?.value ?? "",
+      color: v.selectedOptions.find((o) => o.name === "Color")?.value ?? "",
       price: Number(v.price.amount),
       availableForSale: v.availableForSale,
     }));
@@ -66,6 +66,8 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [inStock, setInStock] = useState(initial?.variants[0]?.availableForSale ?? true);
   const [collectionsText, setCollectionsText] = useState((initial?.collections ?? []).join(", "));
   const [variants, setVariants] = useState<ProductVariantInput[]>(initialVariants(initial));
+  const [sizeList, setSizeList] = useState("");
+  const [colorList, setColorList] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [categories, setCategories] = useState<string[]>(CATEGORY_SUGGESTIONS);
@@ -139,8 +141,47 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const addVariant = () => {
     setVariants([
       ...variants,
-      { title: "", option: "Size", price: Number(price) || 0, availableForSale: true },
+      { size: "", color: "", price: Number(price) || 0, availableForSale: true },
     ]);
+  };
+
+  const splitList = (value: string): string[] =>
+    Array.from(
+      new Set(
+        value
+          .split(/[,/]/)
+          .map((part) => part.trim())
+          .filter(Boolean),
+      ),
+    );
+
+  /**
+   * Quick generator: type the sizes and colours once, get every combination
+   * as variant rows (sizes × colours). Duplicates of existing rows are
+   * skipped. Leave one field empty for a size-only or colour-only product.
+   */
+  const generateVariants = () => {
+    const sizes = splitList(sizeList);
+    const colors = splitList(colorList);
+    if (sizes.length === 0 && colors.length === 0) return;
+    const sizeCases = sizes.length > 0 ? sizes : [""];
+    const colorCases = colors.length > 0 ? colors : [""];
+    const existing = new Set(
+      variants.map((v) => `${v.size.trim().toLowerCase()}|${v.color.trim().toLowerCase()}`),
+    );
+    const combos: ProductVariantInput[] = [];
+    for (const size of sizeCases) {
+      for (const color of colorCases) {
+        const key = `${size.toLowerCase()}|${color.toLowerCase()}`;
+        if (!existing.has(key)) {
+          existing.add(key);
+          combos.push({ size, color, price: Number(price) || 0, availableForSale: true });
+        }
+      }
+    }
+    if (combos.length > 0) setVariants([...variants, ...combos]);
+    setSizeList("");
+    setColorList("");
   };
 
   const removeVariant = (index: number) => {
@@ -166,6 +207,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     try {
       const costNumber = Number.parseFloat(cost);
       const stockNumber = Number.parseInt(startingStock, 10);
+      const hasVariants = variants.length > 0;
       await onSubmit({
         handle: handle || slugify(title),
         title,
@@ -180,9 +222,17 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           .split(",")
           .map((c) => c.trim())
           .filter(Boolean),
-        variants,
+        variants: variants.map((v) => ({
+          ...v,
+          // Starting stock rides on each variant; undefined for the no-variant
+          // case where the single "Starting stock" field below applies.
+          stock: hasVariants ? Math.max(Math.round(v.stock ?? 0), 0) : undefined,
+        })),
         ...(Number.isFinite(costNumber) && costNumber >= 0 ? { cost: costNumber } : {}),
-        ...(Number.isFinite(stockNumber) && stockNumber > 0 ? { stockIn: stockNumber } : {}),
+        // Top-level starting stock only applies to products without variants.
+        ...(!hasVariants && Number.isFinite(stockNumber) && stockNumber > 0
+          ? { stockIn: stockNumber }
+          : {}),
       });
     } finally {
       setIsSubmitting(false);
@@ -328,22 +378,30 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                 What you pay your supplier — used for profit reports in the Stock page.
               </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="startingStock">Starting stock (optional)</Label>
-              <Input
-                id="startingStock"
-                type="number"
-                min="0"
-                step="1"
-                value={startingStock}
-                onChange={(e) => setStartingStock(e.target.value)}
-                placeholder="0"
-              />
-              <p className="text-xs text-muted-foreground">
-                Units on the shelf right now. With sizes/colours this goes to the first one —
-                restock the rest in Stock.
-              </p>
-            </div>
+            {variants.length === 0 ? (
+              <div className="space-y-2">
+                <Label htmlFor="startingStock">Starting stock (optional)</Label>
+                <Input
+                  id="startingStock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={startingStock}
+                  onChange={(e) => setStartingStock(e.target.value)}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Units on the shelf right now — recorded as the first entry in Stock.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Starting stock</Label>
+                <p className="text-sm text-muted-foreground">
+                  Set it per variant below — each size/colour gets its own stock count.
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -358,31 +416,67 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="grid gap-3 rounded-md border border-dashed bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Sizes (comma separated)</Label>
+              <Input
+                value={sizeList}
+                onChange={(e) => setSizeList(e.target.value)}
+                placeholder="S, M, L  or  32, 34"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Colors (comma separated)</Label>
+              <Input
+                value={colorList}
+                onChange={(e) => setColorList(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    generateVariants();
+                  }
+                }}
+                placeholder="Black, White"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={generateVariants}
+              disabled={!sizeList.trim() && !colorList.trim()}
+            >
+              <Sparkles className="mr-1 h-4 w-4" /> Generate
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Type the sizes and colours once and Generate creates every combination for you (sizes ×
+            colours, duplicates skipped). Leave one box empty for a size-only or colour-only
+            product. "Add Variant" is there for single rows.
+          </p>
+
           {variants.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No variants — product has one default option. Click "Add Variant" to add sizes or
-              colors.
+              No variants — product has one default option. Click "Add Variant" to add a row for
+              each size and colour combination (e.g. Size 32 + colour Black). Leave a field empty if
+              the product only has one of the two.
             </p>
           )}
           {variants.map((v, i) => (
-            <div key={i} className="grid gap-3 sm:grid-cols-4 items-end border rounded-md p-3">
+            <div key={i} className="grid gap-3 sm:grid-cols-6 items-end border rounded-md p-3">
               <div className="space-y-1">
-                <Label className="text-xs">Option type</Label>
-                <select
-                  value={v.option}
-                  onChange={(e) => updateVariant(i, "option", e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                >
-                  <option value="Size">Size</option>
-                  <option value="Color">Color</option>
-                </select>
+                <Label className="text-xs">Size</Label>
+                <Input
+                  placeholder="S / M / 32"
+                  value={v.size}
+                  onChange={(e) => updateVariant(i, "size", e.target.value)}
+                />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Value</Label>
+                <Label className="text-xs">Color</Label>
                 <Input
-                  placeholder={v.option === "Size" ? "Small / Medium / Large" : "Red / Blue"}
-                  value={v.title}
-                  onChange={(e) => updateVariant(i, "title", e.target.value)}
+                  placeholder="Black / White"
+                  value={v.color}
+                  onChange={(e) => updateVariant(i, "color", e.target.value)}
                 />
               </div>
               <div className="space-y-1">
@@ -394,6 +488,22 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                   value={v.price}
                   onChange={(e) => updateVariant(i, "price", Number(e.target.value))}
                 />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Starting stock</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={v.stock ?? 0}
+                  disabled={Boolean(initial)}
+                  onChange={(e) =>
+                    updateVariant(i, "stock", Math.max(Number(e.target.value) || 0, 0))
+                  }
+                />
+                {initial ? (
+                  <p className="text-[11px] text-muted-foreground">Change quantities in Stock.</p>
+                ) : null}
               </div>
               <Button type="button" size="icon" variant="ghost" onClick={() => removeVariant(i)}>
                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -522,10 +632,10 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           <div className="flex items-center justify-between rounded-md border p-3">
             <div>
               <Label htmlFor="inStock" className="cursor-pointer">
-                Available for sale
+                Published
               </Label>
               <p className="text-xs text-muted-foreground">
-                Show this product as in stock on the storefront.
+                On = shows on the website immediately. Off = saved as a draft, hidden from shoppers.
               </p>
             </div>
             <Switch id="inStock" checked={inStock} onCheckedChange={setInStock} />

@@ -43,8 +43,12 @@ const tokenSchema = z.object({
 });
 
 const productVariantSchema = z.object({
-  title: z.string().min(1),
-  option: z.string().min(1),
+  // Size + colour combination — either side can be empty.
+  size: z.string().optional(),
+  color: z.string().optional(),
+  // Legacy single-option fields (older saved forms) — still accepted.
+  title: z.string().optional(),
+  option: z.string().optional(),
   price: z.number().nonnegative(),
   availableForSale: z.boolean(),
   // Starting stock for this variant — seeds the linked stock_items row.
@@ -205,10 +209,20 @@ function productInputToDbRow(
     row.variants = input.variants.map((variant, index) => {
       // `stock` is a form-only field: it seeds stock_items and is not part of
       // the stored variant shape (stock lives in the linked stock_items rows).
-      const { stock: _stock, ...variantData } = variant;
+      const { stock: _stock, ...rest } = variant;
+      // Accept both the new size+colour shape and the legacy title/option shape.
+      const { size, color } = variantToSizeColor(rest);
+      const selectedOptions = [
+        ...(size && size !== "Default" ? [{ name: "Size", value: size }] : []),
+        ...(color ? [{ name: "Color", value: color }] : []),
+      ];
       return {
         id: variantIds?.[index] ?? `${input.handle}-v${index}`,
-        ...variantData,
+        title: [size === "Default" ? "" : size, color].filter(Boolean).join(" / ") || "Default",
+        option: color ? (size && size !== "Default" ? "Size" : "Color") : "Size",
+        price: rest.price,
+        availableForSale: rest.availableForSale,
+        ...(selectedOptions.length > 0 ? { selectedOptions } : {}),
       };
     });
   }
@@ -331,15 +345,24 @@ function stockGroupHandle(name: string, category: string): string {
 }
 
 /** Map a product variant onto the size/colour columns of stock_items. */
-function variantToSizeColor(variant?: { title: string; option: string }): {
+function variantToSizeColor(variant?: {
+  size?: string;
+  color?: string;
+  title?: string;
+  option?: string;
+}): {
   size: string;
   color: string;
 } {
   if (!variant) return { size: "Default", color: "" };
+  const size = (variant.size ?? "").trim();
+  const color = (variant.color ?? "").trim();
+  if (size || color) return { size: size || "Default", color };
+  // Legacy single-option shape ("option" = "Size" or "Color", value in "title").
   const option = (variant.option || "").toLowerCase();
   const value = (variant.title || "").trim();
-  if (option === "color" || option === "colour") return { size: "", color: value };
-  return { size: value, color: "" };
+  if (option.startsWith("color")) return { size: "", color: value };
+  return { size: value || "Default", color: "" };
 }
 
 type StockRowInsert = {
@@ -577,15 +600,27 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
     }
 
     // Keep existing variant ids (they double as stock SKUs) so order history
-    // and stock rows stay connected across edits. Match by option+value, not
+    // and stock rows stay connected across edits. Match by size+colour, not
     // position, so adding/removing a variant doesn't shuffle stock onto the
-    // wrong size/colour.
+    // wrong size/colour. Handles both the stored size+colour shape and the
+    // legacy title/option shape.
     const oldVariants =
-      (existing.variants as Array<{ id: string; title?: string; option?: string }> | null) ?? [];
+      (existing.variants as Array<{
+        id: string;
+        title?: string;
+        option?: string;
+        selectedOptions?: Array<{ name: string; value: string }> | null;
+      }> | null) ?? [];
+    const oldVariantKey = (old: (typeof oldVariants)[number]): string => {
+      const size = old?.selectedOptions?.find((o) => o.name === "Size")?.value ?? "";
+      const color = old?.selectedOptions?.find((o) => o.name === "Color")?.value ?? "";
+      if (size || color) return `${size.trim()}|${color.trim()}`;
+      const mapped = variantToSizeColor(old);
+      return `${mapped.size.trim()}|${mapped.color.trim()}`;
+    };
     const variantIds = input.variants.map((variant, index) => {
-      const match = oldVariants.find(
-        (old) => old?.title === variant.title && old?.option === variant.option,
-      );
+      const wanted = `${variant.size.trim()}|${variant.color.trim()}`;
+      const match = oldVariants.find((old) => oldVariantKey(old) === wanted);
       return match?.id ?? `${newHandle}-v${index}`;
     });
 

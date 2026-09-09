@@ -40,7 +40,7 @@ const trustIcons = [Truck, ShieldCheck, RotateCcw];
 function Index() {
   const { data: featuredProducts, isLoading } = useQuery({
     queryKey: ["products", "featured"],
-    queryFn: () => getProducts({ first: 12 }),
+    queryFn: () => getProducts({ first: 12, onlyPublished: true }),
   });
 
   const { data: collections } = useQuery({

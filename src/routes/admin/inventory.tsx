@@ -1,13 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Boxes,
   DollarSign,
   Download,
+  PackageMinus,
   PackagePlus,
   Pencil,
-  Plus,
   RefreshCw,
   Search,
   TrendingUp,
@@ -44,9 +44,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/format";
 import {
-  createStockItem,
+  adjustStock,
   downloadFile,
   listStockItems,
   restockItem,
@@ -60,46 +61,23 @@ export const Route = createFileRoute("/admin/inventory")({
   component: InventoryPage,
 });
 
-const SIZE_SUGGESTIONS = ["Free size", "S", "M", "L", "XL", "32", "34", "36", "38", "40"];
-const CATEGORY_SUGGESTIONS = ["Bra & Lingerie", "Underwear", "Tops", "Jeans", "Other"];
+/**
+ * The Stock page only logs quantity changes. Products (name, price, cost,
+ * variants) are defined once on the Products page — this page never re-types
+ * them.
+ */
 
+/** Small per-item form used by Edit: only stock-hygiene fields. */
 interface ItemFormState {
-  name: string;
-  category: string;
-  size: string;
-  color: string;
-  cost: string;
-  price: string;
-  stockIn: string;
   lowStockAt: string;
   note: string;
 }
 
-const EMPTY_FORM: ItemFormState = {
-  name: "",
-  category: "Bra & Lingerie",
-  size: "Free size",
-  color: "",
-  cost: "",
-  price: "",
-  stockIn: "1",
-  lowStockAt: "0",
-  note: "",
-};
-
 function toForm(item: StockItem): ItemFormState {
-  return {
-    name: item.name,
-    category: item.category,
-    size: item.size,
-    color: item.color,
-    cost: String(item.cost),
-    price: String(item.price),
-    stockIn: String(item.stockIn),
-    lowStockAt: String(item.lowStockAt),
-    note: item.note,
-  };
+  return { lowStockAt: String(item.lowStockAt), note: item.note };
 }
+
+type WriteOffReason = "loss" | "adjustment";
 
 function InventoryPage() {
   const [items, setItems] = useState<StockItem[]>([]);
@@ -111,7 +89,7 @@ function InventoryPage() {
 
   const [editing, setEditing] = useState<StockItem | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState<ItemFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<ItemFormState>({ lowStockAt: "0", note: "" });
   const [saving, setSaving] = useState(false);
 
   const [restockTarget, setRestockTarget] = useState<StockItem | null>(null);
@@ -119,6 +97,11 @@ function InventoryPage() {
   const [restockCost, setRestockCost] = useState("");
   const [restockSupplier, setRestockSupplier] = useState("");
   const [restockPostExpense, setRestockPostExpense] = useState(true);
+
+  const [writeOffTarget, setWriteOffTarget] = useState<StockItem | null>(null);
+  const [writeOffQty, setWriteOffQty] = useState("1");
+  const [writeOffReason, setWriteOffReason] = useState<WriteOffReason>("loss");
+  const [writeOffNote, setWriteOffNote] = useState("");
 
   const load = async () => {
     setIsLoading(true);
@@ -169,12 +152,6 @@ function InventoryPage() {
     };
   }, [items]);
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setFormOpen(true);
-  };
-
   const openEdit = (item: StockItem) => {
     setEditing(item);
     setForm(toForm(item));
@@ -182,40 +159,49 @@ function InventoryPage() {
   };
 
   const submitForm = async () => {
-    const cost = Number(form.cost);
-    const price = Number(form.price);
-    const stockIn = Number(form.stockIn);
-
-    if (!form.name.trim()) return toast.error("Item name is required");
-    if (!Number.isFinite(cost) || cost < 0) return toast.error("Cost must be a positive number");
-    if (!Number.isFinite(price) || price < 0) return toast.error("Price must be a positive number");
-    if (!Number.isInteger(stockIn) || stockIn < 0)
-      return toast.error("Quantity must be a whole number");
+    if (!editing) return;
+    const lowStockAt = Math.max(Number(form.lowStockAt) || 0, 0);
 
     setSaving(true);
     try {
-      const payload = {
-        name: form.name,
-        category: form.category,
-        size: form.size,
-        color: form.color,
-        cost,
-        price,
-        stockIn,
-        lowStockAt: Math.max(Number(form.lowStockAt) || 0, 0),
-        note: form.note,
-      };
-      if (editing) {
-        await updateStockItem(editing.id, payload);
-        toast.success(`${form.name} updated`);
-      } else {
-        const created = await createStockItem(payload);
-        toast.success(`${created.sku} added`);
-      }
+      await updateStockItem(editing.id, { lowStockAt, note: form.note });
+      toast.success(`${editing.sku} updated`);
       setFormOpen(false);
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save the item");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openWriteOff = (item: StockItem) => {
+    setWriteOffTarget(item);
+    setWriteOffQty("1");
+    setWriteOffReason("loss");
+    setWriteOffNote("");
+  };
+
+  const submitWriteOff = async () => {
+    if (!writeOffTarget) return;
+    const quantity = Number(writeOffQty);
+    if (!Number.isInteger(quantity) || quantity <= 0) return toast.error("Enter a whole quantity");
+    if (quantity > stockLeft(writeOffTarget))
+      return toast.error(`Only ${stockLeft(writeOffTarget)} left — cannot write off ${quantity}`);
+
+    setSaving(true);
+    try {
+      const updated = await adjustStock({
+        stockItemId: writeOffTarget.id,
+        delta: -quantity,
+        reason: writeOffReason,
+        note: writeOffNote.trim() || undefined,
+      });
+      toast.success(`Wrote off ${quantity} × ${updated.name}`);
+      setWriteOffTarget(null);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not record the write-off");
     } finally {
       setSaving(false);
     }
@@ -296,7 +282,7 @@ function InventoryPage() {
   return (
     <AdminShell
       title="Stock"
-      description="Every SKU, what it cost, what it sells for, and how many are left."
+      description="Quantity changes only — products are created on the Products page."
       actions={
         <>
           <Button variant="outline" size="sm" onClick={exportCsv}>
@@ -306,10 +292,6 @@ function InventoryPage() {
           <Button variant="outline" size="sm" onClick={load} disabled={isLoading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
-          </Button>
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add item
           </Button>
         </>
       }
@@ -415,7 +397,20 @@ function InventoryPage() {
                 ) : visible.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={10} className="py-10 text-center text-muted-foreground">
-                      No items match this filter.
+                      {items.length === 0 ? (
+                        <>
+                          No stock yet — every product you create on{" "}
+                          <Link
+                            to="/admin/products/new"
+                            className="font-medium text-foreground underline underline-offset-2"
+                          >
+                            Products → Add product
+                          </Link>{" "}
+                          shows up here automatically.
+                        </>
+                      ) : (
+                        "No items match this filter."
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -471,6 +466,15 @@ function InventoryPage() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => openWriteOff(item)}
+                              title="Write-off (damaged / lost)"
+                            >
+                              <PackageMinus className="h-4 w-4" />
+                              <span className="sr-only">Write off {item.sku}</span>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => openEdit(item)}
                               title="Edit"
                             >
@@ -497,122 +501,40 @@ function InventoryPage() {
         </CardContent>
       </Card>
 
-      {/* Add / edit item */}
+      {/* Edit — stock-hygiene fields only; product details live on the Products page */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? `Edit ${editing.sku}` : "Add stock item"}</DialogTitle>
+            <DialogTitle>{editing ? `Edit ${editing.sku}` : "Edit"}</DialogTitle>
             <DialogDescription>
-              One row per size and colour, the same way the stock sheet worked.
+              {editing
+                ? `${editing.name} · ${editing.size} · ${editing.color || "no colour"} — change name, price or cost on the Products page.`
+                : null}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="item-name">Item name</Label>
+              <Label htmlFor="item-low">Alert when left ≤</Label>
               <Input
-                id="item-name"
-                value={form.name}
-                onChange={(event) => setForm({ ...form, name: event.target.value })}
-                placeholder="French-Style Lace Lingerie"
+                id="item-low"
+                type="number"
+                min="0"
+                value={form.lowStockAt}
+                onChange={(event) => setForm({ ...form, lowStockAt: event.target.value })}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="item-category">Category</Label>
-                <Input
-                  id="item-category"
-                  list="category-options"
-                  value={form.category}
-                  onChange={(event) => setForm({ ...form, category: event.target.value })}
-                />
-                <datalist id="category-options">
-                  {[...new Set([...CATEGORY_SUGGESTIONS, ...categories])].map((category) => (
-                    <option key={category} value={category} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="item-size">Size</Label>
-                <Input
-                  id="item-size"
-                  list="size-options"
-                  value={form.size}
-                  onChange={(event) => setForm({ ...form, size: event.target.value })}
-                />
-                <datalist id="size-options">
-                  {SIZE_SUGGESTIONS.map((size) => (
-                    <option key={size} value={size} />
-                  ))}
-                </datalist>
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="item-note">Note (optional)</Label>
+              <Textarea
+                id="item-note"
+                rows={2}
+                value={form.note}
+                onChange={(event) => setForm({ ...form, note: event.target.value })}
+                placeholder="e.g. supplier stopped making this colour"
+              />
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="item-color">Colour</Label>
-                <Input
-                  id="item-color"
-                  value={form.color}
-                  onChange={(event) => setForm({ ...form, color: event.target.value })}
-                  placeholder="Black"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="item-low">Alert when left ≤</Label>
-                <Input
-                  id="item-low"
-                  type="number"
-                  min="0"
-                  value={form.lowStockAt}
-                  onChange={(event) => setForm({ ...form, lowStockAt: event.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="item-cost">Cost / item</Label>
-                <Input
-                  id="item-cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.cost}
-                  onChange={(event) => setForm({ ...form, cost: event.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="item-price">Selling price</Label>
-                <Input
-                  id="item-price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.price}
-                  onChange={(event) => setForm({ ...form, price: event.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="item-qty">{editing ? "Total received" : "Quantity"}</Label>
-                <Input
-                  id="item-qty"
-                  type="number"
-                  min="0"
-                  value={form.stockIn}
-                  onChange={(event) => setForm({ ...form, stockIn: event.target.value })}
-                />
-              </div>
-            </div>
-
-            {Number(form.price) > 0 && Number(form.cost) > 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Profit per item {formatPrice(Number(form.price) - Number(form.cost))} ·{" "}
-                {(((Number(form.price) - Number(form.cost)) / Number(form.price)) * 100).toFixed(0)}
-                % margin
-              </p>
-            ) : null}
           </div>
 
           <DialogFooter>
@@ -620,7 +542,7 @@ function InventoryPage() {
               Cancel
             </Button>
             <Button onClick={submitForm} disabled={saving}>
-              {saving ? "Saving…" : editing ? "Save changes" : "Add item"}
+              {saving ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -694,6 +616,73 @@ function InventoryPage() {
             </Button>
             <Button onClick={submitRestock} disabled={saving}>
               {saving ? "Saving…" : "Add stock"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Write-off — damaged / lost units */}
+      <Dialog
+        open={writeOffTarget !== null}
+        onOpenChange={(open) => !open && setWriteOffTarget(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Write off {writeOffTarget?.sku}</DialogTitle>
+            <DialogDescription>
+              {writeOffTarget
+                ? `${writeOffTarget.name} · ${writeOffTarget.size} · ${writeOffTarget.color || "no colour"} — ${stockLeft(writeOffTarget)} left`
+                : null}
+              Removed units are subtracted from stock and logged in the movement history.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="writeoff-qty">Quantity to remove</Label>
+                <Input
+                  id="writeoff-qty"
+                  type="number"
+                  min="1"
+                  value={writeOffQty}
+                  onChange={(event) => setWriteOffQty(event.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="writeoff-reason">Reason</Label>
+                <Select
+                  value={writeOffReason}
+                  onValueChange={(v) => setWriteOffReason(v as WriteOffReason)}
+                >
+                  <SelectTrigger id="writeoff-reason">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="loss">Damaged / lost</SelectItem>
+                    <SelectItem value="adjustment">Count correction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="writeoff-note">Note (optional)</Label>
+              <Input
+                id="writeoff-note"
+                value={writeOffNote}
+                onChange={(event) => setWriteOffNote(event.target.value)}
+                placeholder="e.g. zipper broken, found during stock count"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWriteOffTarget(null)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button onClick={submitWriteOff} disabled={saving} variant="destructive">
+              {saving ? "Saving…" : "Write off"}
             </Button>
           </DialogFooter>
         </DialogContent>

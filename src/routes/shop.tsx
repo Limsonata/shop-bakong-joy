@@ -36,7 +36,7 @@ function ShopPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["products", "all"],
-    queryFn: () => getProducts({ first: 50 }),
+    queryFn: () => getProducts({ first: 50, onlyPublished: true }),
   });
 
   const { data: collections } = useQuery({
@@ -65,9 +65,7 @@ function ShopPage() {
     }
     if (activeCollection) {
       result = result.filter((p) =>
-        p.node.collections.some((c) =>
-          c.toLowerCase().includes(activeCollection.toLowerCase()),
-        ),
+        p.node.collections.some((c) => c.toLowerCase().includes(activeCollection.toLowerCase())),
       );
     }
     result = result.filter((p) => {

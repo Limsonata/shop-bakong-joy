@@ -71,7 +71,10 @@ function dbProductToProduct(row: DbProduct): Product {
           title: v.title,
           price: { amount: String(v.price), currencyCode: row.currency || "USD" },
           availableForSale: v.availableForSale,
-          selectedOptions: [{ name: v.option, value: v.title }],
+          selectedOptions:
+            v.selectedOptions && v.selectedOptions.length > 0
+              ? v.selectedOptions.filter((o) => o.value)
+              : [{ name: v.option ?? "Option", value: v.title }],
         }))
       : [
           {
@@ -148,12 +151,19 @@ export async function getProductTypes(): Promise<string[]> {
 // ---------- Admin mutations ----------
 
 export interface ProductVariantInput {
-  title: string;
-  option: string; // "Size" or "Color"
+  /** Size value, e.g. "M" or "32" — leave empty for colour-only products. */
+  size: string;
+  /** Colour value, e.g. "Black" — leave empty for size-only products. */
+  color: string;
   price: number;
   availableForSale: boolean;
   /** Starting stock for this variant — creates the linked stock row's first quantity. */
   stock?: number;
+}
+
+/** Display label for a variant combination, e.g. "M / Black". */
+export function variantLabel(variant: Pick<ProductVariantInput, "size" | "color">): string {
+  return [variant.size.trim(), variant.color.trim()].filter(Boolean).join(" / ") || "Default";
 }
 
 export interface ProductInput {
