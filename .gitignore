@@ -40,3 +40,5 @@ dist-ssr
 
 # Local dashboard data backups (contain customer data)
 data-backups/
+.playwright-cli/page-2026-09-09T10-05-42-387Z.yml
+.playwright-cli/page-2026-09-09T10-06-58-240Z.yml

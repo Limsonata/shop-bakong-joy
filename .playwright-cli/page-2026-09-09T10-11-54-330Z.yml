@@ -1,0 +1,25 @@
+- generic [active] [ref=f1e1]:
+  - main [ref=f1e3]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e6]:
+        - img "BillieGrace Closet" [ref=f1e8]
+        - generic [ref=f1e9]: BillieGrace Closet
+        - generic [ref=f1e10]: Admin panel — login to continue
+      - generic [ref=f1e12]:
+        - tablist [ref=f1e13]:
+          - tab "Login" [selected] [ref=f1e14] [cursor=pointer]
+          - tab "Register" [ref=f1e15] [cursor=pointer]
+        - tabpanel "Login" [ref=f1e16]:
+          - generic [ref=f1e17]:
+            - generic [ref=f1e18]:
+              - text: Email
+              - textbox "Email" [ref=f1e19]:
+                - /placeholder: your@email.com
+                - text: temp.renametest.admin@gmail.com
+            - generic [ref=f1e20]:
+              - text: Password
+              - textbox "Password" [ref=f1e21]:
+                - /placeholder: Enter your password
+                - text: TempAdmin#2026x
+            - button "Logging in..." [disabled]
+  - region "Notifications alt+T"

@@ -420,7 +420,18 @@ function InventoryPage() {
                       <TableRow key={item.id} className={item.archived ? "opacity-50" : undefined}>
                         <TableCell className="font-mono text-xs">{item.sku}</TableCell>
                         <TableCell>
-                          <div className="font-medium">{item.name}</div>
+                          {item.productId ? (
+                            <Link
+                              to="/admin/products/$id"
+                              params={{ id: item.productId }}
+                              title="Rename on the Products page"
+                              className="font-medium text-foreground underline-offset-2 hover:underline"
+                            >
+                              {item.name}
+                            </Link>
+                          ) : (
+                            <span className="font-medium">{item.name}</span>
+                          )}
                           <div className="text-xs text-muted-foreground">
                             {[item.size, item.color, item.category].filter(Boolean).join(" · ")}
                           </div>
