@@ -383,7 +383,9 @@ function InventoryPage() {
                   <TableHead className="text-right">In</TableHead>
                   <TableHead className="text-right">Sold</TableHead>
                   <TableHead className="text-right">Left</TableHead>
-                  <TableHead className="text-right">Value</TableHead>
+                  <TableHead className="text-right" title="Stock left × cost — money tied up on the shelf, not profit">
+                    Value (cost)
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -443,7 +445,7 @@ function InventoryPage() {
                           {formatPrice(item.price)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-emerald-600">
-                          {formatPrice(item.price - item.cost)}
+                          {formatPrice(round2(item.price - item.cost))}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{item.stockIn}</TableCell>
                         <TableCell className="text-right tabular-nums">{item.sold}</TableCell>
