@@ -74,15 +74,18 @@ function ProductsAdmin() {
   const handleDelete = async () => {
     if (!pendingDelete) return;
     setDeletingId(pendingDelete.id);
-    const ok = await deleteProduct(pendingDelete.id);
-    if (ok) {
+    try {
+      await deleteProduct(pendingDelete.id);
       toast.success(`Deleted "${pendingDelete.title}"`);
       setProducts((prev) => prev.filter((p) => p.id !== pendingDelete.id));
-    } else {
-      toast.error("Failed to delete product");
+    } catch (error) {
+      console.error("[handleDelete] Error:", error);
+      const message = error instanceof Error ? error.message : "Failed to delete product";
+      toast.error(message);
+    } finally {
+      setDeletingId(null);
+      setPendingDelete(null);
     }
-    setDeletingId(null);
-    setPendingDelete(null);
   };
 
   const filtered = products.filter((p) => {

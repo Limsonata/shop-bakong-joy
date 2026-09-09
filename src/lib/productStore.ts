@@ -202,8 +202,10 @@ export async function deleteProduct(id: string): Promise<boolean> {
     const accessToken = await getSupabaseAccessToken();
     await deleteAdminProduct({ data: { accessToken, id } });
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    console.error("[deleteProduct] Failed:", error);
+    // Re-throw so the UI can show the actual error message
+    throw error;
   }
 }
 
