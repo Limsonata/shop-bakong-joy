@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { Plus, ShoppingBag, ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import type { ProductEdge } from "@/lib/productStore";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { Tilt3D } from "@/components/site/Tilt3D";
+import { motion } from "framer-motion";
 
+/**
+ * Editorial product card — static frame, square-cropped image,
+ * quiet underline hover. No tilt, no glass, no pills.
+ */
 export function ProductCard({ product }: { product: ProductEdge }) {
-  const [isHovered, setIsHovered] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const isLoading = useCartStore((s) => s.isLoading);
 
@@ -37,145 +37,53 @@ export function ProductCard({ product }: { product: ProductEdge }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -8 }}
-      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="group relative flex flex-col"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+      className="group"
     >
-      {/* Image Container — Tilt3D perspective effect */}
-      <Tilt3D className="rounded-2xl" maxTilt={12}>
-      <Link
-        to="/product/$handle"
-        params={{ handle: p.handle }}
-        className="relative block aspect-[4/5] overflow-hidden rounded-2xl bg-muted"
-      >
-        {/* Main Image */}
-        <motion.div
-          className="absolute inset-0"
-          animate={{ scale: isHovered ? 1.08 : 1 }}
-          transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-        >
+      <Link to="/product/$handle" params={{ handle: p.handle }} className="block">
+        {/* Image frame — plain, square crop, no chrome */}
+        <div className="relative overflow-hidden bg-muted aspect-[4/5]">
           {image ? (
             <img
               src={image.url}
-              alt={image.altText ?? p.title}
+              alt={image.altText || p.title}
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-muted">
-              <span className="text-muted-foreground text-sm">No image</span>
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="font-serif text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                {p.title}
+              </span>
             </div>
           )}
-        </motion.div>
 
-        {/* Liquid Glass Overlay */}
-        <motion.div
-          className="absolute inset-0"
-          style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(2px) saturate(120%)", WebkitBackdropFilter: "blur(2px) saturate(120%)" }}
-          animate={{ opacity: isHovered ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
-        />
-
-        {/* Quick Add Button */}
-        <AnimatePresence>
-          {isHovered && variant && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-              className="absolute bottom-4 left-4 right-4"
-            >
-              <Button
-                className="w-full rounded-full py-6 shadow-xl"
-                onClick={handleAdd}
-                disabled={isLoading || !variant.availableForSale}
-                variant={!variant.availableForSale ? "outline" : "default"}
-              >
-                {isLoading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </motion.div>
-                ) : !variant.availableForSale ? (
-                  "Out of Stock"
-                ) : (
-                  <>
-                    <Plus className="h-5 w-5 mr-2" />
-                    Add to Cart
-                  </>
-                )}
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Out-of-stock badge */}
-        {!variant?.availableForSale && (
-          <div className="absolute top-3 left-3 z-10">
-            <span className="px-2 py-1 text-xs font-medium bg-red-500/90 text-white rounded-full">
-              Out of Stock
-            </span>
-          </div>
-        )}
-
-        {/* Collection Tag */}
-        {p.collections.length > 0 && variant?.availableForSale && (
-          <div className="absolute top-3 left-3">
-            <span className="px-2 py-1 text-xs font-medium liquid-glass-card rounded-full">
-              {p.collections[0]}
-            </span>
-          </div>
-        )}
-
-        {/* Hover Arrow */}
-        <motion.div
-          className="absolute top-3 right-3"
-          animate={{ opacity: isHovered ? 1 : 0, scale: isHovered ? 1 : 0.8 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="p-2 liquid-glass-card rounded-full">
-            <ArrowUpRight className="h-4 w-4" />
-          </div>
-        </motion.div>
-      </Link>
-      </Tilt3D>
-
-      {/* Product Info */}
-      <div className="flex flex-col gap-1 pt-4 px-1">
-        <Link to="/product/$handle" params={{ handle: p.handle }} className="group/link block">
-          <h3 className="text-sm font-medium text-foreground group-hover/link:text-foreground/70 transition-colors line-clamp-1">
-            {p.title}
-          </h3>
-        </Link>
-
-        {p.productType && <p className="text-xs text-muted-foreground">{p.productType}</p>}
-
-        <div className="flex items-center justify-between mt-1">
-          <div className="flex items-baseline gap-1">
-            <span className="font-semibold text-lg">
-              {currency} {price.toFixed(2)}
-            </span>
-          </div>
-
-          {/* Mobile Add Button */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-full md:hidden"
+          {/* Quiet add-to-cart — thin bar, bottom edge */}
+          <button
             onClick={handleAdd}
-            disabled={!variant || isLoading || !variant?.availableForSale}
+            disabled={isLoading}
+            className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2
+              bg-neutral-900 text-white text-[11px] uppercase tracking-[0.2em]
+              py-3 translate-y-full opacity-0 transition-all duration-300
+              hover:bg-neutral-700 disabled:opacity-50
+              group-hover:translate-y-0 group-hover:opacity-100"
           >
-            <Plus className="h-4 w-4" />
-          </Button>
+            <ShoppingBag className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Add to Cart
+          </button>
         </div>
-      </div>
+
+        {/* Caption — title left, price right, plain row */}
+        <div className="mt-4 flex items-baseline justify-between gap-4">
+          <h3 className="font-serif text-[15px] leading-snug">{p.title}</h3>
+          <span className="text-[13px] text-muted-foreground whitespace-nowrap">
+            {currency === "USD" ? "$" : ""}
+            {price.toFixed(2)}
+          </span>
+        </div>
+      </Link>
     </motion.div>
   );
 }

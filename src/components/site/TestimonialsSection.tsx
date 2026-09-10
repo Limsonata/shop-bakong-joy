@@ -80,7 +80,10 @@ export function TestimonialsSection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) { toast.error("Please select a rating"); return; }
+    if (rating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
     setIsSubmitting(true);
     try {
       await submitFeedback({ name, location, rating, text, highlight });
@@ -96,7 +99,11 @@ export function TestimonialsSection() {
   const resetForm = () => {
     setFormOpen(false);
     setSubmitted(false);
-    setName(""); setLocation(""); setText(""); setHighlight(""); setRating(5);
+    setName("");
+    setLocation("");
+    setText("");
+    setHighlight("");
+    setRating(5);
   };
 
   return (
@@ -109,7 +116,9 @@ export function TestimonialsSection() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">What customers say</h2>
-          <p className="text-muted-foreground mt-3">Real results from real people across Cambodia</p>
+          <p className="text-muted-foreground mt-3">
+            Real results from real people across Cambodia
+          </p>
         </motion.div>
 
         <div className="grid sm:grid-cols-3 gap-6">
@@ -232,7 +241,10 @@ export function TestimonialsSection() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="fb-highlight">One-line highlight <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                      <Label htmlFor="fb-highlight">
+                        One-line highlight{" "}
+                        <span className="text-muted-foreground text-xs">(optional)</span>
+                      </Label>
                       <Input
                         id="fb-highlight"
                         value={highlight}

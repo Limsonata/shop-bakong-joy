@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ArrowUpRight, Truck, ShieldCheck, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/site/ProductCard";
 import { getProducts, getCollections } from "@/lib/productStore";
@@ -11,13 +10,13 @@ import { motion } from "framer-motion";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BillieGrace Closet — Activewear & Everyday Essentials for Women" },
+      { title: "Bakong Joy — Modern Essentials for Women" },
       {
         name: "description",
         content:
-          "Shop BillieGrace Closet: leggings, sports bras, sets and everyday essentials designed for women. New drops weekly, delivered across Cambodia.",
+          "Shop Bakong Joy: leggings, sports bras, sets and everyday essentials designed for women. New drops weekly, delivered across Cambodia.",
       },
-      { property: "og:title", content: "BillieGrace Closet — Made for Her" },
+      { property: "og:title", content: "Bakong Joy — Modern Essentials for Women" },
       {
         property: "og:description",
         content:
@@ -29,13 +28,11 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 24 },
+const fadeUp = {
+  initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] },
+  transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
 };
-
-const trustIcons = [Truck, ShieldCheck, RotateCcw];
 
 function Index() {
   const { data: featuredProducts, isLoading } = useQuery({
@@ -56,7 +53,7 @@ function Index() {
   // Fall back to the built-in defaults while loading (or if the section is
   // somehow missing) so the homepage never renders empty/broken.
   const content = siteContent ?? DEFAULT_SITE_CONTENT;
-  const { hero, marquee, trust_strip, cta } = content;
+  const { hero, marquee, cta } = content;
 
   return (
     <motion.div
@@ -65,111 +62,149 @@ function Index() {
       transition={{ duration: 0.4 }}
       className="min-h-screen"
     >
-      {/* Hero — bold, full-bleed, one clear CTA (Gymshark-style) */}
-      <section className="relative min-h-[86vh] flex items-end overflow-hidden bg-foreground">
+      {/* ── Hero — editorial full-bleed, quiet typography ── */}
+      <section className="relative h-[88vh] flex items-end overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={hero.backgroundImage}
-            alt="Woman wearing BillieGrace Closet activewear"
-            className="h-full w-full object-cover opacity-80"
+            alt="Woman wearing Bakong Joy essentials"
+            className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/30 to-foreground/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full pb-16 pt-32">
-          <motion.div {...fadeInUp} className="max-w-2xl">
-            <span className="inline-block mb-5 px-4 py-1.5 rounded-full bg-background/10 border border-background/20 text-background text-xs font-semibold uppercase tracking-widest">
+        <div className="relative w-full max-w-[1400px] mx-auto px-6 lg:px-10 pb-20">
+          <motion.div {...fadeUp}>
+            <p className="text-white/80 text-[11px] uppercase tracking-[0.3em] mb-5">
               {hero.badge}
-            </span>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[0.95] text-background">
+            </p>
+            <h1 className="font-serif font-light text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
               {hero.headingLine1}
               <br />
-              <span style={{ color: "oklch(78% 0.10 15)" }}>{hero.headingLine2}</span>
+              {hero.headingLine2}
             </h1>
-            <p className="mt-6 text-lg text-background/75 max-w-lg">{hero.subtext}</p>
-            <div className="mt-9 flex flex-wrap gap-4">
-              <Button
-                asChild
-                size="lg"
-                className="rounded-full px-8 py-6 text-lg bg-background text-foreground hover:bg-background/90 group"
+            <p className="mt-6 max-w-md text-white/85 text-[15px] font-light leading-relaxed">
+              {hero.subtext}
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-8">
+              <Link
+                to={hero.primaryButtonLink as "/shop"}
+                className="inline-flex items-center gap-3 bg-white text-neutral-900
+                  text-[11px] uppercase tracking-[0.25em] px-9 py-4
+                  hover:bg-white/85 transition-colors"
               >
-                <Link to={hero.primaryButtonLink as "/shop"}>
-                  {hero.primaryButtonLabel}
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="rounded-full px-8 py-6 text-lg bg-transparent border-background/40 text-background hover:bg-background/10 hover:text-background"
+                {hero.primaryButtonLabel}
+                <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
+              </Link>
+              <Link
+                to="/shop"
+                search={{ q: hero.secondaryButtonSearch }}
+                className="text-white text-[11px] uppercase tracking-[0.25em]
+                  border-b border-white/70 pb-1 hover:opacity-60 transition-opacity"
               >
-                <Link to="/shop" search={{ q: hero.secondaryButtonSearch }}>
-                  {hero.secondaryButtonLabel}
-                </Link>
-              </Button>
+                {hero.secondaryButtonLabel}
+              </Link>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Marquee ticker */}
-      <section className="border-y border-border bg-foreground overflow-hidden py-3">
+      {/* ── Marquee — quiet single-line scroll ── */}
+      <section className="border-b border-neutral-200 overflow-hidden py-3 bg-white">
         <div className="marquee-track">
-          {[...marquee.words, ...marquee.words, ...marquee.words].map((word, i) => (
+          {[...marquee.words, ...marquee.words].map((word, i) => (
             <span
               key={i}
-              className="flex items-center gap-6 px-6 text-background text-sm font-bold uppercase tracking-widest shrink-0"
+              className="flex items-center gap-8 px-8 text-[10px] uppercase tracking-[0.3em] text-neutral-500 shrink-0"
             >
               {word}
-              <span style={{ color: "oklch(78% 0.10 15)" }} className="text-lg">
-                ✦
-              </span>
+              <span aria-hidden className="text-neutral-300">—</span>
             </span>
           ))}
         </div>
       </section>
 
-      {/* Shop by category — straight into product discovery, no filler */}
-      {collections && collections.length > 0 && (
-        <section className="py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex items-end justify-between mb-8"
+      {/* ── New In — editorial grid ── */}
+      <section className="py-20 sm:py-24">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+          <motion.div
+            {...fadeUp}
+            className="flex items-end justify-between mb-10"
+          >
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-3">
+                New In
+              </p>
+              <h2 className="font-serif font-light text-3xl sm:text-4xl">
+                Latest Pieces
+              </h2>
+            </div>
+            <Link
+              to="/shop"
+              className="hidden sm:inline-flex items-center gap-2 text-[11px]
+                uppercase tracking-[0.25em] border-b border-neutral-900 pb-1
+                hover:opacity-60 transition-opacity"
             >
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              View All
+              <ArrowRight className="w-3 h-3" strokeWidth={1.5} />
+            </Link>
+          </motion.div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-12">
+            {isLoading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="space-y-4">
+                    <Skeleton className="aspect-[4/5] w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                ))
+              : featuredProducts?.map((product) => (
+                  <ProductCard key={product.node.id} product={product} />
+                ))}
+          </div>
+
+          <div className="mt-16 text-center">
+            <Link
+              to="/shop"
+              className="inline-flex items-center gap-3 bg-neutral-900 text-white
+                text-[11px] uppercase tracking-[0.25em] px-10 py-4
+                hover:bg-neutral-700 transition-colors"
+            >
+              View All Products
+              <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Categories — square editorial tiles ── */}
+      {collections && collections.length > 0 && (
+        <section className="py-16 border-t border-neutral-200">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+            <motion.div {...fadeUp} className="mb-10">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-3">
+                Collections
+              </p>
+              <h2 className="font-serif font-light text-3xl sm:text-4xl">
                 Shop by Category
               </h2>
-              <Link
-                to="/shop"
-                className="hidden sm:flex items-center gap-1 text-sm font-semibold hover:gap-2 transition-all"
-              >
-                View All <ArrowRight className="w-4 h-4" />
-              </Link>
             </motion.div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              {collections.slice(0, 6).map((collection, i) => (
-                <motion.div
-                  key={collection.node.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                >
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {collections.slice(0, 6).map((collection) => (
+                <motion.div key={collection.node.id} {...fadeUp}>
                   <Link
                     to="/shop"
                     search={{ q: collection.node.title }}
-                    className="group relative block aspect-square rounded-2xl overflow-hidden bg-muted"
+                    className="group relative block aspect-[3/4] overflow-hidden bg-neutral-100"
                   >
-                    <div className="absolute inset-0 bg-black/35 group-hover:bg-black/45 transition-colors" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-white font-semibold">{collection.node.title}</p>
+                    <div className="absolute inset-0 bg-black/20 transition-colors duration-500 group-hover:bg-black/35" />
+                    <div className="absolute inset-x-0 bottom-0 p-5">
+                      <p className="text-white text-[11px] uppercase tracking-[0.2em]">
+                        {collection.node.title}
+                      </p>
                     </div>
-                    <ArrowUpRight className="absolute top-3 right-3 w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 </motion.div>
               ))}
@@ -178,114 +213,27 @@ function Index() {
         </section>
       )}
 
-      {/* Product grid — the whole homepage revolves around this */}
-      <section className="py-8 sm:py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex items-end justify-between mb-8"
-          >
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Shop All</h2>
-              <p className="text-muted-foreground mt-1 text-sm">Every piece, all in one place</p>
-            </div>
-            <Button asChild variant="ghost" className="hidden sm:flex font-semibold">
-              <Link to="/shop">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </motion.div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {isLoading
-              ? Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="aspect-[4/5] rounded-2xl" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ))
-              : featuredProducts?.map((product, i) => (
-                  <motion.div
-                    key={product.node.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: (i % 4) * 0.05 }}
-                  >
-                    <ProductCard product={product} />
-                  </motion.div>
-                ))}
-          </div>
-
-          <div className="mt-10 text-center">
-            <Button asChild size="lg" className="rounded-full px-10">
-              <Link to="/shop">
-                View All Products
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust strip — compact, functional, no marketing fluff */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {trust_strip.items.map(({ title, desc }, i) => {
-              const Icon = trustIcons[i % trustIcons.length];
-              return (
-                <motion.div
-                  key={`${title}-${i}`}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">{title}</p>
-                    <p className="text-sm text-muted-foreground">{desc}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-foreground text-background py-16 sm:py-20 px-8 text-center"
-          >
-            <div className="relative max-w-2xl mx-auto">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-5">
-                {cta.heading}
-              </h2>
-              <p className="text-lg text-background/70 mb-8 max-w-lg mx-auto">{cta.subtext}</p>
-              <Button
-                asChild
-                size="lg"
-                className="rounded-full px-8 py-6 text-lg bg-background text-foreground hover:bg-background/90"
-              >
-                <Link to={cta.buttonLink as "/shop"}>
-                  {cta.buttonLabel}
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
+      {/* ── Closing statement — quiet full-width ── */}
+      <section className="py-24 sm:py-28 border-t border-neutral-200">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 text-center">
+          <motion.div {...fadeUp} className="max-w-2xl mx-auto">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-6">
+              The Edit
+            </p>
+            <h2 className="font-serif font-light text-4xl sm:text-5xl leading-tight">
+              {cta.heading}
+            </h2>
+            <p className="mt-5 text-neutral-500 text-[15px] font-light leading-relaxed">
+              {cta.subtext}
+            </p>
+            <Link
+              to={cta.buttonLink as "/shop"}
+              className="mt-10 inline-block bg-neutral-900 text-white
+                text-[11px] uppercase tracking-[0.25em] px-10 py-4
+                hover:bg-neutral-700 transition-colors"
+            >
+              {cta.buttonLabel}
+            </Link>
           </motion.div>
         </div>
       </section>
