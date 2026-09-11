@@ -7,7 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
+import { MediaField } from "@/components/admin/MediaField";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import {
   getSiteContent,
@@ -42,7 +44,15 @@ function ContentAdmin() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const sections: Array<keyof SiteContent> = ["hero", "marquee", "trust_strip", "cta"];
+      const sections: Array<keyof SiteContent> = [
+        "hero",
+        "marquee",
+        "trust_strip",
+        "cta",
+        "dual_tiles",
+        "video_popup",
+        "footer",
+      ];
       const results = await Promise.all(
         sections
           .filter(
@@ -70,9 +80,6 @@ function ContentAdmin() {
     setContent(original);
     toast.info("Changes discarded");
   };
-
-  const updateHero = (field: keyof SiteContent["hero"], value: string) =>
-    setContent((prev) => ({ ...prev, hero: { ...prev.hero, [field]: value } }));
 
   const updateCta = (field: keyof SiteContent["cta"], value: string) =>
     setContent((prev) => ({ ...prev, cta: { ...prev.cta, [field]: value } }));
@@ -114,6 +121,41 @@ function ContentAdmin() {
       ...prev,
       trust_strip: { items: prev.trust_strip.items.filter((_, i) => i !== index) },
     }));
+
+  const updateTile = (
+    index: number,
+    field: keyof SiteContent["dual_tiles"]["tiles"][number],
+    value: string,
+  ) =>
+    setContent((prev) => {
+      const tiles = prev.dual_tiles.tiles.map((tile, i) =>
+        i === index ? { ...tile, [field]: value } : tile,
+      );
+      return { ...prev, dual_tiles: { tiles } };
+    });
+
+  const updateVideoPopup = (field: "videoUrl" | "posterUrl", value: string) =>
+    setContent((prev) => ({
+      ...prev,
+      video_popup: { ...prev.video_popup, [field]: value },
+    }));
+
+  const toggleVideoPopup = (enabled: boolean) =>
+    setContent((prev) => ({
+      ...prev,
+      video_popup: { ...prev.video_popup, enabled },
+    }));
+
+  const updateFooter = (field: "about" | "address" | "phone" | "email", value: string) =>
+    setContent((prev) => ({ ...prev, footer: { ...prev.footer, [field]: value } }));
+
+  const updateSocial = (index: number, field: "label" | "href", value: string) =>
+    setContent((prev) => {
+      const socials = prev.footer.socials.map((social, i) =>
+        i === index ? { ...social, [field]: value } : social,
+      );
+      return { ...prev, footer: { ...prev.footer, socials } };
+    });
 
   if (isLoading) {
     return (
@@ -191,101 +233,6 @@ function ContentAdmin() {
           )}
 
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Hero Section</CardTitle>
-                <CardDescription>The big banner at the top of the homepage.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="hero-badge">Badge text</Label>
-                  <Input
-                    id="hero-badge"
-                    value={content.hero.badge}
-                    onChange={(e) => updateHero("badge", e.target.value)}
-                    placeholder="Made for her"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-line1">Heading — line 1</Label>
-                    <Input
-                      id="hero-line1"
-                      value={content.hero.headingLine1}
-                      onChange={(e) => updateHero("headingLine1", e.target.value)}
-                      placeholder="Move."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-line2">Heading — line 2 (accent color)</Label>
-                    <Input
-                      id="hero-line2"
-                      value={content.hero.headingLine2}
-                      onChange={(e) => updateHero("headingLine2", e.target.value)}
-                      placeholder="Look good doing it."
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hero-subtext">Subtext</Label>
-                  <textarea
-                    id="hero-subtext"
-                    value={content.hero.subtext}
-                    onChange={(e) => updateHero("subtext", e.target.value)}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    rows={3}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hero-bg">Background image URL</Label>
-                  <Input
-                    id="hero-bg"
-                    value={content.hero.backgroundImage}
-                    onChange={(e) => updateHero("backgroundImage", e.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-primary-label">Primary button label</Label>
-                    <Input
-                      id="hero-primary-label"
-                      value={content.hero.primaryButtonLabel}
-                      onChange={(e) => updateHero("primaryButtonLabel", e.target.value)}
-                      placeholder="Shop Now"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-primary-link">Primary button link</Label>
-                    <Input
-                      id="hero-primary-link"
-                      value={content.hero.primaryButtonLink}
-                      onChange={(e) => updateHero("primaryButtonLink", e.target.value)}
-                      placeholder="/shop"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-secondary-label">Secondary button label</Label>
-                    <Input
-                      id="hero-secondary-label"
-                      value={content.hero.secondaryButtonLabel}
-                      onChange={(e) => updateHero("secondaryButtonLabel", e.target.value)}
-                      placeholder="New Arrivals"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-secondary-search">Secondary button search term</Label>
-                    <Input
-                      id="hero-secondary-search"
-                      value={content.hero.secondaryButtonSearch}
-                      onChange={(e) => updateHero("secondaryButtonSearch", e.target.value)}
-                      placeholder="New Arrivals"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Ticker Strip</CardTitle>
@@ -397,6 +344,195 @@ function ContentAdmin() {
                       placeholder="/shop"
                     />
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Hero Banners (Dual Tiles)</CardTitle>
+                <CardDescription>
+                  The two side-by-side banners at the top of the homepage. Insert photos from your
+                  device or paste image URLs.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {content.dual_tiles.tiles.map((tile, i) => (
+                  <div key={i} className="space-y-3 rounded-md border p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Tile {i + 1}
+                    </p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor={`tile-${i}-eyebrow`}>Eyebrow</Label>
+                        <Input
+                          id={`tile-${i}-eyebrow`}
+                          value={tile.eyebrow}
+                          onChange={(e) => updateTile(i, "eyebrow", e.target.value)}
+                          placeholder="SUMMER 26"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`tile-${i}-heading`}>Heading</Label>
+                        <Input
+                          id={`tile-${i}-heading`}
+                          value={tile.heading}
+                          onChange={(e) => updateTile(i, "heading", e.target.value)}
+                          placeholder="A Return to Self"
+                        />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor={`tile-${i}-subtext`}>Subtext</Label>
+                        <Input
+                          id={`tile-${i}-subtext`}
+                          value={tile.subtext}
+                          onChange={(e) => updateTile(i, "subtext", e.target.value)}
+                          placeholder="Optional supporting line"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`tile-${i}-cta-label`}>CTA label</Label>
+                        <Input
+                          id={`tile-${i}-cta-label`}
+                          value={tile.ctaLabel}
+                          onChange={(e) => updateTile(i, "ctaLabel", e.target.value)}
+                          placeholder="DISCOVER"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`tile-${i}-cta-link`}>CTA link</Label>
+                        <Input
+                          id={`tile-${i}-cta-link`}
+                          value={tile.ctaLink}
+                          onChange={(e) => updateTile(i, "ctaLink", e.target.value)}
+                          placeholder="/shop"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`tile-${i}-cta-search`}>CTA search term (optional)</Label>
+                        <Input
+                          id={`tile-${i}-cta-search`}
+                          value={tile.ctaSearch ?? ""}
+                          onChange={(e) => updateTile(i, "ctaSearch", e.target.value)}
+                          placeholder="New Arrivals"
+                        />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <MediaField
+                          label="Tile image"
+                          kind="image"
+                          value={tile.image}
+                          onChange={(url) => updateTile(i, "image", url)}
+                          hint="Insert a photo from your device, or paste any image URL."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Runway &amp; Beyond — Video Popup</CardTitle>
+                <CardDescription>
+                  The floating video card in the bottom-right corner. Click-to-play, like
+                  bouguessa.com.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <p className="text-sm font-medium">Show video popup</p>
+                    <p className="text-xs text-muted-foreground">
+                      Displays the floating card on storefront pages.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={content.video_popup.enabled}
+                    onCheckedChange={(checked) => toggleVideoPopup(checked)}
+                    aria-label="Toggle video popup"
+                  />
+                </div>
+                <MediaField
+                  label="Video"
+                  kind="video"
+                  value={content.video_popup.videoUrl}
+                  onChange={(url) => updateVideoPopup("videoUrl", url)}
+                  hint="Insert a film from your device (mp4 / webm), or paste a video URL."
+                />
+                <MediaField
+                  label="Poster image"
+                  kind="image"
+                  value={content.video_popup.posterUrl}
+                  onChange={(url) => updateVideoPopup("posterUrl", url)}
+                  hint="Shown on the floating card before the visitor presses play."
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Footer</CardTitle>
+                <CardDescription>
+                  Brand blurb, contact details and social links in the footer.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="footer-about">About text</Label>
+                  <textarea
+                    id="footer-about"
+                    value={content.footer.about}
+                    onChange={(e) => updateFooter("about", e.target.value)}
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    rows={2}
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="footer-address">Address</Label>
+                    <Input
+                      id="footer-address"
+                      value={content.footer.address}
+                      onChange={(e) => updateFooter("address", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="footer-phone">Phone</Label>
+                    <Input
+                      id="footer-phone"
+                      value={content.footer.phone}
+                      onChange={(e) => updateFooter("phone", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="footer-email">Email</Label>
+                    <Input
+                      id="footer-email"
+                      value={content.footer.email}
+                      onChange={(e) => updateFooter("email", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label>Social links</Label>
+                  {content.footer.socials.map((social, i) => (
+                    <div key={i} className="grid grid-cols-2 gap-3">
+                      <Input
+                        value={social.label}
+                        onChange={(e) => updateSocial(i, "label", e.target.value)}
+                        placeholder="Instagram"
+                        aria-label={`Social ${i + 1} label`}
+                      />
+                      <Input
+                        value={social.href}
+                        onChange={(e) => updateSocial(i, "href", e.target.value)}
+                        placeholder="https://..."
+                        aria-label={`Social ${i + 1} URL`}
+                      />
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

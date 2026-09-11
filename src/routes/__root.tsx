@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
+import { FloatingVideoWidget } from "@/components/site/FloatingVideoWidget";
 import { useCartSync } from "@/hooks/useCartSync";
 
 function NotFoundComponent() {
@@ -149,6 +150,7 @@ function RootComponent() {
           <Outlet />
         </main>
         {isBackOffice ? null : <Footer />}
+        {isBackOffice ? null : <FloatingVideoWidget />}
       </div>
       <Toaster position="top-center" richColors />
       <SpeedInsights />

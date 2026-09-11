@@ -53,7 +53,8 @@ function Index() {
   // Fall back to the built-in defaults while loading (or if the section is
   // somehow missing) so the homepage never renders empty/broken.
   const content = siteContent ?? DEFAULT_SITE_CONTENT;
-  const { hero, marquee, cta } = content;
+  const { marquee, cta } = content;
+  const tiles = content.dual_tiles?.tiles ?? DEFAULT_SITE_CONTENT.dual_tiles.tiles;
 
   return (
     <motion.div
@@ -62,51 +63,40 @@ function Index() {
       transition={{ duration: 0.4 }}
       className="min-h-screen"
     >
-      {/* ── Hero — editorial full-bleed, quiet typography ── */}
-      <section className="relative h-[88vh] flex items-end overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={hero.backgroundImage}
-            alt="Woman wearing Bakong Joy essentials"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
-        </div>
+      {/* ── Hero — Bouguessa-style dual tiles ── */}
+      <section className="grid md:grid-cols-2">
+        {tiles.slice(0, 2).map((tile, i) => (
+          <motion.div key={i} {...fadeUp} className="relative h-[72vh] overflow-hidden md:h-[86vh]">
+            <img
+              src={tile.image}
+              alt={tile.heading}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
 
-        <div className="relative w-full max-w-[1400px] mx-auto px-6 lg:px-10 pb-20">
-          <motion.div {...fadeUp}>
-            <p className="text-white/80 text-[11px] uppercase tracking-[0.3em] mb-5">
-              {hero.badge}
-            </p>
-            <h1 className="font-serif font-light text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
-              {hero.headingLine1}
-              <br />
-              {hero.headingLine2}
-            </h1>
-            <p className="mt-6 max-w-md text-white/85 text-[15px] font-light leading-relaxed">
-              {hero.subtext}
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-8">
+            <div className="absolute inset-x-0 bottom-0 p-7 sm:p-10 lg:p-12">
+              <p className="mb-3 text-[11px] uppercase tracking-[0.25em] text-white/85">
+                {tile.eyebrow}
+              </p>
+              <h1 className="font-serif font-light text-4xl leading-tight text-white sm:text-5xl">
+                {tile.heading}
+              </h1>
+              {tile.subtext && (
+                <p className="mt-3 max-w-sm text-sm font-light leading-relaxed text-white/85">
+                  {tile.subtext}
+                </p>
+              )}
               <Link
-                to={hero.primaryButtonLink as "/shop"}
-                className="inline-flex items-center gap-3 bg-white text-neutral-900
-                  text-[11px] uppercase tracking-[0.25em] px-9 py-4
-                  hover:bg-white/85 transition-colors"
+                to={tile.ctaLink as "/shop"}
+                search={tile.ctaSearch ? { q: tile.ctaSearch } : undefined}
+                className="mt-6 inline-block border-b border-white pb-1 text-[11px]
+                  uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-60"
               >
-                {hero.primaryButtonLabel}
-                <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
-              </Link>
-              <Link
-                to="/shop"
-                search={{ q: hero.secondaryButtonSearch }}
-                className="text-white text-[11px] uppercase tracking-[0.25em]
-                  border-b border-white/70 pb-1 hover:opacity-60 transition-opacity"
-              >
-                {hero.secondaryButtonLabel}
+                {tile.ctaLabel}
               </Link>
             </div>
           </motion.div>
-        </div>
+        ))}
       </section>
 
       {/* ── Marquee — quiet single-line scroll ── */}
@@ -118,7 +108,9 @@ function Index() {
               className="flex items-center gap-8 px-8 text-[10px] uppercase tracking-[0.3em] text-neutral-500 shrink-0"
             >
               {word}
-              <span aria-hidden className="text-neutral-300">—</span>
+              <span aria-hidden className="text-neutral-300">
+                —
+              </span>
             </span>
           ))}
         </div>
@@ -127,17 +119,10 @@ function Index() {
       {/* ── New In — editorial grid ── */}
       <section className="py-20 sm:py-24">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
-          <motion.div
-            {...fadeUp}
-            className="flex items-end justify-between mb-10"
-          >
+          <motion.div {...fadeUp} className="flex items-end justify-between mb-10">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-3">
-                New In
-              </p>
-              <h2 className="font-serif font-light text-3xl sm:text-4xl">
-                Latest Pieces
-              </h2>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-3">New In</p>
+              <h2 className="font-serif font-light text-3xl sm:text-4xl">Latest Pieces</h2>
             </div>
             <Link
               to="/shop"
@@ -186,9 +171,7 @@ function Index() {
               <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-3">
                 Collections
               </p>
-              <h2 className="font-serif font-light text-3xl sm:text-4xl">
-                Shop by Category
-              </h2>
+              <h2 className="font-serif font-light text-3xl sm:text-4xl">Shop by Category</h2>
             </motion.div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -217,9 +200,7 @@ function Index() {
       <section className="py-24 sm:py-28 border-t border-neutral-200">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 text-center">
           <motion.div {...fadeUp} className="max-w-2xl mx-auto">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-6">
-              The Edit
-            </p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 mb-6">The Edit</p>
             <h2 className="font-serif font-light text-4xl sm:text-5xl leading-tight">
               {cta.heading}
             </h2>

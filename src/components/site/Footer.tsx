@@ -1,19 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import {
-  Instagram,
-  Twitter,
-  Facebook,
-  Youtube,
-  Mail,
-  MapPin,
-  Phone,
-  ArrowUpRight,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/site/Logo";
+import { getSiteContent, DEFAULT_SITE_CONTENT } from "@/lib/siteContent";
 
 const footerLinks = {
   shop: [
@@ -22,7 +11,7 @@ const footerLinks = {
     { label: "Best Sellers", to: "/shop" },
     { label: "Sale", to: "/shop" },
   ],
-  support: [
+  help: [
     { label: "My Account", to: "/account" },
     { label: "My Orders", to: "/orders" },
     { label: "Track Order", to: "/track" },
@@ -30,143 +19,137 @@ const footerLinks = {
   ],
 };
 
-const socialLinks = [
-  { icon: Instagram, label: "Instagram", href: "#" },
-  { icon: Twitter, label: "Twitter", href: "#" },
-  { icon: Facebook, label: "Facebook", href: "#" },
-  { icon: Youtube, label: "YouTube", href: "#" },
-];
+const paymentMethods = ["Visa", "Mastercard", "Amex", "PayPal", "Apple Pay", "ABA Pay"];
 
+/**
+ * Bouguessa-style footer: quiet white columns on a bordered white ground —
+ * brand + contact, SHOP, HELP, then newsletter (underline input) and JOIN US
+ * text links, closed by a slim copyright / payment-methods bar.
+ * All contact + social content is dynamic via the site content layer.
+ */
 export function Footer() {
+  const { data: siteContent } = useQuery({
+    queryKey: ["site-content"],
+    queryFn: () => getSiteContent(),
+  });
+  const footer = siteContent?.footer ?? DEFAULT_SITE_CONTENT.footer;
+
   const handleNewsletter = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success("Thanks for subscribing!");
   };
 
   return (
-    <footer className="mt-24 bg-foreground text-background">
-      {/* Newsletter Section */}
-      <div className="border-b border-background/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <h3 className="text-2xl sm:text-3xl font-bold">Join the BillieGrace list</h3>
-              <p className="text-background/60 mt-2">
-                Subscribe for early access to new drops, style edits, and member-only discounts.
-              </p>
-            </motion.div>
-            <motion.form
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              onSubmit={handleNewsletter}
-              className="flex gap-3"
-            >
-              <div className="relative flex-1">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-background/40" />
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="pl-12 py-6 rounded-full bg-background/10 border-background/20 text-background placeholder:text-background/40 focus:bg-background/20"
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                className="px-8 py-6 rounded-full bg-background text-foreground hover:bg-background/90"
-              >
-                Subscribe
-              </Button>
-            </motion.form>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-          {/* Brand */}
-          <div className="col-span-2">
-            <Link to="/" className="flex items-center mb-6">
-              <Logo className="h-16 w-auto" />
+    <footer className="border-t border-border bg-background">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+          {/* Brand / contact */}
+          <div>
+            <Link to="/" className="mb-7 inline-block" aria-label="BillieGrace Closet — home">
+              <Logo className="h-12 w-auto" />
             </Link>
-            <p className="text-background/60 mb-6 max-w-sm">
-              Activewear and everyday essentials designed for women, with fast cash-on-delivery
-              ordering. Proudly serving Cambodia.
+            <p className="max-w-xs text-sm font-light leading-relaxed text-muted-foreground">
+              {footer.about}
             </p>
-
-            {/* Contact */}
-            <div className="space-y-3 text-sm text-background/60">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4" />
-                <span>Phnom Penh, Cambodia</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4" />
-                <span>+855 12 345 678</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4" />
-                <span>hello@storefront.com</span>
-              </div>
-            </div>
-
-            {/* Social */}
-            <div className="flex gap-3 mt-6">
-              {socialLinks.map((social) => (
-                <motion.a
-                  key={social.label}
-                  href={social.href}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="h-10 w-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors"
-                  aria-label={social.label}
-                >
-                  <social.icon className="h-5 w-5" />
-                </motion.a>
-              ))}
+            <div className="mt-6 space-y-2 text-sm font-light text-muted-foreground">
+              <p>{footer.address}</p>
+              <p>{footer.phone}</p>
+              <a
+                href={`mailto:${footer.email}`}
+                className="transition-colors hover:text-foreground"
+              >
+                {footer.email}
+              </a>
             </div>
           </div>
 
-          {/* Links */}
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h4 className="font-semibold mb-4 capitalize text-sm uppercase tracking-wider">
-                {category}
-              </h4>
-              <ul className="space-y-3">
-                {links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      to={link.to}
-                      className="text-sm text-background/60 hover:text-background transition-colors inline-flex items-center gap-1 group"
-                    >
-                      {link.label}
-                      <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Shop */}
+          <nav aria-label="Shop">
+            <p className="editorial-label mb-5">Shop</p>
+            <ul className="space-y-3">
+              {footerLinks.shop.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    to={link.to}
+                    className="text-sm font-light text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Help */}
+          <nav aria-label="Help">
+            <p className="editorial-label mb-5">Help</p>
+            <ul className="space-y-3">
+              {footerLinks.help.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    to={link.to}
+                    className="text-sm font-light text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Newsletter + social */}
+          <div>
+            <p className="editorial-label mb-5">Newsletter</p>
+            <p className="mb-5 text-sm font-light text-muted-foreground">
+              Join our newsletter for exclusive updates and offers.
+            </p>
+            <form onSubmit={handleNewsletter} className="flex items-end gap-4">
+              <input
+                type="email"
+                required
+                placeholder="Email"
+                aria-label="Email address"
+                className="editorial-input w-full py-2 text-sm"
+              />
+              <button type="submit" className="editorial-label shrink-0 pb-2">
+                Subscribe
+              </button>
+            </form>
+
+            <p className="editorial-label mb-5 mt-12">Join Us</p>
+            <ul className="space-y-3">
+              {footer.socials.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href={social.href}
+                    target={social.href.startsWith("http") ? "_blank" : undefined}
+                    rel="noreferrer"
+                    className="text-sm font-light text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {social.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-background/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-background/60">
-            <p>© {new Date().getFullYear()} BillieGrace Closet. All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
-                All systems operational
+      {/* Bottom bar */}
+      <div className="border-t border-border">
+        <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 px-6 py-5 sm:flex-row lg:px-10">
+          <p className="text-xs font-light text-muted-foreground">
+            © {new Date().getFullYear()} BillieGrace Closet. All rights reserved.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {paymentMethods.map((method) => (
+              <span
+                key={method}
+                className="border border-border px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
+              >
+                {method}
               </span>
-            </div>
+            ))}
           </div>
         </div>
       </div>

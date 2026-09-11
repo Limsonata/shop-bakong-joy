@@ -1,17 +1,6 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import {
-  Search,
-  Menu,
-  ShoppingBag,
-  User,
-  ArrowRight,
-  Bell,
-  Package,
-  ShieldAlert,
-  Tag,
-  Info,
-} from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, Menu, User, Bell, Package, ShieldAlert, Tag, Info } from "lucide-react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +8,6 @@ import { CartDrawer } from "@/components/site/CartDrawer";
 import { Logo } from "@/components/site/Logo";
 import { getCollections, getProductTypes } from "@/lib/productStore";
 import { useAuth } from "@/hooks/useAuth";
-import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   NavigationMenu,
@@ -129,16 +117,9 @@ function NotificationBell({ userId }: { userId: string }) {
 export function Navbar() {
   const router = useRouter();
   const [q, setQ] = useState("");
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
-
-  // Track scroll for glassmorphism effect
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Fetch collections and product types
   const { data: collectionsData } = useQuery({
@@ -157,238 +138,232 @@ export function Navbar() {
   };
 
   return (
-    <>
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "liquid-glass border-b" : "bg-transparent"}`}
-      >
-        {/* Top Banner */}
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="bg-foreground text-background py-2 text-center text-xs font-medium tracking-wide"
-        >
-          <span className="inline-flex items-center gap-2">
-            New arrivals weekly — free nationwide shipping in Cambodia
-            <ArrowRight className="w-3 h-3" />
-          </span>
-        </motion.div>
+    <header className="sticky top-0 z-50 border-b border-border bg-background">
+      <div className="mx-auto max-w-[1400px] px-6 lg:px-10">
+        <div className="flex h-14 items-center justify-between gap-6">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex shrink-0 items-center"
+            aria-label="BillieGrace Closet — home"
+          >
+            <Logo className="h-9 w-auto" />
+          </Link>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/" className="flex items-center">
-                <Logo className="h-12 w-auto" />
-              </Link>
-            </motion.div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              {[
-                { to: "/" as const, label: "Home" },
-                { to: "/shop" as const, label: "Shop", search: undefined },
-                { to: "/shop" as const, label: "Activewear", search: { q: "Activewear" } },
-                { to: "/shop" as const, label: "Sets", search: { q: "Sets" } },
-                { to: "/shop" as const, label: "New", search: { q: "New Arrivals" } },
-                { to: "/shop" as const, label: "Sale", search: { q: "Sale" } },
-              ].map((item, index) => (
-                <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + index * 0.1 }}
-                >
-                  <Link
-                    to={item.to}
-                    search={item.search}
-                    className={cn(
-                      "relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 group",
-                      item.label === "Sale" && "text-secondary hover:text-secondary",
-                    )}
+          {/* Desktop Navigation — quiet uppercase editorial links */}
+          <nav className="hidden items-center gap-7 lg:flex">
+            <NavigationMenu>
+              <NavigationMenuList className="gap-7">
+                {/* Shop dropdown */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger
+                    className="editorial-label h-auto w-auto gap-1.5 bg-transparent px-0 py-2 text-foreground
+                        hover:bg-transparent data-[state=open]:bg-transparent focus:bg-transparent
+                        [&>svg]:h-3 [&>svg]:w-3"
                   >
-                    {item.label}
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-foreground transition-all group-hover:w-full" />
-                  </Link>
-                </motion.div>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <NavigationMenu>
-                  <NavigationMenuList>
-                    <NavigationMenuItem>
-                      <NavigationMenuTrigger className="h-auto bg-transparent px-0 py-2 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground focus:bg-transparent">
-                        Collections
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <div className="grid grid-cols-2 gap-8 p-6 w-[400px]">
-                          {collectionsData && collectionsData.length > 0 && (
-                            <div>
-                              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                                Collections
-                              </h4>
-                              <ul className="space-y-1">
-                                {collectionsData.slice(0, 6).map((collection) => (
-                                  <li key={collection.node.id}>
-                                    <button
-                                      onClick={() =>
-                                        router.navigate({
-                                          to: "/shop",
-                                          search: { q: collection.node.title },
-                                        })
-                                      }
-                                      className="text-sm text-foreground hover:text-primary transition-colors py-1"
-                                    >
-                                      {collection.node.title}
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {productTypes.length > 0 && (
-                            <div>
-                              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                                Product Types
-                              </h4>
-                              <ul className="space-y-1">
-                                {productTypes.slice(0, 6).map((type) => (
-                                  <li key={type}>
-                                    <button
-                                      onClick={() =>
-                                        router.navigate({ to: "/shop", search: { q: type } })
-                                      }
-                                      className="text-sm text-foreground hover:text-primary transition-colors py-1"
-                                    >
-                                      {type}
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                    Shop
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="w-[240px] p-8">
+                      {productTypes.length > 0 && (
+                        <div>
+                          <p className="editorial-label mb-4 text-muted-foreground">Categories</p>
+                          <ul className="space-y-2.5">
+                            {productTypes.slice(0, 8).map((type) => (
+                              <li key={type}>
+                                <button
+                                  onClick={() =>
+                                    router.navigate({ to: "/shop", search: { q: type } })
+                                  }
+                                  className="text-sm font-light text-foreground transition-opacity hover:opacity-60"
+                                >
+                                  {type}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
-                  </NavigationMenuList>
-                </NavigationMenu>
-              </motion.div>
-            </nav>
+                      )}
+                      <Link to="/shop" className="editorial-label mt-6 inline-block">
+                        View All
+                      </Link>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              {/* Account */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                {authLoading ? (
-                  <div className="h-9 w-9" />
-                ) : user ? (
-                  <Button asChild variant="ghost" size="icon">
-                    <Link to="/account">
-                      <User className="h-5 w-5" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button asChild variant="ghost" size="sm" className="hidden md:flex">
-                    <Link to="/login">Sign In</Link>
-                  </Button>
+                {/* Collections dropdown */}
+                {collectionsData && collectionsData.length > 0 && (
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger
+                      className="editorial-label h-auto w-auto gap-1.5 bg-transparent px-0 py-2 text-foreground
+                          hover:bg-transparent data-[state=open]:bg-transparent focus:bg-transparent
+                          [&>svg]:h-3 [&>svg]:w-3"
+                    >
+                      Collections
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="w-[240px] p-8">
+                        <p className="editorial-label mb-4 text-muted-foreground">Collections</p>
+                        <ul className="space-y-2.5">
+                          {collectionsData.slice(0, 8).map((collection) => (
+                            <li key={collection.node.id}>
+                              <button
+                                onClick={() =>
+                                  router.navigate({
+                                    to: "/shop",
+                                    search: { q: collection.node.title },
+                                  })
+                                }
+                                className="text-sm font-light text-foreground transition-opacity hover:opacity-60"
+                              >
+                                {collection.node.title}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
                 )}
-              </motion.div>
+              </NavigationMenuList>
+            </NavigationMenu>
 
-              {/* Notifications */}
-              {!authLoading && user && isSupabaseConfigured && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.55 }}
-                >
-                  <NotificationBell userId={user.id} />
-                </motion.div>
-              )}
-
-              {/* Cart */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
+            {[
+              { label: "New In", search: "New Arrivals" },
+              { label: "Sets", search: "Sets" },
+              { label: "Sale", search: "Sale" },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                to="/shop"
+                search={{ q: item.search }}
+                className="editorial-label transition-opacity hover:opacity-60"
               >
-                <CartDrawer />
-              </motion.div>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
 
-              {/* Mobile Menu */}
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full pt-16 sm:max-w-sm">
-                  <SheetHeader className="sr-only">
-                    <SheetTitle>Navigation</SheetTitle>
-                  </SheetHeader>
-                  <div className="overflow-auto h-full pb-6">
-                    <form onSubmit={onSearch} className="mb-8">
-                      <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          value={q}
-                          onChange={(e) => setQ(e.target.value)}
-                          placeholder="Search products..."
-                          className="pl-12 py-6 text-lg rounded-full"
-                        />
-                      </div>
-                    </form>
-                    <nav className="space-y-2">
-                      {[
-                        { label: "Home", to: "/" as const, search: undefined },
-                        { label: "Shop", to: "/shop" as const, search: undefined },
-                        { label: "Activewear", to: "/shop" as const, search: { q: "Activewear" } },
-                        { label: "Sets", to: "/shop" as const, search: { q: "Sets" } },
-                        {
-                          label: "New Arrivals",
-                          to: "/shop" as const,
-                          search: { q: "New Arrivals" },
-                        },
-                        { label: "Sale", to: "/shop" as const, search: { q: "Sale" } },
-                        { label: "Orders", to: "/orders" as const, search: undefined },
-                        { label: "Account", to: "/account" as const, search: undefined },
-                      ].map((item) => (
-                        <Link
-                          key={item.label}
-                          to={item.to}
-                          search={item.search}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="block py-4 text-2xl font-medium border-b border-border hover:pl-4 transition-all"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </nav>
-                    {!user && (
-                      <div className="mt-8">
-                        <Button asChild className="w-full py-6 text-lg rounded-full">
-                          <Link to="/login">Sign In</Link>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+          {/* Actions */}
+          <div className="flex items-center gap-1">
+            {/* Search */}
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Search"
+                  className="hidden md:inline-flex"
+                >
+                  <Search className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-4">
+                <form
+                  onSubmit={(e) => {
+                    onSearch(e);
+                    setSearchOpen(false);
+                  }}
+                  className="flex items-center gap-3 border-b border-border pb-2"
+                >
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <input
+                    autoFocus
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search products..."
+                    aria-label="Search products"
+                    className="editorial-input w-full bg-transparent py-1 text-sm"
+                  />
+                </form>
+              </PopoverContent>
+            </Popover>
+
+            {/* Account */}
+            {authLoading ? (
+              <div className="h-9 w-9" />
+            ) : user ? (
+              <Button asChild variant="ghost" size="icon" aria-label="Account">
+                <Link to="/account">
+                  <User className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="ghost" size="icon" aria-label="Sign in">
+                <Link to="/login">
+                  <User className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                </Link>
+              </Button>
+            )}
+
+            {/* Notifications */}
+            {!authLoading && user && isSupabaseConfigured && <NotificationBell userId={user.id} />}
+
+            {/* Cart */}
+            <CartDrawer />
+
+            {/* Mobile Menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full pt-16 sm:max-w-sm">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Navigation</SheetTitle>
+                </SheetHeader>
+                <div className="overflow-auto h-full pb-6">
+                  <form onSubmit={onSearch} className="mb-8">
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search products..."
+                        className="pl-12 py-6 text-lg rounded-full"
+                      />
+                    </div>
+                  </form>
+                  <nav className="space-y-2">
+                    {[
+                      { label: "Home", to: "/" as const, search: undefined },
+                      { label: "Shop", to: "/shop" as const, search: undefined },
+                      { label: "Activewear", to: "/shop" as const, search: { q: "Activewear" } },
+                      { label: "Sets", to: "/shop" as const, search: { q: "Sets" } },
+                      {
+                        label: "New Arrivals",
+                        to: "/shop" as const,
+                        search: { q: "New Arrivals" },
+                      },
+                      { label: "Sale", to: "/shop" as const, search: { q: "Sale" } },
+                      { label: "Orders", to: "/orders" as const, search: undefined },
+                      { label: "Account", to: "/account" as const, search: undefined },
+                    ].map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.to}
+                        search={item.search}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-4 text-2xl font-medium border-b border-border hover:pl-4 transition-all"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </nav>
+                  {!user && (
+                    <div className="mt-8">
+                      <Button asChild className="w-full py-6 text-lg rounded-full">
+                        <Link to="/login">Sign In</Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
-      </motion.header>
-
-      {/* Spacer for fixed header */}
-      <div className="h-[72px]" />
-    </>
+      </div>
+    </header>
   );
 }

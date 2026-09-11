@@ -35,11 +35,47 @@ export interface CtaContent {
   buttonLink: string;
 }
 
+export interface DualTile {
+  eyebrow: string;
+  heading: string;
+  subtext: string;
+  ctaLabel: string;
+  ctaLink: string;
+  ctaSearch?: string;
+  image: string;
+}
+
+export interface DualTilesContent {
+  tiles: DualTile[];
+}
+
+export interface VideoPopupContent {
+  enabled: boolean;
+  videoUrl: string;
+  posterUrl: string;
+}
+
+export interface FooterSocialLink {
+  label: string;
+  href: string;
+}
+
+export interface FooterContent {
+  about: string;
+  address: string;
+  phone: string;
+  email: string;
+  socials: FooterSocialLink[];
+}
+
 export interface SiteContent {
   hero: HeroContent;
   marquee: MarqueeContent;
   trust_strip: TrustStripContent;
   cta: CtaContent;
+  dual_tiles: DualTilesContent;
+  video_popup: VideoPopupContent;
+  footer: FooterContent;
 }
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -56,7 +92,13 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     backgroundImage: "https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=1600&q=80",
   },
   marquee: {
-    words: ["NEW ARRIVALS", "FREE SHIPPING", "MADE FOR HER", "SHOP THE EDIT", "CASH ON DELIVERY"],
+    words: [
+      "WELCOME TO OUR STORE",
+      "NEW ARRIVALS WEEKLY",
+      "CASH ON DELIVERY",
+      "FREE SHIPPING NATIONWIDE",
+      "VISIT US IN PHNOM PENH",
+    ],
   },
   trust_strip: {
     items: [
@@ -66,11 +108,52 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     ],
   },
   cta: {
-    heading: "Your new favorite fit is one tap away",
+    heading: "Visit the store — or shop from home",
     subtext:
-      "Join women across Cambodia shopping BillieGrace Closet for fit, comfort, and easy cash-on-delivery ordering.",
-    buttonLabel: "Shop Now",
+      "Browse the collection online and pay cash on delivery, or come see everything in person in Phnom Penh. Your new favorite fit is waiting.",
+    buttonLabel: "Shop the Store",
     buttonLink: "/shop",
+  },
+  dual_tiles: {
+    tiles: [
+      {
+        eyebrow: "OUR STORE",
+        heading: "Everyday Essentials, Made for Her",
+        subtext: "Comfortable pieces you can live in — shop the store and take them home today.",
+        ctaLabel: "SHOP THE STORE",
+        ctaLink: "/shop",
+        image: "https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=1600&q=80",
+      },
+      {
+        eyebrow: "NEW IN STORE",
+        heading: "Fresh Arrivals Every Week",
+        subtext: "New pieces land in the store weekly. Come see what just arrived.",
+        ctaLabel: "VIEW NEW ARRIVALS",
+        ctaLink: "/shop",
+        ctaSearch: "New Arrivals",
+        image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&q=80",
+      },
+    ],
+  },
+  video_popup: {
+    enabled: true,
+    // Placeholder film — replace with your own lookbook/brand film in Admin → Content.
+    videoUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/d/dd/Amsterdam_Fashion_Week_-_Aftermovie.webm",
+    posterUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80",
+  },
+  footer: {
+    about:
+      "BillieGrace Closet is a women's clothing store in Phnom Penh — everyday essentials, comfortable fits and fresh weekly arrivals, with fast cash-on-delivery across Cambodia.",
+    address: "Phnom Penh, Cambodia",
+    phone: "+855 12 345 678",
+    email: "hello@storefront.com",
+    socials: [
+      { label: "Instagram", href: "#" },
+      { label: "Facebook", href: "#" },
+      { label: "TikTok", href: "#" },
+      { label: "YouTube", href: "#" },
+    ],
   },
 };
 
@@ -124,6 +207,23 @@ export async function getSiteContent(): Promise<SiteContent> {
         case "cta":
           merged.cta = { ...DEFAULT_SITE_CONTENT.cta, ...(row.content as Partial<CtaContent>) };
           break;
+        case "dual_tiles": {
+          const tiles = (row.content as Partial<DualTilesContent>).tiles;
+          if (tiles && tiles.length > 0) merged.dual_tiles = { tiles };
+          break;
+        }
+        case "video_popup":
+          merged.video_popup = {
+            ...DEFAULT_SITE_CONTENT.video_popup,
+            ...(row.content as Partial<VideoPopupContent>),
+          };
+          break;
+        case "footer":
+          merged.footer = {
+            ...DEFAULT_SITE_CONTENT.footer,
+            ...(row.content as Partial<FooterContent>),
+          };
+          break;
         default:
           break;
       }
@@ -132,11 +232,20 @@ export async function getSiteContent(): Promise<SiteContent> {
   }
 
   const overlay = loadLocalOverlay();
+  const overlayTiles = overlay.dual_tiles?.tiles;
   return {
     hero: { ...DEFAULT_SITE_CONTENT.hero, ...overlay.hero },
     marquee: { ...DEFAULT_SITE_CONTENT.marquee, ...overlay.marquee },
     trust_strip: { ...DEFAULT_SITE_CONTENT.trust_strip, ...overlay.trust_strip },
     cta: { ...DEFAULT_SITE_CONTENT.cta, ...overlay.cta },
+    dual_tiles: {
+      tiles:
+        overlayTiles && overlayTiles.length > 0
+          ? overlayTiles
+          : DEFAULT_SITE_CONTENT.dual_tiles.tiles,
+    },
+    video_popup: { ...DEFAULT_SITE_CONTENT.video_popup, ...overlay.video_popup },
+    footer: { ...DEFAULT_SITE_CONTENT.footer, ...overlay.footer },
   };
 }
 
