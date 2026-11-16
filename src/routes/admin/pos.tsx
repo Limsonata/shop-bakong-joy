@@ -1,6 +1,26 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Check, Minus, Plus, Search, ShoppingCart, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import {
+  AlertTriangle,
+  Check,
+  Minus,
+  Plus,
+  Printer,
+  QrCode,
+  Search,
+  Share2,
+  ShoppingCart,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +37,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/format";
+import { generateBakongQR, getBakongPaymentConfig, isValidBakongAccount } from "@/lib/bakong";
+import { lowStockAfterSale, saleAlertText, sendOwnerAlert } from "@/lib/pos/alerts";
+import { printSaleReceipt, shareSaleReceipt } from "@/lib/pos/receipt";
 import { listStockItems, recordSale } from "@/lib/pos/store";
 import {
   PAYMENT_METHODS,
+  localDate,
   round2,
   stockLeft,
+  type Sale,
   type SaleChannel,
   type StockItem,
 } from "@/lib/pos/types";
@@ -44,6 +69,24 @@ interface CartLine {
   available: number | null;
 }
 
+/** One product on the picker, with all its size/colour variants (stock items). */
+interface ProductGroup {
+  key: string;
+  name: string;
+  variants: StockItem[];
+}
+
+/** Variants are the stock items linked to the same product, or sharing a name + category. */
+const groupKey = (item: StockItem) =>
+  item.productId ?? `${item.name.trim().toLowerCase()}|${item.category.trim().toLowerCase()}`;
+
+const priceLabel = (variants: StockItem[]) => {
+  const prices = variants.map((variant) => variant.price);
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  return low === high ? formatPrice(low) : `${formatPrice(low)}–${formatPrice(high)}`;
+};
+
 const DELIVERY_METHODS = ["Pickup", "Delivery", "VET Express", "J&T", "Grab", "Other"];
 const CITY_SUGGESTIONS = [
   "Phnom Penh",
@@ -54,7 +97,21 @@ const CITY_SUGGESTIONS = [
   "Kampong Cham",
 ];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDate();
+
+/** Banknotes customers usually pay with, used for the quick "customer gave" buttons. */
+const NOTE_STEPS = [5, 10, 20, 50, 100];
+
+/** Round amounts just above the total (e.g. $37 → $40, $50, $100). */
+function cashSuggestions(total: number): number[] {
+  if (total <= 0) return [];
+  const amounts = new Set<number>();
+  for (const step of NOTE_STEPS) {
+    const rounded = Math.ceil(total / step) * step;
+    if (rounded > total) amounts.add(rounded);
+  }
+  return [...amounts].sort((a, b) => a - b).slice(0, 4);
+}
 
 function PosPage() {
   const navigate = useNavigate();
@@ -93,17 +150,53 @@ function PosPage() {
 
   const results = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const inStock = stock.filter((item) => stockLeft(item) > 0);
-    const pool = term
-      ? inStock.filter((item) =>
-          [item.sku, item.name, item.size, item.color, item.category]
-            .join(" ")
-            .toLowerCase()
-            .includes(term),
-        )
-      : inStock;
+    const byKey = new Map<string, ProductGroup>();
+    for (const item of stock) {
+      const key = groupKey(item);
+      const group = byKey.get(key);
+      if (group) group.variants.push(item);
+      else byKey.set(key, { key, name: item.name, variants: [item] });
+    }
+    const pool = [...byKey.values()].filter((group) => {
+      if (!group.variants.some((variant) => stockLeft(variant) > 0)) return false;
+      if (!term) return true;
+      return group.variants.some((variant) =>
+        [variant.sku, variant.name, variant.size, variant.color, variant.category]
+          .join(" ")
+          .toLowerCase()
+          .includes(term),
+      );
+    });
     return pool.slice(0, term ? 40 : 12);
   }, [stock, search]);
+
+  const [pickerGroup, setPickerGroup] = useState<ProductGroup | null>(null);
+  const checkoutRef = useRef<HTMLDListElement>(null);
+  const itemCount = lines.reduce((sum, line) => sum + line.qty, 0);
+
+  const openGroup = (group: ProductGroup) => {
+    // A product with a single variant goes straight into the cart.
+    if (group.variants.length === 1) addItem(group.variants[0]);
+    else setPickerGroup(group);
+  };
+
+  const pickVariant = (item: StockItem) => {
+    addItem(item);
+    setPickerGroup(null);
+  };
+
+  /** Variants of the open product, grouped by colour, sizes in their stock-list order. */
+  const pickerSections = useMemo(() => {
+    if (!pickerGroup) return [];
+    const sections = new Map<string, StockItem[]>();
+    for (const variant of pickerGroup.variants) {
+      const colour = variant.color.trim();
+      sections.set(colour, [...(sections.get(colour) ?? []), variant]);
+    }
+    return [...sections.entries()];
+  }, [pickerGroup]);
+
+  const inCart = (item: StockItem) => lines.find((line) => line.stockItemId === item.id)?.qty ?? 0;
 
   const subtotal = useMemo(
     () => round2(lines.reduce((sum, line) => sum + line.qty * line.unitPrice, 0)),
@@ -116,12 +209,50 @@ function PosPage() {
   const discountValue = Math.max(Number.isFinite(Number(discount)) ? Number(discount) : 0, 0);
   const feeValue = Math.max(Number.isFinite(Number(deliveryFee)) ? Number(deliveryFee) : 0, 0);
   const total = round2(Math.max(subtotal - discountValue + feeValue, 0));
-  const paid =
-    paidInput === "" || !Number.isFinite(Number(paidInput))
-      ? 0
-      : Math.max(Number(paidInput), 0);
+  const received =
+    paidInput === "" || !Number.isFinite(Number(paidInput)) ? 0 : Math.max(Number(paidInput), 0);
+  // Only the sale total goes into the cash book; anything above it is change handed back.
+  const paid = round2(Math.min(received, total));
+  const change = round2(Math.max(received - total, 0));
   const balance = round2(Math.max(total - paid, 0));
+
+  /** The sale just saved, kept so the cashier can print or share its receipt. */
+  const [lastSale, setLastSale] = useState<{
+    sale: Sale;
+    cashGiven: number;
+    change: number;
+  } | null>(null);
   const profit = round2(subtotal - discountValue - cost);
+
+  /** KHQR shown to the customer: the amount is baked into the code. */
+  const [khqr, setKhqr] = useState<{ amount: number; qr: string; expiresAt: number } | null>(null);
+  const bakong = getBakongPaymentConfig();
+  const bakongReady = isValidBakongAccount(bakong.merchantAccount);
+
+  const openKhqr = () => {
+    // Charge what was typed in "Received now" (e.g. a deposit), otherwise the full total.
+    const amount = paid > 0 ? paid : total;
+    if (amount <= 0) return toast.error("Add items first");
+    const minutes = 10;
+    setKhqr({
+      amount,
+      qr: generateBakongQR(bakong, {
+        amount,
+        currency: "USD",
+        storeLabel: "BillieGrace POS",
+        expiresInMinutes: minutes,
+      }),
+      expiresAt: Date.now() + minutes * 60 * 1000,
+    });
+  };
+
+  const confirmKhqrPaid = () => {
+    if (!khqr) return;
+    setPaymentMethod("Bakong/KHQR");
+    setPaidInput(String(khqr.amount));
+    setKhqr(null);
+    toast.success(`${formatPrice(khqr.amount)} KHQR payment noted — now save the sale`);
+  };
 
   const addItem = (item: StockItem) => {
     setLines((current) => {
@@ -258,8 +389,12 @@ function PosPage() {
           : `${sale.code} saved — paid in full`,
       );
       resetForm();
-      setStock(await listStockItems());
+      const freshStock = await listStockItems();
+      setStock(freshStock);
+      // Owner alert on Telegram; runs in the background and never blocks the till.
+      void sendOwnerAlert(saleAlertText(sale, lowStockAfterSale(sale, freshStock)));
       if (goToSales) void navigate({ to: "/admin/sales" });
+      else setLastSale({ sale, cashGiven: change > 0 ? received : 0, change });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save the sale");
     } finally {
@@ -272,7 +407,9 @@ function PosPage() {
       title="New sale"
       description="Pick items, take the money, stock and the cash book update themselves."
     >
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr]">
+      <div
+        className={`grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr] ${lines.length > 0 ? "pb-24 lg:pb-0" : ""}`}
+      >
         {/* ── Item picker ─────────────────────────────────────────── */}
         <div className="min-w-0 space-y-4">
           <Card>
@@ -295,27 +432,38 @@ function PosPage() {
                 <p className="py-8 text-center text-sm text-muted-foreground">Loading stock…</p>
               ) : results.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">
-                  Nothing in stock matches “{search}”.
+                  {search.trim() ? `Nothing in stock matches “${search}”.` : "Nothing in stock."}
                 </p>
               ) : (
-                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {results.map((item) => {
-                    const left = stockLeft(item);
+                <ul className="grid grid-cols-2 gap-2">
+                  {results.map((group) => {
+                    const inStock = group.variants.filter((variant) => stockLeft(variant) > 0);
+                    const left = inStock.reduce((sum, variant) => sum + stockLeft(variant), 0);
+                    const options =
+                      group.variants.length === 1
+                        ? [group.variants[0].size, group.variants[0].color]
+                            .filter(Boolean)
+                            .join(" · ")
+                        : [...new Set(inStock.map((variant) => variant.size).filter(Boolean))].join(
+                            " · ",
+                          );
                     return (
-                      <li key={item.id}>
+                      <li key={group.key}>
                         <button
                           type="button"
-                          onClick={() => addItem(item)}
-                          className="w-full rounded-lg border p-3 text-left transition-colors hover:border-primary hover:bg-muted/50"
+                          onClick={() => openGroup(group)}
+                          className="h-full w-full rounded-lg border p-3 text-left transition-colors hover:border-primary hover:bg-muted/50 active:bg-muted"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="min-w-0 break-words text-sm font-medium leading-tight">{item.name}</span>
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
+                            <span className="min-w-0 break-words text-sm font-medium leading-tight">
+                              {group.name}
+                            </span>
                             <span className="whitespace-nowrap text-sm font-semibold tabular-nums">
-                              {formatPrice(item.price)}
+                              {priceLabel(group.variants)}
                             </span>
                           </div>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{[item.size, item.color].filter(Boolean).join(" · ")}</span>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                            {options ? <span className="break-words">{options}</span> : null}
                             <Badge
                               variant="outline"
                               className={
@@ -474,7 +622,7 @@ function PosPage() {
                 </div>
               </div>
 
-              <dl className="space-y-1 border-t pt-3 text-sm">
+              <dl ref={checkoutRef} className="scroll-mt-4 space-y-1 border-t pt-3 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Items</dt>
                   <dd className="tabular-nums">{formatPrice(subtotal)}</dd>
@@ -556,12 +704,64 @@ function PosPage() {
                     Nothing yet
                   </Button>
                 </div>
+                {paymentMethod === "Bakong/KHQR" && total > 0 ? (
+                  <Button
+                    className="w-full"
+                    variant="secondary"
+                    onClick={openKhqr}
+                    disabled={!bakongReady}
+                    title={bakongReady ? undefined : "Set VITE_BAKONG_MERCHANT_ACCOUNT first"}
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Show KHQR for {formatPrice(paid > 0 ? paid : total)}
+                  </Button>
+                ) : null}
+                {paymentMethod === "cash" && total > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Customer gave:</span>
+                    {cashSuggestions(total).map((amount) => (
+                      <Button
+                        key={amount}
+                        variant={received === amount ? "default" : "secondary"}
+                        size="sm"
+                        onClick={() => setPaidInput(String(amount))}
+                      >
+                        {formatPrice(amount)}
+                      </Button>
+                    ))}
+                  </div>
+                ) : null}
+                {change > 0 ? (
+                  <div className="flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2 text-emerald-900">
+                    <span className="text-sm font-medium">Change to give back</span>
+                    <span className="text-xl font-bold tabular-nums">{formatPrice(change)}</span>
+                  </div>
+                ) : null}
                 {balance > 0 ? (
                   <p className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     Balance owed {formatPrice(balance)} — this sale stays in the unpaid list.
                   </p>
                 ) : null}
+              </div>
+
+              <div className="flex flex-wrap gap-2 border-t pt-3">
+                <Button
+                  className="flex-1"
+                  size="lg"
+                  onClick={() => save(false)}
+                  disabled={saving || lines.length === 0}
+                >
+                  {saving ? "Saving…" : `Save sale · ${formatPrice(total)}`}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => save(true)}
+                  disabled={saving || lines.length === 0}
+                >
+                  Save &amp; view sales
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -681,27 +881,202 @@ function PosPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      </div>
 
-          <div className="flex flex-wrap gap-2">
+      {/* ── Phone/tablet pay bar: always within thumb reach ────────── */}
+      {lines.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 pt-3 backdrop-blur pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">
+                {itemCount} item{itemCount === 1 ? "" : "s"}
+                {balance > 0 && paid > 0 ? ` · ${formatPrice(balance)} owed` : ""}
+                {change > 0 ? ` · change ${formatPrice(change)}` : ""}
+              </p>
+              <p className="text-lg font-semibold tabular-nums">{formatPrice(total)}</p>
+            </div>
             <Button
-              className="flex-1"
               size="lg"
-              onClick={() => save(false)}
-              disabled={saving || lines.length === 0}
+              className="shrink-0"
+              onClick={() =>
+                checkoutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
             >
-              {saving ? "Saving…" : `Save sale · ${formatPrice(total)}`}
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => save(true)}
-              disabled={saving || lines.length === 0}
-            >
-              Save &amp; view sales
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Checkout
             </Button>
           </div>
         </div>
-      </div>
+      ) : null}
+
+      {/* ── Size / colour picker ───────────────────────────────────── */}
+      <Dialog open={pickerGroup !== null} onOpenChange={(open) => !open && setPickerGroup(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="pr-6">{pickerGroup?.name}</DialogTitle>
+            <DialogDescription>Tap a size to add it to the sale.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {pickerSections.map(([colour, variants]) => (
+              <div key={colour || "-"}>
+                {pickerSections.length > 1 || colour ? (
+                  <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+                    {colour || "No colour"}
+                  </p>
+                ) : null}
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                  {variants.map((variant) => {
+                    const left = stockLeft(variant);
+                    const taken = inCart(variant);
+                    const soldOut = left - taken <= 0;
+                    const showPrice = new Set(pickerGroup?.variants.map((v) => v.price)).size > 1;
+                    return (
+                      <button
+                        key={variant.id}
+                        type="button"
+                        disabled={soldOut}
+                        onClick={() => pickVariant(variant)}
+                        className="flex min-h-16 flex-col items-center justify-center rounded-lg border p-2 text-center transition-colors hover:border-primary hover:bg-muted/50 active:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <span className="text-base font-semibold">
+                          {variant.size || "One size"}
+                        </span>
+                        {showPrice ? (
+                          <span className="text-xs tabular-nums">{formatPrice(variant.price)}</span>
+                        ) : null}
+                        <span
+                          className={`text-xs ${left <= 1 && !soldOut ? "text-amber-700" : "text-muted-foreground"}`}
+                        >
+                          {left <= 0 ? "Sold out" : soldOut ? "All in cart" : `${left} left`}
+                          {taken > 0 && !soldOut ? ` · ${taken} in cart` : ""}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── After saving: receipt ──────────────────────────────────── */}
+      <Dialog open={lastSale !== null} onOpenChange={(open) => !open && setLastSale(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="pr-6">Sale {lastSale?.sale.code} saved</DialogTitle>
+            <DialogDescription>
+              {lastSale
+                ? `Total ${formatPrice(lastSale.sale.total)} · paid ${formatPrice(lastSale.sale.paid)} by ${lastSale.sale.paymentMethod}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {lastSale && lastSale.change > 0 ? (
+            <div className="flex items-center justify-between rounded-md bg-emerald-50 px-3 py-3 text-emerald-900">
+              <span className="font-medium">Give change</span>
+              <span className="text-2xl font-bold tabular-nums">
+                {formatPrice(lastSale.change)}
+              </span>
+            </div>
+          ) : null}
+          {lastSale && lastSale.sale.total - lastSale.sale.paid > 0 ? (
+            <p className="flex items-center gap-1.5 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <AlertTriangle className="h-4 w-4" />
+              Still owed {formatPrice(round2(lastSale.sale.total - lastSale.sale.paid))}
+            </p>
+          ) : null}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => {
+                if (!lastSale) return;
+                try {
+                  printSaleReceipt(lastSale.sale, { cashGiven: lastSale.cashGiven });
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Could not open the print window",
+                  );
+                }
+              }}
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={async () => {
+                if (!lastSale) return;
+                try {
+                  const result = await shareSaleReceipt(lastSale.sale, {
+                    cashGiven: lastSale.cashGiven,
+                  });
+                  if (result === "copied") {
+                    toast.success("Receipt copied — paste it in Telegram or Messenger");
+                  }
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Could not share the receipt",
+                  );
+                }
+              }}
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+          </div>
+          <Button size="lg" onClick={() => setLastSale(null)}>
+            New sale
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── KHQR for the customer to scan ─────────────────────────── */}
+      <Dialog open={khqr !== null} onOpenChange={(open) => !open && setKhqr(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="pr-6">
+              Scan to pay {khqr ? formatPrice(khqr.amount) : ""}
+            </DialogTitle>
+            <DialogDescription>
+              Any Cambodian banking app (ABA, ACLEDA, Wing, Bakong…). The amount is already filled
+              in.
+            </DialogDescription>
+          </DialogHeader>
+          {khqr ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="rounded-xl border-4 border-red-600 bg-white p-4">
+                <QRCodeSVG value={khqr.qr} size={240} level="M" marginSize={0} />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-semibold">{bakong.merchantName}</p>
+                <p className="text-xs text-muted-foreground">{bakong.merchantAccount}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Valid until{" "}
+                  {new Date(khqr.expiresAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+              <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                Check the payment arrived in your bank app before tapping “Customer paid”.
+              </p>
+            </div>
+          ) : null}
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" size="lg" onClick={() => setKhqr(null)}>
+              Cancel
+            </Button>
+            <Button size="lg" onClick={confirmKhqrPaid}>
+              <Check className="mr-2 h-4 w-4" />
+              Customer paid
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminShell>
   );
 }

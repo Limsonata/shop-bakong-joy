@@ -1,14 +1,20 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Search, Menu, User, Bell, Package, ShieldAlert, Tag, Info } from "lucide-react";
+import { Search, Menu, User, Bell, Package, ShieldAlert, Tag, Info, X, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { Logo } from "@/components/site/Logo";
 import { getCollections, getProductTypes } from "@/lib/productStore";
 import { useAuth } from "@/hooks/useAuth";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -138,7 +144,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background pt-[env(safe-area-inset-top)]">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/70 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150 md:bg-background md:backdrop-blur-none">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
         <div className="flex h-14 items-center justify-between gap-6">
           {/* Logo */}
@@ -302,62 +308,111 @@ export function Navbar() {
             {/* Cart */}
             <CartDrawer />
 
-            {/* Mobile Menu */}
+            {/* Mobile Menu — full-height sheet */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Open menu"
+                  className="md:hidden"
+                >
+                  <Menu className="h-5 w-5" strokeWidth={1.5} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full pt-16 sm:max-w-sm">
-                <SheetHeader className="sr-only">
-                  <SheetTitle>Navigation</SheetTitle>
-                </SheetHeader>
-                <div className="overflow-auto h-full pb-6">
-                  <form onSubmit={onSearch} className="mb-8">
-                    <div className="relative">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <Input
+              <SheetContent
+                side="right"
+                className="flex w-full max-w-none flex-col gap-0 border-0 bg-white p-0 text-black sm:max-w-none [&>button]:hidden"
+              >
+                <SheetTitle className="sr-only">Navigation</SheetTitle>
+                <SheetDescription className="sr-only">Site navigation menu</SheetDescription>
+
+                <div className="flex h-14 shrink-0 items-center justify-between border-b border-black/10 px-4 pt-[env(safe-area-inset-top)] box-content">
+                  <Logo className="h-9 w-auto" />
+                  <SheetClose asChild>
+                    <Button variant="ghost" size="icon" aria-label="Close menu">
+                      <X className="h-5 w-5" strokeWidth={1.5} />
+                    </Button>
+                  </SheetClose>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6">
+                  <form onSubmit={(e) => { onSearch(e); setMobileMenuOpen(false); }}>
+                    <div className="flex items-center gap-3 border-b border-black/30 pb-3 focus-within:border-black">
+                      <Search className="h-5 w-5 shrink-0" strokeWidth={1.5} />
+                      <input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Search products..."
-                        className="pl-12 py-6 text-lg rounded-full"
+                        placeholder="Search products"
+                        aria-label="Search products"
+                        className="w-full bg-transparent text-base font-light placeholder:text-black/40 focus:outline-none"
                       />
                     </div>
                   </form>
-                  <nav className="space-y-2">
+
+                  <nav className="mt-6" aria-label="Mobile">
                     {[
                       { label: "Home", to: "/" as const, search: undefined },
                       { label: "Shop", to: "/shop" as const, search: undefined },
-                      { label: "Activewear", to: "/shop" as const, search: { q: "Activewear" } },
+                      { label: "New Arrivals", to: "/shop" as const, search: { q: "New Arrivals" } },
                       { label: "Sets", to: "/shop" as const, search: { q: "Sets" } },
-                      {
-                        label: "New Arrivals",
-                        to: "/shop" as const,
-                        search: { q: "New Arrivals" },
-                      },
+                      { label: "Activewear", to: "/shop" as const, search: { q: "Activewear" } },
                       { label: "Sale", to: "/shop" as const, search: { q: "Sale" } },
-                      { label: "Orders", to: "/orders" as const, search: undefined },
-                      { label: "Account", to: "/account" as const, search: undefined },
                     ].map((item) => (
                       <Link
                         key={item.label}
                         to={item.to}
                         search={item.search}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block py-4 text-2xl font-medium border-b border-border hover:pl-4 transition-all"
+                        className="group flex items-center justify-between border-b border-black/10 py-4 text-[28px] font-light leading-none active:opacity-60"
+                        style={{ fontFamily: "var(--font-serif)" }}
                       >
                         {item.label}
+                        <ArrowRight
+                          className="h-5 w-5 opacity-40 transition-transform group-active:translate-x-1"
+                          strokeWidth={1.5}
+                        />
                       </Link>
                     ))}
                   </nav>
-                  {!user && (
+
+                  {productTypes.length > 0 && (
                     <div className="mt-8">
-                      <Button asChild className="w-full py-6 text-lg rounded-full">
-                        <Link to="/login">Sign In</Link>
-                      </Button>
+                      <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.25em]">
+                        Categories
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {productTypes.slice(0, 8).map((type) => (
+                          <Link
+                            key={type}
+                            to="/shop"
+                            search={{ q: type }}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="rounded-full border border-black/20 px-4 py-2 text-[13px] font-light active:bg-black active:text-white"
+                          >
+                            {type}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
+
+                  <div className="mt-8 grid grid-cols-2 gap-3">
+                    <Link
+                      to="/orders"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 rounded-full border border-black/20 py-3 text-[12px] uppercase tracking-[0.2em] active:bg-black/5"
+                    >
+                      <Package className="h-4 w-4" strokeWidth={1.5} /> Orders
+                    </Link>
+                    <Link
+                      to={user ? "/account" : "/login"}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 rounded-full bg-black py-3 text-[12px] uppercase tracking-[0.2em] text-white active:opacity-80"
+                    >
+                      <User className="h-4 w-4" strokeWidth={1.5} /> {user ? "Account" : "Sign in"}
+                    </Link>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>

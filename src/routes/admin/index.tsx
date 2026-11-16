@@ -30,7 +30,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatPrice } from "@/lib/format";
 import { getAllOrders, type Order } from "@/lib/orderStore";
 import { loadShopData, type ShopData } from "@/lib/pos/store";
-import { balanceOwed, isLowStock, round2, stockLeft } from "@/lib/pos/types";
+import { balanceOwed, isLowStock, localDate, round2, stockLeft } from "@/lib/pos/types";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Admin Dashboard" }] }),
@@ -67,7 +67,7 @@ function AdminDashboard() {
     void load();
   }, []);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDate();
 
   const todayTotals = useMemo(() => {
     if (!data) return { sales: 0, revenue: 0, collected: 0 };
@@ -83,7 +83,7 @@ function AdminDashboard() {
     if (!data) return [];
     const days: Array<{ date: string; label: string; revenue: number; collected: number }> = [];
     for (let offset = 13; offset >= 0; offset -= 1) {
-      const date = new Date(Date.now() - offset * DAY_MS).toISOString().slice(0, 10);
+      const date = localDate(new Date(Date.now() - offset * DAY_MS));
       days.push({ date, label: date.slice(5), revenue: 0, collected: 0 });
     }
     const index = new Map(days.map((day) => [day.date, day]));

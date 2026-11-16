@@ -55,6 +55,7 @@ import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   PAYMENT_METHODS,
+  localDate,
   round2,
   type FinanceEntry,
   type FinanceKind,
@@ -65,7 +66,7 @@ export const Route = createFileRoute("/admin/finance")({
   component: FinancePage,
 });
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDate();
 
 function monthKey(date: string): string {
   return date.slice(0, 7);
@@ -154,7 +155,7 @@ function FinancePage() {
       if (!isCollected(order.status)) return false;
       if (kindFilter === "expense") return false; // viewing expenses only
       if (monthFilter === "all") return true;
-      return monthKey(new Date(order.createdAt).toISOString().slice(0, 10)) === monthFilter;
+      return monthKey(localDate(new Date(order.createdAt))) === monthFilter;
     });
     const online = round2(onlineInScope.reduce((sum, order) => sum + order.total, 0));
     const onlinePending = webOrders.filter((order) => order.status === "pending").length;

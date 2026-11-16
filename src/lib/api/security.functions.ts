@@ -153,7 +153,7 @@ function createServiceClient(): SupabaseClient {
   });
 }
 
-async function assertAdmin(accessToken?: string | null): Promise<string> {
+export async function assertAdmin(accessToken?: string | null): Promise<string> {
   console.log("[assertAdmin] Starting check, token exists:", !!accessToken);
   if (!accessToken) throw new Error("Authentication required");
   const supabase = createUserClient(accessToken);
@@ -886,7 +886,8 @@ async function syncOrderWithPos(
   const { error } = await serviceSupabase.rpc("record_online_sale", {
     payload: {
       orderId,
-      soldAt: new Date().toISOString().slice(0, 10),
+      // Shop day in Cambodia; the server runs in UTC, which is "yesterday" before 07:00.
+      soldAt: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Phnom_Penh" }).format(new Date()),
       customerName: orderRow.customer_name || "Online customer",
       phone: orderRow.phone ?? "",
       address: orderRow.address ?? "",

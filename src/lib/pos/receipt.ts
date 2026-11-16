@@ -59,10 +59,39 @@ function openPrintWindow(bodyHtml: string): void {
   win.document.close();
 }
 
+/** Optional till details that are not stored on the sale itself. */
+export interface ReceiptExtras {
+  /** Cash the customer handed over, when more than the amount paid. */
+  cashGiven?: number;
+}
+
+/**
+ * Receipt date line. `soldAt` is a calendar date (no time), so it is read as a
+ * local date; the time comes from `createdAt` when the sale was entered that day.
+ */
+function receiptDateLine(sale: Sale): string {
+  const [year, month, day] = sale.soldAt.split("-").map(Number);
+  const date = year && month && day ? new Date(year, month - 1, day) : new Date(sale.createdAt);
+  const created = new Date(sale.createdAt);
+  const sameDay =
+    !Number.isNaN(created.getTime()) &&
+    created.getFullYear() === date.getFullYear() &&
+    created.getMonth() === date.getMonth() &&
+    created.getDate() === date.getDate();
+  const time = sameDay
+    ? ` ${created.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+    : "";
+  return `${date.toLocaleDateString()}${time}`;
+}
+
+function changeDue(sale: Sale, extras: ReceiptExtras): number {
+  return extras.cashGiven && extras.cashGiven > sale.paid ? extras.cashGiven - sale.paid : 0;
+}
+
 /** Thermal-style receipt for a sale (works for cancelled/refunded sales too). */
-export function printSaleReceipt(sale: Sale): void {
-  const soldAt = new Date(sale.soldAt);
-  const dateLine = `${soldAt.toLocaleDateString()} ${soldAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
+  const dateLine = receiptDateLine(sale);
+  const change = changeDue(sale, extras);
 
   const items = sale.items
     .map(
@@ -83,6 +112,9 @@ export function printSaleReceipt(sale: Sale): void {
       : "",
     `<tr><td class="total">Total</td><td class="r total">${money(sale.total)}</td></tr>`,
     `<tr><td>Paid</td><td class="r">${money(sale.paid)}</td></tr>`,
+    change > 0
+      ? `<tr><td>Cash given</td><td class="r">${money(extras.cashGiven ?? 0)}</td></tr><tr><td>Change</td><td class="r">${money(change)}</td></tr>`
+      : "",
     Math.max(sale.total - sale.paid, 0) > 0
       ? `<tr><td class="total">Balance due</td><td class="r total">${money(sale.total - sale.paid)}</td></tr>`
       : "",
@@ -104,6 +136,61 @@ export function printSaleReceipt(sale: Sale): void {
     <hr />
     <p class="center">${esc(RECEIPT_FOOTER)}</p>
   `);
+}
+
+/** Plain-text receipt for Telegram / Messenger / SMS. */
+export function saleReceiptText(sale: Sale, extras: ReceiptExtras = {}): string {
+  const change = changeDue(sale, extras);
+  const balance = Math.max(sale.total - sale.paid, 0);
+  const lines = [
+    SHOP_NAME,
+    `Receipt ${sale.code} · ${receiptDateLine(sale)}`,
+    sale.status === "cancelled" ? "*** CANCELLED — REFUNDED ***" : "",
+    "",
+    ...sale.items.map((item) => {
+      const variant = [item.size, item.color].filter(Boolean).join(" ");
+      return `${item.qty} × ${item.name}${variant ? ` (${variant})` : ""} — ${money(item.qty * item.unitPrice)}`;
+    }),
+    "",
+    sale.discount > 0 ? `Discount: −${money(sale.discount)}` : "",
+    sale.deliveryFee > 0 ? `Delivery: ${money(sale.deliveryFee)}` : "",
+    `Total: ${money(sale.total)}`,
+    `Paid (${sale.paymentMethod}): ${money(sale.paid)}`,
+    change > 0 ? `Change: ${money(change)}` : "",
+    balance > 0 ? `Balance due: ${money(balance)}` : "",
+    "",
+    RECEIPT_FOOTER,
+  ];
+  return lines
+    .filter((line, index, all) => line !== "" || (all[index - 1] ?? "") !== "")
+    .join("\n")
+    .trim();
+}
+
+/**
+ * Share the receipt with the phone's share sheet (Telegram, Messenger…).
+ * Falls back to copying the text when the browser has no share sheet.
+ * Returns "copied" so the caller can tell the user to paste it.
+ */
+export async function shareSaleReceipt(
+  sale: Sale,
+  extras: ReceiptExtras = {},
+): Promise<"shared" | "copied" | "cancelled"> {
+  const text = saleReceiptText(sale, extras);
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      await navigator.share({ title: `${SHOP_NAME} receipt ${sale.code}`, text });
+      return "shared";
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
+      // Any other failure (e.g. not allowed on this page): fall back to copying.
+    }
+  }
+  if (typeof navigator === "undefined" || !navigator.clipboard) {
+    throw new Error("This browser cannot share or copy text");
+  }
+  await navigator.clipboard.writeText(text);
+  return "copied";
 }
 
 export interface EndOfDayReport {

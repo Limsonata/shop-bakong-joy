@@ -244,3 +244,14 @@ export interface ShopSummary {
 export function round2(value: number): number {
   return Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
 }
+
+/**
+ * Calendar date (YYYY-MM-DD) in the device's own time zone.
+ * `toISOString()` is UTC, which in Cambodia (UTC+7) files anything before
+ * 07:00 under the previous day.
+ */
+export function localDate(date: Date = new Date()): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}

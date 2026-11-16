@@ -46,7 +46,7 @@ function Index() {
     queryFn: () => getCollections({ first: 6 }),
   });
 
-  const { data: siteContent } = useQuery({
+  const { data: siteContent, isLoading: contentLoading } = useQuery({
     queryKey: ["site-content"],
     queryFn: () => getSiteContent(),
   });
@@ -57,14 +57,13 @@ function Index() {
   const { marquee, cta } = content;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="min-h-screen"
-    >
+    <div className="min-h-screen">
       {/* ── Hero — clothing rail ── */}
-      <HomeHeroRail content={content.rail_hero} />
+      <HomeHeroRail
+        content={content.rail_hero}
+        products={featuredProducts}
+        loading={isLoading || contentLoading}
+      />
 
       {/* ── Marquee — quiet single-line scroll ── */}
       <section className="border-b border-neutral-200 overflow-hidden py-3 bg-white">
@@ -185,6 +184,6 @@ function Index() {
           </motion.div>
         </div>
       </section>
-    </motion.div>
+    </div>
   );
 }

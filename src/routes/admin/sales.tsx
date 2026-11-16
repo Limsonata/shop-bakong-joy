@@ -10,6 +10,7 @@ import {
   Printer,
   RefreshCw,
   Search,
+  Send,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -37,7 +38,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatPrice } from "@/lib/format";
-import { printEndOfDayReport, printSaleReceipt } from "@/lib/pos/receipt";
+import { endOfDayAlertText, sendOwnerAlert } from "@/lib/pos/alerts";
+import {
+  printEndOfDayReport,
+  printSaleReceipt,
+  type EndOfDayReport,
+} from "@/lib/pos/receipt";
 import {
   addFinanceEntry,
   addSalePayment,
@@ -52,6 +58,7 @@ import {
   PAYMENT_METHODS,
   balanceOwed,
   paymentState,
+  localDate,
   round2,
   saleProfit,
   type DeliveryStatus,
@@ -95,7 +102,7 @@ function SalesPage() {
 
   // ── End-of-day cash up (drawer reconciliation) ──
   const [cashUpOpen, setCashUpOpen] = useState(false);
-  const [cashDate, setCashDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [cashDate, setCashDate] = useState(() => localDate());
   const [openingFloat, setOpeningFloat] = useState(() =>
     typeof window !== "undefined" ? localStorage.getItem("pos-opening-float") ?? "" : "",
   );
@@ -259,24 +266,36 @@ function SalesPage() {
     }
   };
 
+  const endOfDayReport = (): EndOfDayReport => ({
+    date: cashDate,
+    salesCount: cashUp.salesCount,
+    billed: cashUp.billed,
+    collectedByMethod: cashUp.byMethod.map(([method, amount]) => ({ method, amount })),
+    refunds: cashUp.refunds,
+    openingFloat: cashUp.float,
+    cashIn: cashUp.cashIn,
+    cashOut: cashUp.cashOut,
+    expectedCash: cashUp.expectedCash,
+    countedCash: cashUp.counted,
+  });
+
   const printCashUp = () => {
     try {
       localStorage.setItem("pos-opening-float", openingFloat);
-      printEndOfDayReport({
-        date: cashDate,
-        salesCount: cashUp.salesCount,
-        billed: cashUp.billed,
-        collectedByMethod: cashUp.byMethod.map(([method, amount]) => ({ method, amount })),
-        refunds: cashUp.refunds,
-        openingFloat: cashUp.float,
-        cashIn: cashUp.cashIn,
-        cashOut: cashUp.cashOut,
-        expectedCash: cashUp.expectedCash,
-        countedCash: cashUp.counted,
-      });
+      printEndOfDayReport(endOfDayReport());
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not open the print window");
     }
+  };
+
+  const [sendingReport, setSendingReport] = useState(false);
+  const sendCashUpToTelegram = async () => {
+    setSendingReport(true);
+    localStorage.setItem("pos-opening-float", openingFloat);
+    const result = await sendOwnerAlert(endOfDayAlertText(endOfDayReport()));
+    setSendingReport(false);
+    if (result.ok) toast.success("End-of-day report sent to Telegram");
+    else toast.error(result.reason ?? "Could not send to Telegram");
   };
 
   const postDifference = async () => {
@@ -303,7 +322,7 @@ function SalesPage() {
 
   const exportCsv = () => {
     downloadFile(
-      `sales-${new Date().toISOString().slice(0, 10)}.csv`,
+      `sales-${localDate()}.csv`,
       toCsv(
         sales.flatMap((sale) =>
           sale.items.map((item) => ({
@@ -755,6 +774,14 @@ function SalesPage() {
             <Button variant="outline" onClick={printCashUp} disabled={cashLoading}>
               <Printer className="mr-2 h-4 w-4" />
               Print report
+            </Button>
+            <Button
+              variant="outline"
+              onClick={sendCashUpToTelegram}
+              disabled={cashLoading || sendingReport}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              {sendingReport ? "Sending…" : "Send to Telegram"}
             </Button>
             {cashDifference !== null && Math.abs(cashDifference) >= 0.005 ? (
               <Button onClick={postDifference} disabled={posting}>

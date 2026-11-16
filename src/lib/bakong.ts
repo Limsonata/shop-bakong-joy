@@ -24,10 +24,14 @@ export interface BakongPaymentConfig {
 export interface BakongQRPayload {
   amount?: number;
   currency?: string;
+  /** Bill number shown in the customer's banking app (max 25 chars). */
   reference?: string;
+  /** Purpose of transaction (max 25 chars). */
   description?: string;
   storeLabel?: string;
   terminalLabel?: string;
+  /** How long a QR with an amount stays payable. KHQR requires an expiry for these. Default 10. */
+  expiresInMinutes?: number;
 }
 
 export function getBakongPaymentConfig(): BakongPaymentConfig {
@@ -82,88 +86,72 @@ function crc16(data: string): string {
 }
 
 /**
- * Generate a KHQR-compliant QR code string for Bakong payments.
+ * Generate a KHQR string for an individual Bakong account.
  *
- * Field layout (EMVCo / KHQR):
+ * Field layout follows the official NBC `bakong-khqr` SDK (v1.0.20):
  *   00 - Payload Format Indicator ("01")
- *   01 - Point of Initiation Method ("11" static, "12" dynamic)
- *   29 - Merchant Account Information (Bakong - account ID)
+ *   01 - Point of Initiation Method ("11" static, "12" dynamic = has amount)
+ *   29 - Individual account: 00 = Bakong account ID, 02 = acquiring bank (optional)
  *   52 - Merchant Category Code ("5999" general)
- *   53 - Transaction Currency (ISO 4217 numeric)
- *   54 - Transaction Amount (optional, for dynamic QR)
+ *   53 - Transaction Currency (840 USD, 116 KHR)
+ *   54 - Transaction Amount (dynamic only; USD up to 2 decimals, KHR whole riel)
  *   58 - Country Code ("KH")
- *   59 - Merchant Name
- *   60 - Merchant City
- *   62 - Additional Data (reference, description)
- *   63 - CRC checksum
+ *   59 - Merchant Name (max 25)
+ *   60 - Merchant City (max 15)
+ *   62 - Additional data: 01 bill number, 03 store label, 07 terminal, 08 purpose
+ *   99 - Timestamps in ms: 00 created, 01 expires (required for dynamic QR)
+ *   63 - CRC16 checksum
  */
 export function generateBakongQR(
   config: BakongPaymentConfig,
   payload: BakongQRPayload = {},
 ): string {
-  const currency = payload.currency || config.currencyCode || DEFAULT_CURRENCY;
-  const currencyCode = CURRENCY_CODES[currency.toUpperCase()] || CURRENCY_CODES.USD;
+  const currency = (payload.currency || config.currencyCode || DEFAULT_CURRENCY).toUpperCase();
+  const currencyCode = CURRENCY_CODES[currency] || CURRENCY_CODES.USD;
   const isDynamic = typeof payload.amount === "number" && payload.amount > 0;
 
-  // Field 00 - Payload Format Indicator
   let qrString = tlv("00", "01");
-
-  // Field 01 - Point of Initiation Method (11=static, 12=dynamic)
   qrString += tlv("01", isDynamic ? "12" : "11");
 
-  // Field 29 - Merchant Account Information for Bakong
-  // Sub-tag 00 = Globally Unique Identifier ("kh.gov.nbc.bakong")
-  // Sub-tag 01 = Merchant Bakong Account ID
-  const merchantAccountInfo = tlv("00", "kh.gov.nbc.bakong") + tlv("01", config.merchantAccount);
-  qrString += tlv("29", merchantAccountInfo);
+  let accountInfo = tlv("00", config.merchantAccount);
+  if (config.acquiringBank) accountInfo += tlv("02", config.acquiringBank.substring(0, 32));
+  qrString += tlv("29", accountInfo);
 
-  // Field 52 - Merchant Category Code (5999 = general retail)
   qrString += tlv("52", "5999");
-
-  // Field 53 - Transaction Currency
   qrString += tlv("53", currencyCode);
 
-  // Field 54 - Transaction Amount (only for dynamic QR)
   if (isDynamic) {
-    const amount = payload.amount!.toFixed(2);
-    qrString += tlv("54", amount);
+    const amount = payload.amount!;
+    let formatted: string;
+    if (currencyCode === CURRENCY_CODES.KHR) {
+      formatted = String(Math.round(amount));
+    } else {
+      const cents = Math.round(amount * 100);
+      formatted = cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
+    }
+    qrString += tlv("54", formatted);
   }
 
-  // Field 58 - Country Code
   qrString += tlv("58", "KH");
+  qrString += tlv("59", config.merchantName.substring(0, 25));
+  qrString += tlv("60", (config.merchantCity || "Phnom Penh").substring(0, 15));
 
-  // Field 59 - Merchant Name (max 25 chars)
-  const merchantName = config.merchantName.substring(0, 25);
-  qrString += tlv("59", merchantName);
+  let additionalData = "";
+  if (payload.reference) additionalData += tlv("01", payload.reference.substring(0, 25));
+  if (payload.storeLabel) additionalData += tlv("03", payload.storeLabel.substring(0, 25));
+  if (payload.terminalLabel) additionalData += tlv("07", payload.terminalLabel.substring(0, 25));
+  if (payload.description) additionalData += tlv("08", payload.description.substring(0, 25));
+  if (additionalData) qrString += tlv("62", additionalData);
 
-  // Field 60 - Merchant City (max 15 chars)
-  const merchantCity = (config.merchantCity || "Phnom Penh").substring(0, 15);
-  qrString += tlv("60", merchantCity);
-
-  // Field 62 - Additional Data Field (reference, description)
-  if (payload.reference || payload.description || payload.storeLabel || payload.terminalLabel) {
-    let additionalData = "";
-    if (payload.storeLabel) {
-      additionalData += tlv("03", payload.storeLabel.substring(0, 25));
-    }
-    if (payload.reference) {
-      additionalData += tlv("05", payload.reference.substring(0, 25));
-    }
-    if (payload.terminalLabel) {
-      additionalData += tlv("07", payload.terminalLabel.substring(0, 25));
-    }
-    if (payload.description) {
-      additionalData += tlv("08", payload.description.substring(0, 25));
-    }
-    if (additionalData) {
-      qrString += tlv("62", additionalData);
-    }
+  if (isDynamic) {
+    const created = Date.now();
+    const expires = created + Math.max(payload.expiresInMinutes ?? 10, 1) * 60 * 1000;
+    qrString += tlv("99", tlv("00", String(created)) + tlv("01", String(expires)));
   }
 
-  // Field 63 - CRC (calculate over everything including "6304")
+  // Field 63 - CRC (calculated over everything including "6304")
   qrString += "6304";
-  const checksum = crc16(qrString);
-  qrString += checksum;
+  qrString += crc16(qrString);
 
   return qrString;
 }

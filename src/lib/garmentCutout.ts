@@ -160,3 +160,29 @@ export async function makeGarmentCutout(file: File, strip = true): Promise<Cutou
 
   return { file: await canvasToFile(out, file.name), removed };
 }
+
+const urlCache = new Map<string, Promise<string>>();
+
+/**
+ * Cut-out for an already-uploaded product photo, used by the homepage rail.
+ * Resolves to an object URL of the cut-out, or to the original URL when the photo
+ * cannot be fetched/processed (e.g. CORS) or its background is not plain enough.
+ */
+export function cutoutFromUrl(url: string): Promise<string> {
+  const cached = urlCache.get(url);
+  if (cached) return cached;
+  const job = (async () => {
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) return url;
+      const blob = await res.blob();
+      const file = new File([blob], "product.png", { type: blob.type || "image/png" });
+      const { file: out, removed } = await makeGarmentCutout(file, true);
+      return removed ? URL.createObjectURL(out) : url;
+    } catch {
+      return url;
+    }
+  })();
+  urlCache.set(url, job);
+  return job;
+}

@@ -20,6 +20,7 @@ import {
 } from "./localBackend";
 import {
   isRunningCost,
+  localDate,
   round2,
   stockLeft,
   type FinanceEntry,
@@ -367,7 +368,7 @@ export async function restockItem(input: RestockInput): Promise<StockItem> {
     });
 
     if (input.postExpense && purchaseCost > 0) {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDate();
       snapshot.financeEntries.unshift({
         id: newId("fe"),
         entryDate: today,
@@ -646,7 +647,7 @@ export async function addSalePayment(
     const now = new Date().toISOString();
     snapshot.financeEntries.unshift({
       id: newId("fe"),
-      entryDate: now.slice(0, 10),
+      entryDate: localDate(),
       kind: "income",
       description: `Balance payment ${sale.code} — ${sale.customerName}`,
       category: "Sales",
@@ -730,7 +731,7 @@ export async function cancelSale(saleId: string): Promise<Sale> {
     if (sale.paid > 0) {
       snapshot.financeEntries.unshift({
         id: newId("fe"),
-        entryDate: now.slice(0, 10),
+        entryDate: localDate(),
         kind: "expense",
         description: `Refund ${sale.code} — ${sale.customerName}`,
         category: "Refund",
