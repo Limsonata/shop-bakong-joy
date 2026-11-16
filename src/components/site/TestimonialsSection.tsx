@@ -121,7 +121,7 @@ export function TestimonialsSection() {
           </p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {items.map((t, i) => (
             <motion.div
               key={t.id}
@@ -218,7 +218,7 @@ export function TestimonialsSection() {
                       <StarPicker value={rating} onChange={setRating} />
                     </div>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="fb-name">Your name</Label>
                         <Input

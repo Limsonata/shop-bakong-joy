@@ -42,7 +42,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand / contact */}
           <div>
             <Link to="/" className="mb-7 inline-block" aria-label="BillieGrace Closet — home">

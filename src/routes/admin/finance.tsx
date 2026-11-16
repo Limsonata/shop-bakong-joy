@@ -273,7 +273,7 @@ function FinancePage() {
         </>
       }
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Money in"
           value={formatPrice(totals.incomeTotal)}
@@ -298,7 +298,7 @@ function FinancePage() {
         <StatCard label="Entries" value={String(visible.length)} hint="In current view" icon={Truck} />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
         <Card>
           <CardContent className="space-y-4 pt-6">
             <div className="flex flex-wrap items-end gap-3">

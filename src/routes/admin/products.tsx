@@ -98,6 +98,25 @@ function ProductsAdmin() {
     );
   });
 
+  const renderStock = (product: (typeof products)[number]) =>
+    stockByProduct.has(product.id) ? (
+      (stockByProduct.get(product.id) ?? 0) > 0 ? (
+        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+          {stockByProduct.get(product.id)} in stock
+        </span>
+      ) : (
+        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">
+          Out of stock — restock in Stock
+        </span>
+      )
+    ) : product.variants[0]?.availableForSale ? (
+      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">In stock</span>
+    ) : (
+      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+        Out of stock
+      </span>
+    );
+
   if (!isProductsIndex) {
     return (
       <RequireAdmin>
@@ -110,22 +129,26 @@ function ProductsAdmin() {
     <RequireAdmin>
       <div className="min-h-screen bg-background">
         <header className="border-b">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-            <div className="flex items-center gap-4">
-              <Link to="/admin" className="text-muted-foreground hover:text-foreground">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 pt-[env(safe-area-inset-top)] sm:px-6">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <Link
+                to="/admin"
+                aria-label="Back to dashboard"
+                className="-m-2 p-2 text-muted-foreground hover:text-foreground"
+              >
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <h1 className="text-xl font-semibold">Products</h1>
+              <h1 className="truncate text-xl font-semibold">Products</h1>
             </div>
-            <Button asChild>
+            <Button asChild className="shrink-0">
               <Link to="/admin/products/new">
-                <Plus className="mr-2 h-4 w-4" /> Add Product
+                <Plus className="mr-1 h-4 w-4 sm:mr-2" /> Add<span className="hidden sm:inline">&nbsp;Product</span>
               </Link>
             </Button>
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
           {!isSupabaseConfigured && (
             <div className="mb-6 rounded-md border border-yellow-300 bg-yellow-50 p-4 text-sm">
               <p className="font-medium text-yellow-900">Demo mode</p>
@@ -142,7 +165,7 @@ function ProductsAdmin() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search products..."
-              className="pl-9 max-w-md"
+              className="w-full pl-9 sm:max-w-md"
             />
           </div>
 
@@ -176,7 +199,50 @@ function ProductsAdmin() {
               </CardContent>
             </Card>
           ) : (
-            <div className="overflow-hidden rounded-md border">
+            <>
+            {/* Phones: card list */}
+            <ul className="space-y-3 md:hidden">
+              {filtered.map((product) => (
+                <li key={product.id} className="rounded-xl border p-3">
+                  <div className="flex gap-3">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      {product.images[0] && (
+                        <img
+                          src={product.images[0].url}
+                          alt={product.title}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{product.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {product.productType || "No type"} · {product.price.currencyCode}{" "}
+                        {Number(product.price.amount).toFixed(2)}
+                      </p>
+                      <div className="mt-1.5">{renderStock(product)}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button asChild variant="outline" className="h-11">
+                      <Link to="/admin/products/$id" params={{ id: product.id }}>
+                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-11 text-destructive"
+                      onClick={() => setPendingDelete(product)}
+                      disabled={deletingId === product.id}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="hidden overflow-hidden rounded-md border md:block">
               <table className="w-full">
                 <thead className="border-b bg-muted/50">
                   <tr>
@@ -223,27 +289,7 @@ function ProductsAdmin() {
                       <td className="px-4 py-3 text-sm">
                         {product.price.currencyCode} {Number(product.price.amount).toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-sm">
-                        {stockByProduct.has(product.id) ? (
-                          (stockByProduct.get(product.id) ?? 0) > 0 ? (
-                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
-                              {stockByProduct.get(product.id)} in stock
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">
-                              Out of stock — restock in Stock
-                            </span>
-                          )
-                        ) : product.variants[0]?.availableForSale ? (
-                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
-                            In stock
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                            Out of stock
-                          </span>
-                        )}
-                      </td>
+                      <td className="px-4 py-3 text-sm">{renderStock(product)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button asChild variant="ghost" size="icon">
@@ -266,6 +312,7 @@ function ProductsAdmin() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </main>
 

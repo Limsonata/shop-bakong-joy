@@ -272,9 +272,9 @@ function PosPage() {
       title="New sale"
       description="Pick items, take the money, stock and the cash book update themselves."
     >
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr]">
         {/* ── Item picker ─────────────────────────────────────────── */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Choose items</CardTitle>
@@ -298,7 +298,7 @@ function PosPage() {
                   Nothing in stock matches “{search}”.
                 </p>
               ) : (
-                <ul className="grid gap-2 sm:grid-cols-2">
+                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {results.map((item) => {
                     const left = stockLeft(item);
                     return (
@@ -309,7 +309,7 @@ function PosPage() {
                           className="w-full rounded-lg border p-3 text-left transition-colors hover:border-primary hover:bg-muted/50"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <span className="text-sm font-medium leading-tight">{item.name}</span>
+                            <span className="min-w-0 break-words text-sm font-medium leading-tight">{item.name}</span>
                             <span className="whitespace-nowrap text-sm font-semibold tabular-nums">
                               {formatPrice(item.price)}
                             </span>
@@ -368,7 +368,7 @@ function PosPage() {
         </div>
 
         {/* ── Cart + payment ──────────────────────────────────────── */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -412,7 +412,7 @@ function PosPage() {
                           <span className="sr-only">Remove {line.name}</span>
                         </Button>
                       </div>
-                      <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-1">
                           <Button variant="outline" size="sm" onClick={() => changeQty(index, -1)}>
                             <Minus className="h-3 w-3" />

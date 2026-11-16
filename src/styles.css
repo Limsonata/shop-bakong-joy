@@ -446,3 +446,41 @@ button:active:not(:disabled) {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Mobile / installed web-app behaviour ---- */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overscroll-behavior-y: none; /* no rubber-band pull on the page itself */
+}
+
+/* Instant taps (no 300ms delay / double-tap zoom) on interactive elements */
+a,
+button,
+[role="button"],
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
+}
+
+/* iOS zooms the page when an input is under 16px; keep forms steady on phones */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Hide scrollbar on swipeable rows (admin tabs) */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

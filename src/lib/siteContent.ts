@@ -49,6 +49,30 @@ export interface DualTilesContent {
   tiles: DualTile[];
 }
 
+export type RailGarmentKind = "tee" | "knit" | "hoodie" | "shirt" | "jacket" | "coat";
+
+export interface RailItemContent {
+  id: string;
+  name: string;
+  description: string;
+  /** Price / size shown on the hang tag. */
+  tag: string;
+  /** Uploaded clothing photo (cut-out). Empty = use the drawn mock-up. */
+  image: string;
+  /** Drawn mock-up used when there is no photo. */
+  kind: RailGarmentKind;
+  color: string;
+}
+
+export interface RailHeroContent {
+  eyebrow: string;
+  heading: string;
+  caption: string;
+  ctaLabel: string;
+  ctaLink: string;
+  items: RailItemContent[];
+}
+
 export interface VideoPopupContent {
   enabled: boolean;
   videoUrl: string;
@@ -74,6 +98,7 @@ export interface SiteContent {
   trust_strip: TrustStripContent;
   cta: CtaContent;
   dual_tiles: DualTilesContent;
+  rail_hero: RailHeroContent;
   video_popup: VideoPopupContent;
   footer: FooterContent;
 }
@@ -133,6 +158,22 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         ctaSearch: "New Arrivals",
         image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&q=80",
       },
+    ],
+  },
+  rail_hero: {
+    eyebrow: "New season · Fresh on the rail",
+    heading: "Modern essentials, hung for you to browse.",
+    caption: "Brush along the rail, slide a hanger, lift a piece to see the back.",
+    ctaLabel: "Shop the edit",
+    ctaLink: "/shop",
+    items: [
+      { id: "tee-bone", name: "Everyday tee · Bone", description: "Soft cotton tee for every day.", tag: "", image: "", kind: "tee", color: "#EFEBE2" },
+      { id: "knit-rose", name: "Soft knit · Rose", description: "A cosy knit with ribbed trims.", tag: "", image: "", kind: "knit", color: "#D9A3A8" },
+      { id: "hoodie-sage", name: "Hoodie · Sage", description: "Fleece hoodie with a kangaroo pocket.", tag: "", image: "", kind: "hoodie", color: "#A7B59A" },
+      { id: "shirt-sky", name: "Button shirt · Sky", description: "Light button-down for easy layering.", tag: "", image: "", kind: "shirt", color: "#A3D3EB" },
+      { id: "jacket-clay", name: "Jacket · Clay", description: "A structured everyday jacket.", tag: "", image: "", kind: "jacket", color: "#B98A6B" },
+      { id: "coat-ink", name: "Long coat · Ink", description: "Full-length coat for cooler days.", tag: "", image: "", kind: "coat", color: "#2B2F3A" },
+      { id: "tee-lilac", name: "Everyday tee · Lilac", description: "The same easy tee in lilac.", tag: "", image: "", kind: "tee", color: "#CCB2E0" },
     ],
   },
   video_popup: {
@@ -212,6 +253,15 @@ export async function getSiteContent(): Promise<SiteContent> {
           if (tiles && tiles.length > 0) merged.dual_tiles = { tiles };
           break;
         }
+        case "rail_hero": {
+          const rail = row.content as Partial<RailHeroContent>;
+          merged.rail_hero = {
+            ...DEFAULT_SITE_CONTENT.rail_hero,
+            ...rail,
+            items: rail.items ?? DEFAULT_SITE_CONTENT.rail_hero.items,
+          };
+          break;
+        }
         case "video_popup":
           merged.video_popup = {
             ...DEFAULT_SITE_CONTENT.video_popup,
@@ -244,6 +294,11 @@ export async function getSiteContent(): Promise<SiteContent> {
           ? overlayTiles
           : DEFAULT_SITE_CONTENT.dual_tiles.tiles,
     },
+    rail_hero: {
+      ...DEFAULT_SITE_CONTENT.rail_hero,
+      ...overlay.rail_hero,
+      items: overlay.rail_hero?.items ?? DEFAULT_SITE_CONTENT.rail_hero.items,
+    },
     video_popup: { ...DEFAULT_SITE_CONTENT.video_popup, ...overlay.video_popup },
     footer: { ...DEFAULT_SITE_CONTENT.footer, ...overlay.footer },
   };
@@ -259,8 +314,8 @@ export async function updateSiteContentSection<K extends keyof SiteContent>(
       .from("site_content")
       .upsert({ section, content }, { onConflict: "section" });
     if (error) {
-      console.error(`Failed to update site content section "${section}":`, error.message);
-      return false;
+      console.error(`Failed to update site content section "${section}":`, error);
+      throw new Error(`"${section}": ${error.message}${error.hint ? ` (${error.hint})` : ""}`);
     }
     return true;
   }

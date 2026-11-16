@@ -296,7 +296,7 @@ function InventoryPage() {
         </>
       }
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Units in stock"
           value={String(totals.units)}
@@ -328,7 +328,7 @@ function InventoryPage() {
       <Card className="mt-6">
         <CardContent className="space-y-4 pt-6">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[220px] flex-1">
+            <div className="w-full sm:min-w-[220px] sm:flex-1">
               <Label htmlFor="stock-search" className="text-xs text-muted-foreground">
                 Search
               </Label>
@@ -344,10 +344,10 @@ function InventoryPage() {
               </div>
             </div>
 
-            <div>
+            <div className="w-full sm:w-auto">
               <Label className="text-xs text-muted-foreground">Category</Label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,7 +371,90 @@ function InventoryPage() {
             </label>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Phones: one card per item with big, thumb-sized actions */}
+          <div className="space-y-3 md:hidden">
+            {isLoading ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Loading stock…</p>
+            ) : visible.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {items.length === 0 ? (
+                  <>
+                    No stock yet. Add one in{" "}
+                    <Link to="/admin/products/new" className="font-medium text-foreground underline">
+                      Products → Add product
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  "No items match this filter."
+                )}
+              </p>
+            ) : (
+              visible.map((item) => {
+                const left = stockLeft(item);
+                const tone =
+                  left <= 0
+                    ? "bg-red-100 text-red-700"
+                    : isLowStock(item)
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-emerald-100 text-emerald-700";
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-xl border p-3 ${item.archived ? "opacity-50" : ""}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {[item.size, item.color, item.category].filter(Boolean).join(" · ")}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                          {item.sku}
+                        </p>
+                      </div>
+                      <div className={`shrink-0 rounded-lg px-3 py-1.5 text-center ${tone}`}>
+                        <p className="text-xl font-semibold leading-none tabular-nums">{left}</p>
+                        <p className="text-[10px] uppercase">left</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="rounded-md bg-muted/50 py-1.5">
+                        <p className="text-muted-foreground">Cost</p>
+                        <p className="font-medium tabular-nums">{formatPrice(item.cost)}</p>
+                      </div>
+                      <div className="rounded-md bg-muted/50 py-1.5">
+                        <p className="text-muted-foreground">Price</p>
+                        <p className="font-medium tabular-nums">{formatPrice(item.price)}</p>
+                      </div>
+                      <div className="rounded-md bg-muted/50 py-1.5">
+                        <p className="text-muted-foreground">Sold</p>
+                        <p className="font-medium tabular-nums">{item.sold}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Button className="h-11" onClick={() => openRestock(item)}>
+                        <PackagePlus className="mr-2 h-4 w-4" /> Restock
+                      </Button>
+                      <Button variant="outline" className="h-11" onClick={() => openWriteOff(item)}>
+                        <PackageMinus className="mr-2 h-4 w-4" /> Write off
+                      </Button>
+                      <Button variant="ghost" className="h-10" onClick={() => openEdit(item)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                      </Button>
+                      <Button variant="ghost" className="h-10" onClick={() => toggleArchive(item)}>
+                        {item.archived ? "Restore" : "Archive"}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>

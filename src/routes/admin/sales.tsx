@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+import { LinkifiedText } from "@/components/site/LinkifiedText";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { StatCard } from "@/components/admin/StatCard";
 import { Badge } from "@/components/ui/badge";
@@ -357,7 +358,7 @@ function SalesPage() {
         </>
       }
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Sales" value={String(totals.count)} hint="Not cancelled" />
         <StatCard label="Billed" value={formatPrice(totals.billed)} hint="Items + delivery" />
         <StatCard
@@ -505,7 +506,7 @@ function SalesPage() {
                     </div>
 
                     {isOpen ? (
-                      <div className="mt-3 grid gap-4 rounded-md bg-muted/40 p-3 md:grid-cols-2">
+                      <div className="mt-3 grid grid-cols-1 gap-4 rounded-md bg-muted/40 p-3 md:grid-cols-2">
                         <div>
                           <p className="mb-1 text-xs font-medium uppercase text-muted-foreground">
                             Items
@@ -561,7 +562,9 @@ function SalesPage() {
                             {[sale.deliveryMethod, sale.city].filter(Boolean).join(" · ")}
                           </p>
                           {sale.address ? (
-                            <p className="text-muted-foreground">{sale.address}</p>
+                            <p className="text-muted-foreground">
+                              <LinkifiedText text={sale.address} />
+                            </p>
                           ) : null}
                           {sale.note ? (
                             <p className="italic text-muted-foreground">{sale.note}</p>

@@ -213,7 +213,7 @@ function ReportsPage() {
             <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Profit
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 label="Revenue"
                 value={formatPrice(summary.revenue + webRevenue)}
@@ -251,7 +251,7 @@ function ReportsPage() {
             <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Cash
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard label="Money in" value={formatPrice(summary.cashIn)} tone="good" />
               <StatCard
                 label="Money out"
@@ -299,7 +299,7 @@ function ReportsPage() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Best sellers</CardTitle>

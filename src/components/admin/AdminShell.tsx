@@ -85,18 +85,18 @@ export function AdminShell({
   return (
     <RequireAdmin>
       <div className="min-h-screen bg-background">
-        <header className="border-b">
+        <header className="border-b pt-[env(safe-area-inset-top)]">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <div className="flex items-center gap-3">
-              <img src="/Billie.svg" alt="BillieGrace Closet" className="h-9 w-auto" />
-              <div>
-                <h1 className="text-lg font-semibold leading-tight">{title}</h1>
+            <div className="flex min-w-0 items-center gap-3">
+              <img src="/Billie.svg" alt="BillieGrace Closet" className="h-9 w-auto shrink-0" />
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-semibold leading-tight">{title}</h1>
                 {description ? (
-                  <p className="text-sm text-muted-foreground">{description}</p>
+                  <p className="hidden text-sm text-muted-foreground sm:block">{description}</p>
                 ) : null}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {actions}
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 Logout
@@ -104,14 +104,15 @@ export function AdminShell({
             </div>
           </div>
 
+          {/* Phones: one swipeable row of tabs. Desktop: grouped, wrapping. */}
           <nav aria-label="Admin sections" className="mx-auto max-w-7xl px-2 pb-2 sm:px-4">
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <div className="scrollbar-none -mx-2 flex gap-x-6 overflow-x-auto px-2 sm:mx-0 sm:flex-wrap sm:gap-y-2 sm:overflow-visible sm:px-0">
               {NAV_GROUPS.map((group) => (
-                <div key={group.label}>
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                <div key={group.label} className="shrink-0">
+                  <p className="mb-1 hidden text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 sm:block">
                     {group.label}
                   </p>
-                  <ul className="flex flex-wrap gap-1">
+                  <ul className="flex gap-1 sm:flex-wrap">
                     {group.items.map((item) => {
                       const active =
                         item.to === "/admin"
@@ -123,7 +124,7 @@ export function AdminShell({
                           <Link
                             to={item.to}
                             aria-current={active ? "page" : undefined}
-                            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                            className={`flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors sm:py-1.5 ${
                               active
                                 ? "bg-primary text-primary-foreground"
                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -155,7 +156,7 @@ export function AdminShell({
           </div>
         ) : null}
 
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">{children}</main>
+        <main className="mx-auto min-w-0 max-w-7xl overflow-x-clip px-4 py-6 sm:px-6">{children}</main>
       </div>
     </RequireAdmin>
   );

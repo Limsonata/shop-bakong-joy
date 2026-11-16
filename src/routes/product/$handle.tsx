@@ -67,7 +67,7 @@ function ProductDetail() {
 
   if (qLoading) {
     return (
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2">
+      <div className="mx-auto grid grid-cols-1 max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2">
         <Skeleton className="aspect-square rounded-3xl" />
         <div className="space-y-5">
           <Skeleton className="h-10 w-3/4" />
@@ -110,7 +110,7 @@ function ProductDetail() {
         Back to shop
       </Link>
 
-      <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:gap-16">
         {/* Photos — auto-scrolling gallery */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}

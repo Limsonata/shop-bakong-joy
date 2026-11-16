@@ -54,7 +54,7 @@ function AccountPage() {
         <p className="mt-2 text-muted-foreground">Manage your account and preferences</p>
       </motion.div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Profile */}
         <motion.div
           {...fadeUp}

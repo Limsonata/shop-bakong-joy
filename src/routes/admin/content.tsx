@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import { MediaField } from "@/components/admin/MediaField";
+import { RailHeroEditor } from "@/components/admin/RailHeroEditor";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import {
   getSiteContent,
@@ -50,6 +51,7 @@ function ContentAdmin() {
         "trust_strip",
         "cta",
         "dual_tiles",
+        "rail_hero",
         "video_popup",
         "footer",
       ];
@@ -69,7 +71,9 @@ function ContentAdmin() {
       toast.success("Homepage content saved");
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
-      toast.error("Failed to save content");
+      toast.error(error instanceof Error ? `Save failed: ${error.message}` : "Failed to save content", {
+        duration: 10000,
+      });
       console.error(error);
     } finally {
       setIsSaving(false);
@@ -233,6 +237,11 @@ function ContentAdmin() {
           )}
 
           <div className="space-y-6">
+            <RailHeroEditor
+              value={content.rail_hero}
+              onChange={(rail_hero) => setContent((prev) => ({ ...prev, rail_hero }))}
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle>Ticker Strip</CardTitle>
@@ -350,7 +359,7 @@ function ContentAdmin() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Hero Banners (Dual Tiles)</CardTitle>
+                <CardTitle>Hero Banners (Dual Tiles, currently unused)</CardTitle>
                 <CardDescription>
                   The two side-by-side banners at the top of the homepage. Insert photos from your
                   device or paste image URLs.

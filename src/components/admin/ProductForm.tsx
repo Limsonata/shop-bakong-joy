@@ -339,7 +339,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           <CardTitle>Pricing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="price">Base price</Label>
               <Input
@@ -416,7 +416,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid gap-3 rounded-md border border-dashed bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div className="grid grid-cols-1 gap-3 rounded-md border border-dashed bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
             <div className="space-y-1">
               <Label className="text-xs">Sizes (comma separated)</Label>
               <Input
@@ -462,7 +462,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             </p>
           )}
           {variants.map((v, i) => (
-            <div key={i} className="grid gap-3 sm:grid-cols-6 items-end border rounded-md p-3">
+            <div key={i} className="grid grid-cols-2 items-end gap-3 rounded-md border p-3 sm:grid-cols-6">
               <div className="space-y-1">
                 <Label className="text-xs">Size</Label>
                 <Input
@@ -505,8 +505,15 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
                   <p className="text-[11px] text-muted-foreground">Change quantities in Stock.</p>
                 ) : null}
               </div>
-              <Button type="button" size="icon" variant="ghost" onClick={() => removeVariant(i)}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="col-span-2 justify-self-end sm:col-span-1 sm:w-10 sm:px-0"
+                aria-label="Remove variant"
+                onClick={() => removeVariant(i)}
+              >
                 <Trash2 className="h-4 w-4 text-destructive" />
+                <span className="ml-2 sm:hidden">Remove</span>
               </Button>
             </div>
           ))}
@@ -643,8 +650,9 @@ export function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting}>
+      {/* Sticky on phones so Save is always one thumb-tap away */}
+      <div className="sticky bottom-0 z-20 -mx-4 border-t bg-background/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:static sm:mx-0 sm:flex sm:justify-end sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : submitLabel}
         </Button>
       </div>

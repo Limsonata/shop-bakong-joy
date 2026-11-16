@@ -151,7 +151,7 @@ function AdminDashboard() {
         <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Today"
               value={formatPrice(todayTotals.revenue)}
@@ -181,7 +181,7 @@ function AdminDashboard() {
             />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Stock value"
               value={formatPrice(summary.stockValue)}
@@ -250,7 +250,7 @@ function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Reorder soon</CardTitle>

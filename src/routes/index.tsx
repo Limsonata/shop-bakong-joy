@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/site/ProductCard";
+import { HomeHeroRail } from "@/components/site/HomeHeroRail";
 import { getProducts, getCollections } from "@/lib/productStore";
 import { getSiteContent, DEFAULT_SITE_CONTENT } from "@/lib/siteContent";
 import { motion } from "framer-motion";
@@ -10,13 +11,13 @@ import { motion } from "framer-motion";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bakong Joy — Modern Essentials for Women" },
+      { title: "BillieGrace Closet — Modern Essentials for Women" },
       {
         name: "description",
         content:
-          "Shop Bakong Joy: leggings, sports bras, sets and everyday essentials designed for women. New drops weekly, delivered across Cambodia.",
+          "Shop BillieGrace Closet: leggings, sports bras, sets and everyday essentials designed for women. New drops weekly, delivered across Cambodia.",
       },
-      { property: "og:title", content: "Bakong Joy — Modern Essentials for Women" },
+      { property: "og:title", content: "BillieGrace Closet — Modern Essentials for Women" },
       {
         property: "og:description",
         content:
@@ -54,7 +55,6 @@ function Index() {
   // somehow missing) so the homepage never renders empty/broken.
   const content = siteContent ?? DEFAULT_SITE_CONTENT;
   const { marquee, cta } = content;
-  const tiles = content.dual_tiles?.tiles ?? DEFAULT_SITE_CONTENT.dual_tiles.tiles;
 
   return (
     <motion.div
@@ -63,41 +63,8 @@ function Index() {
       transition={{ duration: 0.4 }}
       className="min-h-screen"
     >
-      {/* ── Hero — Bouguessa-style dual tiles ── */}
-      <section className="grid md:grid-cols-2">
-        {tiles.slice(0, 2).map((tile, i) => (
-          <motion.div key={i} {...fadeUp} className="relative h-[72vh] overflow-hidden md:h-[86vh]">
-            <img
-              src={tile.image}
-              alt={tile.heading}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
-
-            <div className="absolute inset-x-0 bottom-0 p-7 sm:p-10 lg:p-12">
-              <p className="mb-3 text-[11px] uppercase tracking-[0.25em] text-white/85">
-                {tile.eyebrow}
-              </p>
-              <h1 className="font-serif font-light text-4xl leading-tight text-white sm:text-5xl">
-                {tile.heading}
-              </h1>
-              {tile.subtext && (
-                <p className="mt-3 max-w-sm text-sm font-light leading-relaxed text-white/85">
-                  {tile.subtext}
-                </p>
-              )}
-              <Link
-                to={tile.ctaLink as "/shop"}
-                search={tile.ctaSearch ? { q: tile.ctaSearch } : undefined}
-                className="mt-6 inline-block border-b border-white pb-1 text-[11px]
-                  uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-60"
-              >
-                {tile.ctaLabel}
-              </Link>
-            </div>
-          </motion.div>
-        ))}
-      </section>
+      {/* ── Hero — clothing rail ── */}
+      <HomeHeroRail content={content.rail_hero} />
 
       {/* ── Marquee — quiet single-line scroll ── */}
       <section className="border-b border-neutral-200 overflow-hidden py-3 bg-white">

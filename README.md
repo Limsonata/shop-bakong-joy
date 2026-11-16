@@ -1,4 +1,4 @@
-# BillieGrace Closet (Shop Bakong Joy) — E-commerce Store
+# BillieGrace Closet — E-commerce Store
 
 A modern e-commerce storefront **plus a complete back-office** for a small shop in Cambodia, built with React and TanStack Start. Products, orders, sales and money records are stored in **Supabase** (with a localStorage fallback so the admin tools work offline).
 

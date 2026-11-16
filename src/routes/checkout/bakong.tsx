@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useMemo, useState, useCallback } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, MapPin, Navigation, Truck } from "lucide-react";
+import { ArrowLeft, Banknote, CheckCircle2, Copy, Download, Loader2, MapPin, Navigation, QrCode, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { createOrder } from "@/lib/orderStore";
 import { notifyOrderReceipt } from "@/lib/telegramNotify";
 import { getTelegramId } from "@/lib/telegramAuth";
+import { OsmLocationPicker } from "@/components/site/OsmLocationPicker";
 
 declare global {
   interface Window {
@@ -38,10 +39,14 @@ function loadMapsApi(): Promise<void> {
 
 function LocationPicker({
   address,
+  lat,
+  lng,
   onAddressChange,
   disabled,
 }: {
   address: string;
+  lat: number;
+  lng: number;
   onAddressChange: (address: string, lat?: number, lng?: number) => void;
   disabled?: boolean;
 }) {
@@ -145,14 +150,13 @@ function LocationPicker({
 
   if (!MAPS_KEY) {
     return (
-      <textarea
-        value={address}
-        onChange={(e) => onAddressChange(e.target.value)}
-        placeholder="Enter your full delivery address"
+      <OsmLocationPicker
+        address={address}
+        onAddressChange={(a) => onAddressChange(a)}
+        lat={lat}
+        lng={lng}
+        onPinChange={(la, ln) => onAddressChange(address, la, ln)}
         disabled={disabled}
-        required
-        rows={3}
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
       />
     );
   }
@@ -208,6 +212,17 @@ function Checkout() {
   const [formData, setFormData] = useState({ name: "", phone: "", address: "", lat: 0, lng: 0 });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [payMethod, setPayMethod] = useState<"qr" | "cod">("qr");
+  const [hasPaid, setHasPaid] = useState(false);
+
+  const copyText = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Couldn't copy. Please copy it manually.");
+    }
+  };
 
   const totals = useMemo(() => {
     const subtotal = items.reduce(
@@ -236,15 +251,18 @@ function Checkout() {
     if (items.length === 0) { toast.error("Your cart is empty"); return; }
     if (!formData.address) { toast.error("Please enter a delivery location"); return; }
 
+    const hasPin = formData.lat !== 0 && formData.lng !== 0;
     setIsSubmitting(true);
     try {
       const order = await createOrder({
         customerName: formData.name,
         phone: formData.phone,
-        address: formData.address,
+        address: hasPin
+          ? `${formData.address}\nMap: https://www.google.com/maps?q=${formData.lat.toFixed(6)},${formData.lng.toFixed(6)}`
+          : formData.address,
         total: totals.total,
         currency: totals.currency,
-        bakongReference: "COD",
+        bakongReference: payMethod === "qr" ? "ABA-QR" : "COD",
         bakongTransactionId: "",
         items: orderItems,
       });
@@ -268,7 +286,9 @@ function Checkout() {
             <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
             <CardTitle>Order placed!</CardTitle>
             <CardDescription>
-              Your order is confirmed. Our delivery team will contact you shortly to arrange delivery and collect payment.
+              Your order is confirmed. {payMethod === "qr"
+                ? "We'll verify your ABA QR payment shortly and then arrange delivery."
+                : "Our delivery team will contact you shortly to arrange delivery and collect payment."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-center">
@@ -295,7 +315,7 @@ function Checkout() {
         <ArrowLeft className="h-4 w-4" /> Back to shop
       </Link>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Customer details */}
           <Card>
@@ -303,7 +323,7 @@ function Checkout() {
               <CardTitle>Customer details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full name</Label>
                   <Input
@@ -333,12 +353,14 @@ function Checkout() {
               <CardDescription>
                 {MAPS_KEY
                   ? "Search or pin your location on the map."
-                  : "Enter your delivery address."}
+                  : "Enter your delivery address, then pin your location on the map."}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <LocationPicker
                 address={formData.address}
+                lat={formData.lat}
+                lng={formData.lng}
                 onAddressChange={(address, lat, lng) =>
                   setFormData((f) => ({ ...f, address, lat: lat ?? f.lat, lng: lng ?? f.lng }))
                 }
@@ -352,22 +374,170 @@ function Checkout() {
           </Card>
 
           {/* Payment method */}
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Payment method</CardTitle>
+              <CardDescription>Choose how you'd like to pay for this order.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-primary bg-primary/5 p-4">
-                <Truck className="mb-2 h-5 w-5 text-primary" />
-                <p className="font-medium">Pay on delivery</p>
-                <p className="text-xs text-muted-foreground">Cash when we arrive</p>
+            <CardContent className="space-y-4">
+              <div role="radiogroup" aria-label="Payment method" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    { id: "qr", icon: QrCode, title: "Pay by ABA QR", desc: "Scan with any KHQR banking app" },
+                    { id: "cod", icon: Truck, title: "Pay on delivery", desc: "Cash when we arrive" },
+                  ] as const
+                ).map(({ id, icon: Icon, title, desc }) => {
+                  const active = payMethod === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setPayMethod(id)}
+                      className={`relative flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                        active
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block font-medium">{title}</span>
+                        <span className="block text-xs text-muted-foreground">{desc}</span>
+                      </span>
+                      {active && <CheckCircle2 className="absolute right-3 top-3 h-5 w-5 text-primary" />}
+                    </button>
+                  );
+                })}
               </div>
+
+              {payMethod === "qr" ? (
+                <div className="rounded-2xl border bg-gradient-to-b from-muted/50 to-background p-4 sm:p-6">
+                  <div className="grid grid-cols-1 items-center gap-6 sm:grid-cols-[240px_1fr]">
+                    <div className="mx-auto w-full max-w-[240px]">
+                      <img
+                        src="/aba-qr-card.jpeg"
+                        alt="ABA KHQR payment code for Sreynich Youern"
+                        className="w-full rounded-xl border bg-white shadow-md"
+                      />
+                      <Button asChild variant="ghost" size="sm" className="mt-2 w-full">
+                        <a href="/aba-qr-full.jpeg" download="BillieGrace-ABA-QR.jpeg">
+                          <Download className="mr-2 h-4 w-4" /> Save QR to phone
+                        </a>
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-xl bg-primary/10 p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Amount to pay
+                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-3xl font-semibold">
+                            {totals.currency} {totals.total.toFixed(2)}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyText(totals.total.toFixed(2), "Amount")}
+                          >
+                            <Copy className="mr-1 h-4 w-4" /> Copy
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          This QR doesn't fill the amount for you. Please type it in exactly.
+                        </p>
+                      </div>
+
+                      <ol className="space-y-2 text-sm">
+                        {[
+                          "Open ABA Mobile or any KHQR banking app.",
+                          "Scan the QR code, or upload the saved image.",
+                          `Enter ${totals.currency} ${totals.total.toFixed(2)} and confirm.`,
+                          "Tick the box below, then place your order.",
+                        ].map((step, i) => (
+                          <li key={step} className="flex gap-3">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                              {i + 1}
+                            </span>
+                            <span className="pt-0.5">{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+
+                      <div className="space-y-1 rounded-xl border bg-background p-3 text-sm">
+                        <p className="font-medium">Sreynich Youern · ABA Bank</p>
+                        {[
+                          { label: "USD account", value: "019 013 739" },
+                          { label: "KHR account", value: "006 659 744" },
+                        ].map((acc) => (
+                          <div key={acc.label} className="flex items-center justify-between gap-2">
+                            <span className="text-muted-foreground">{acc.label}</span>
+                            <span className="flex items-center gap-1 font-mono">
+                              {acc.value}
+                              <button
+                                type="button"
+                                aria-label={`Copy ${acc.label}`}
+                                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                onClick={() => copyText(acc.value.replace(/\s/g, ""), acc.label)}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={hasPaid}
+                      onChange={(e) => setHasPaid(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-[hsl(var(--primary))]"
+                    />
+                    <span>
+                      I have completed the payment of{" "}
+                      <strong>
+                        {totals.currency} {totals.total.toFixed(2)}
+                      </strong>{" "}
+                      by ABA QR. We'll confirm it shortly.
+                    </span>
+                  </label>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 rounded-2xl border bg-muted/30 p-4 text-sm">
+                  <Banknote className="h-6 w-6 shrink-0 text-primary" />
+                  <p>
+                    Prepare <strong>{totals.currency} {totals.total.toFixed(2)}</strong> in cash. Our
+                    delivery team will collect it when your order arrives.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Action button */}
-          <Button type="submit" size="lg" className="w-full" disabled={!items.length || isSubmitting}>
-            {isSubmitting ? "Placing order…" : "Place order — pay on delivery"}
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={!items.length || isSubmitting || (payMethod === "qr" && !hasPaid)}
+          >
+            {isSubmitting
+              ? "Placing order…"
+              : payMethod === "qr"
+                ? "I've paid — place order"
+                : "Place order — pay on delivery"}
           </Button>
         </form>
 
