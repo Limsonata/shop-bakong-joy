@@ -19,8 +19,10 @@ import {
   type PosSnapshot,
 } from "./localBackend";
 import {
+  DEFAULT_LOW_STOCK_AT,
   isRunningCost,
   localDate,
+  lowStockProducts,
   round2,
   stockLeft,
   type FinanceEntry,
@@ -88,6 +90,7 @@ interface SaleItemRow {
   qty: number;
   unit_price: number | string;
   unit_cost: number | string;
+  returned_qty?: number | null;
 }
 
 interface SaleRow {
@@ -110,6 +113,7 @@ interface SaleRow {
   payment_method: string;
   note: string | null;
   created_at: string;
+  order_id?: string | null;
   sale_items?: SaleItemRow[] | null;
 }
 
@@ -134,6 +138,7 @@ function toSale(row: SaleRow): Sale {
     paymentMethod: row.payment_method,
     note: row.note ?? "",
     createdAt: row.created_at,
+    orderId: row.order_id ?? null,
     items: (row.sale_items ?? []).map(
       (item): SaleItem => ({
         id: item.id,
@@ -144,6 +149,7 @@ function toSale(row: SaleRow): Sale {
         qty: item.qty,
         unitPrice: Number(item.unit_price),
         unitCost: Number(item.unit_cost),
+        returnedQty: Number(item.returned_qty ?? 0),
       }),
     ),
   };
@@ -181,6 +187,11 @@ function fail(context: string, error: { message: string } | null): never {
   throw new Error(`${context}: ${error?.message ?? "unknown error"}`);
 }
 
+/** PostgREST error for an RPC that does not exist yet (migration not run). */
+function isMissingFunction(error: { code?: string; message: string }): boolean {
+  return error.code === "PGRST202" || /could not find the function/i.test(error.message);
+}
+
 const SALE_SELECT = "*, sale_items(*)";
 
 // ───────────────────────────────── stock ──────────────────────────────────
@@ -214,7 +225,7 @@ export async function createStockItem(input: StockItemInput): Promise<StockItem>
         cost: input.cost,
         price: input.price,
         stock_in: input.stockIn,
-        low_stock_at: input.lowStockAt ?? 0,
+        low_stock_at: input.lowStockAt ?? DEFAULT_LOW_STOCK_AT,
         note: input.note ?? null,
       })
       .select("*")
@@ -248,7 +259,7 @@ export async function createStockItem(input: StockItemInput): Promise<StockItem>
       price: input.price,
       stockIn: input.stockIn,
       sold: 0,
-      lowStockAt: input.lowStockAt ?? 0,
+      lowStockAt: input.lowStockAt ?? DEFAULT_LOW_STOCK_AT,
       archived: false,
       note: input.note ?? "",
       updatedAt: new Date().toISOString(),
@@ -397,6 +408,16 @@ export async function adjustStock(input: StockAdjustmentInput): Promise<StockIte
   if (input.delta === 0) throw new Error("Adjustment cannot be zero");
 
   if (usingCloud && supabase) {
+    // One transaction (stock + movement) when the migration has run.
+    const { data: rpcData, error: rpcError } = await supabase.rpc("adjust_stock", {
+      target_item: input.stockItemId,
+      p_delta: input.delta,
+      p_reason: input.reason,
+      p_note: input.note ?? null,
+    });
+    if (!rpcError) return toStockItem(rpcData as StockRow);
+    if (!isMissingFunction(rpcError)) fail("Could not adjust stock", rpcError);
+
     const { data: current, error: readError } = await supabase
       .from("stock_items")
       .select("*")
@@ -748,6 +769,162 @@ export async function cancelSale(saleId: string): Promise<Sale> {
   });
 }
 
+export interface ReturnLine {
+  saleItemId: string;
+  qty: number;
+}
+
+/**
+ * What a return does to the money: returned value comes off the sale, and only
+ * what the customer paid above the new total is handed back.
+ */
+export function previewReturn(sale: Sale, lines: ReturnLine[]) {
+  const returned = round2(
+    lines.reduce((sum, line) => {
+      const item = sale.items.find((candidate) => candidate.id === line.saleItemId);
+      return sum + (item ? Math.min(Math.max(line.qty, 0), item.qty) * item.unitPrice : 0);
+    }, 0),
+  );
+  const subtotal = round2(Math.max(sale.subtotal - returned, 0));
+  const discount = round2(Math.min(sale.discount, subtotal));
+  const total = round2(Math.max(subtotal - discount + sale.deliveryFee, 0));
+  const refund = round2(Math.max(sale.paid - total, 0));
+  return { returned, subtotal, discount, total, refund, stillOwed: round2(Math.max(total - (sale.paid - refund), 0)) };
+}
+
+/** Take back some items from a sale: restocks them, lowers the sale and refunds any overpayment. */
+export async function returnSaleItems(
+  saleId: string,
+  lines: ReturnLine[],
+  refundMethod?: string,
+  note?: string,
+): Promise<Sale> {
+  const wanted = lines.filter((line) => line.qty > 0);
+  if (wanted.length === 0) throw new Error("Choose at least one item to return");
+
+  if (usingCloud && supabase) {
+    const { error } = await supabase.rpc("return_sale_items", {
+      target_sale: saleId,
+      lines: wanted,
+      p_refund_method: refundMethod ?? null,
+      p_note: note?.trim() || null,
+    });
+    if (error) {
+      if (isMissingFunction(error)) {
+        throw new Error("Returns need the latest database migration (supabase db push).");
+      }
+      fail("Could not record the return", error);
+    }
+    const { data, error: readError } = await supabase
+      .from("sales")
+      .select(SALE_SELECT)
+      .eq("id", saleId)
+      .single();
+    if (readError) fail("Could not reload the sale", readError);
+    return toSale(data as SaleRow);
+  }
+
+  return mutate((snapshot) => {
+    const sale = snapshot.sales.find((candidate) => candidate.id === saleId);
+    if (!sale) throw new Error("Sale not found");
+    if (sale.status === "cancelled") throw new Error(`Sale ${sale.code} is cancelled`);
+    const preview = previewReturn(sale, wanted);
+    if (preview.returned <= 0) throw new Error("Choose at least one item to return");
+
+    const now = new Date().toISOString();
+    for (const line of wanted) {
+      const item = sale.items.find((candidate) => candidate.id === line.saleItemId);
+      if (!item) continue;
+      const qty = Math.min(line.qty, item.qty);
+      item.qty -= qty;
+      item.returnedQty = (item.returnedQty ?? 0) + qty;
+      const stock = item.stockItemId
+        ? snapshot.stockItems.find((candidate) => candidate.id === item.stockItemId)
+        : undefined;
+      if (stock) {
+        stock.sold = Math.max(stock.sold - qty, 0);
+        stock.updatedAt = now;
+        snapshot.movements.unshift({
+          id: newId("mv"),
+          stockItemId: stock.id,
+          delta: qty,
+          reason: "return",
+          unitCost: item.unitCost,
+          reference: `return ${sale.code}`,
+          createdAt: now,
+        });
+      }
+    }
+    sale.subtotal = preview.subtotal;
+    sale.discount = preview.discount;
+    sale.total = preview.total;
+    sale.paid = round2(sale.paid - preview.refund);
+    sale.note = [sale.note, `Returned ${localDate()}: $${preview.returned}${note ? ` — ${note}` : ""}`]
+      .filter(Boolean)
+      .join("\n");
+    if (preview.refund > 0) {
+      snapshot.financeEntries.unshift({
+        id: newId("fe"),
+        entryDate: localDate(),
+        kind: "expense",
+        description: `Return ${sale.code} — ${sale.customerName}`,
+        category: "Refund",
+        amount: preview.refund,
+        method: refundMethod || sale.paymentMethod,
+        source: "sale",
+        saleId: sale.id,
+        createdAt: now,
+      });
+    }
+    return sale;
+  });
+}
+
+// ───────────────────────────── change history ─────────────────────────────
+
+export interface AuditEntry {
+  id: string;
+  actor: string;
+  action: "insert" | "update" | "delete";
+  table: string;
+  label: string;
+  oldData: Record<string, unknown> | null;
+  newData: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+/** Who changed prices, stock, order and sale status (newest first). Cloud only. */
+export async function listAuditLog(limit = 100): Promise<AuditEntry[]> {
+  if (!usingCloud || !supabase) return [];
+  const { data, error } = await supabase
+    .from("audit_log")
+    .select("id, actor, action, table_name, label, old_data, new_data, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) fail("Could not load the change history", error);
+  return (
+    data as Array<{
+      id: string;
+      actor: string | null;
+      action: string;
+      table_name: string;
+      label: string | null;
+      old_data: Record<string, unknown> | null;
+      new_data: Record<string, unknown> | null;
+      created_at: string;
+    }>
+  ).map((row) => ({
+    id: row.id,
+    actor: row.actor ?? "unknown",
+    action: row.action as AuditEntry["action"],
+    table: row.table_name,
+    label: row.label ?? "",
+    oldData: row.old_data,
+    newData: row.new_data,
+    createdAt: row.created_at,
+  }));
+}
+
 // ──────────────────────────────── cash book ───────────────────────────────
 
 export async function listFinanceEntries(limit = 500): Promise<FinanceEntry[]> {
@@ -875,7 +1052,7 @@ export function summarise(
   const potentialSales = round2(
     active.reduce((sum, item) => sum + Math.max(stockLeft(item), 0) * item.price, 0),
   );
-  const lowStockCount = active.filter((item) => stockLeft(item) <= item.lowStockAt).length;
+  const lowStockCount = lowStockProducts(stockItems).length;
 
   return {
     revenue,

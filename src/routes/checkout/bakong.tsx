@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useMemo, useState, useCallback } from "react";
 import { ArrowLeft, Banknote, CheckCircle2, Copy, Download, Loader2, MapPin, Navigation, QrCode, Truck } from "lucide-react";
 import { toast } from "sonner";
@@ -7,9 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCartStore } from "@/stores/cartStore";
-import { createOrder } from "@/lib/orderStore";
-import { notifyOrderReceipt } from "@/lib/telegramNotify";
-import { getTelegramId } from "@/lib/telegramAuth";
+import { createOrder, orderNumber, type Order } from "@/lib/orderStore";
+import { getPaymentOptions } from "@/lib/api/payway.functions";
 import { OsmLocationPicker } from "@/components/site/OsmLocationPicker";
 
 declare global {
@@ -210,10 +209,19 @@ function Checkout() {
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const [formData, setFormData] = useState({ name: "", phone: "", address: "", lat: 0, lng: 0 });
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const navigate = useNavigate();
+  const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // "qr" = real KHQR via ABA PayWay when it is set up, else the static ABA QR.
   const [payMethod, setPayMethod] = useState<"qr" | "cod">("qr");
+  const [khqrEnabled, setKhqrEnabled] = useState<boolean | null>(null);
   const [hasPaid, setHasPaid] = useState(false);
+
+  useEffect(() => {
+    getPaymentOptions()
+      .then((options) => setKhqrEnabled(options.khqr))
+      .catch(() => setKhqrEnabled(false));
+  }, []);
 
   const copyText = async (value: string, label: string) => {
     try {
@@ -260,16 +268,17 @@ function Checkout() {
         address: hasPin
           ? `${formData.address}\nMap: https://www.google.com/maps?q=${formData.lat.toFixed(6)},${formData.lng.toFixed(6)}`
           : formData.address,
-        total: totals.total,
-        currency: totals.currency,
-        bakongReference: payMethod === "qr" ? "ABA-QR" : "COD",
-        bakongTransactionId: "",
+        paymentMethod: payMethod === "cod" ? "cod" : khqrEnabled ? "khqr" : "aba_manual",
         items: orderItems,
       });
-      notifyOrderReceipt(getTelegramId(), order);
-      toast.success("Order placed! We'll deliver to you soon.");
       clearCart();
-      setIsSubmitted(true);
+      if (order.paymentMethod === "khqr") {
+        // Real KHQR: show the QR with the exact amount and wait for the bank.
+        void navigate({ to: "/pay/$orderId", params: { orderId: order.id } });
+        return;
+      }
+      toast.success("Order placed! We'll deliver to you soon.");
+      setPlacedOrder(order);
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : "Failed to place order");
@@ -278,7 +287,7 @@ function Checkout() {
     }
   };
 
-  if (isSubmitted) {
+  if (placedOrder) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-xl items-center px-4 py-12 sm:px-6">
         <Card className="w-full">
@@ -286,15 +295,22 @@ function Checkout() {
             <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
             <CardTitle>Order placed!</CardTitle>
             <CardDescription>
-              Your order is confirmed. {payMethod === "qr"
+              Your order is confirmed. {placedOrder.paymentMethod === "aba_manual"
                 ? "We'll verify your ABA QR payment shortly and then arrange delivery."
                 : "Our delivery team will contact you shortly to arrange delivery and collect payment."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-center">
+            <div className="rounded-xl bg-muted/50 p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Order number</p>
+              <p className="font-mono text-2xl font-semibold">{orderNumber(placedOrder)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Save it to track your order with your phone number.
+              </p>
+            </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Button asChild>
-                <Link to="/orders">View my orders</Link>
+                <Link to="/track" search={{ ref: orderNumber(placedOrder) }}>Track my order</Link>
               </Button>
               <Button asChild variant="outline">
                 <Link to="/shop">Continue shopping</Link>
@@ -383,7 +399,14 @@ function Checkout() {
               <div role="radiogroup" aria-label="Payment method" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(
                   [
-                    { id: "qr", icon: QrCode, title: "Pay by ABA QR", desc: "Scan with any KHQR banking app" },
+                    {
+                      id: "qr",
+                      icon: QrCode,
+                      title: khqrEnabled ? "Pay by KHQR" : "Pay by ABA QR",
+                      desc: khqrEnabled
+                        ? "Any bank app · confirmed instantly"
+                        : "Scan with any KHQR banking app",
+                    },
                     { id: "cod", icon: Truck, title: "Pay on delivery", desc: "Cash when we arrive" },
                   ] as const
                 ).map(({ id, icon: Icon, title, desc }) => {
@@ -418,7 +441,23 @@ function Checkout() {
                 })}
               </div>
 
-              {payMethod === "qr" ? (
+              {payMethod === "qr" && khqrEnabled ? (
+                <div className="flex items-start gap-3 rounded-2xl border bg-muted/30 p-4 text-sm">
+                  <QrCode className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
+                  <div className="space-y-1">
+                    <p>
+                      After you place the order we show a KHQR code for exactly{" "}
+                      <strong>{totals.currency} {totals.total.toFixed(2)}</strong>.
+                    </p>
+                    <p className="text-muted-foreground">
+                      Scan it with ABA, ACLEDA, Wing, Bakong or any Cambodian bank app. Your order is
+                      confirmed automatically the moment the payment goes through.
+                    </p>
+                  </div>
+                </div>
+              ) : payMethod === "qr" && khqrEnabled === null ? (
+                <p className="text-sm text-muted-foreground">Loading payment options…</p>
+              ) : payMethod === "qr" ? (
                 <div className="rounded-2xl border bg-gradient-to-b from-muted/50 to-background p-4 sm:p-6">
                   <div className="grid grid-cols-1 items-center gap-6 sm:grid-cols-[240px_1fr]">
                     <div className="mx-auto w-full max-w-[240px]">
@@ -531,13 +570,20 @@ function Checkout() {
             type="submit"
             size="lg"
             className="w-full"
-            disabled={!items.length || isSubmitting || (payMethod === "qr" && !hasPaid)}
+            disabled={
+              !items.length ||
+              isSubmitting ||
+              (payMethod === "qr" && khqrEnabled === null) ||
+              (payMethod === "qr" && khqrEnabled === false && !hasPaid)
+            }
           >
             {isSubmitting
               ? "Placing order…"
-              : payMethod === "qr"
-                ? "I've paid — place order"
-                : "Place order — pay on delivery"}
+              : payMethod === "qr" && khqrEnabled
+                ? "Place order & show KHQR"
+                : payMethod === "qr"
+                  ? "I've paid — place order"
+                  : "Place order — pay on delivery"}
           </Button>
         </form>
 

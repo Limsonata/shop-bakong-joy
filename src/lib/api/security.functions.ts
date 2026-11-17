@@ -1,6 +1,20 @@
+import { randomBytes } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+
+import { shopToday } from "@/lib/server/supabaseAdmin";
+import { writeWithActor } from "@/lib/server/audit";
+import { isPayWayConfigured } from "@/lib/server/payway";
+import {
+  ORDER_COLUMNS,
+  announceNewOrder,
+  applyOrderStatus,
+  assertStockAvailable,
+  getOrder,
+  syncOrderWithPos,
+  type OrderRecord,
+} from "@/lib/server/orderLifecycle";
 
 import type { AuthResult, User, UserRole } from "@/lib/auth";
 import type {
@@ -83,14 +97,7 @@ const secureOrderSchema = z.object({
   customerName: z.string().trim().min(1).max(120),
   phone: z.string().trim().min(3).max(40),
   address: z.string().trim().min(3).max(500),
-  bakongReference: z
-    .string()
-    .trim()
-    .min(1)
-    .max(40)
-    .regex(/^[A-Z0-9-]+$/)
-    .optional(),
-  bakongTransactionId: z.string().trim().max(120).optional().nullable(),
+  paymentMethod: z.enum(["khqr", "aba_manual", "cod"]).default("cod"),
   items: z
     .array(
       z.object({
@@ -243,8 +250,13 @@ function generateHandle(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/** Unique, easy-to-read order reference, e.g. BG-261117-7KQ3. */
 function generateOrderReference(): string {
-  return `SBJ-${Date.now().toString(36).toUpperCase()}`;
+  const date = shopToday().slice(2).replace(/-/g, "");
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // no 0/O/1/I
+  const bytes = randomBytes(4);
+  const code = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+  return `BG-${date}-${code}`;
 }
 
 async function getUserIdFromToken(accessToken?: string | null): Promise<string | null> {
@@ -310,27 +322,54 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     });
 
     const userId = await getUserIdFromToken(data.accessToken);
-    const reference = data.bakongReference || generateOrderReference();
-    const { data: order, error: orderError } = await serviceSupabase
-      .from("orders")
-      .insert({
-        user_id: userId,
-        customer_name: data.customerName,
-        phone: data.phone,
-        address: data.address,
-        total,
-        currency: currency ?? "USD",
-        bakong_reference: reference,
-        bakong_transaction_id: data.bakongTransactionId || null,
-        status: "pending",
-        items: orderItems,
-      })
-      .select("*")
-      .single();
 
-    if (orderError || !order) {
-      throw new Error(orderError?.message || "Failed to create order");
+    if (data.paymentMethod === "khqr" && !isPayWayConfigured()) {
+      throw new Error("KHQR payment is not available right now. Please choose another method.");
     }
+    await assertStockAvailable(serviceSupabase, orderItems);
+
+    let order: OrderRecord | null = null;
+    let lastError: string | null = null;
+    // Retry on the (very unlikely) chance the random reference already exists.
+    for (let attempt = 0; attempt < 3 && !order; attempt++) {
+      const { data: inserted, error: orderError } = await serviceSupabase
+        .from("orders")
+        .insert({
+          user_id: userId,
+          customer_name: data.customerName,
+          phone: data.phone,
+          address: data.address,
+          total: Math.round(total * 100) / 100,
+          currency: currency ?? "USD",
+          bakong_reference: generateOrderReference(),
+          bakong_transaction_id: null,
+          payment_method: data.paymentMethod,
+          status: "pending",
+          items: orderItems,
+        })
+        .select(ORDER_COLUMNS)
+        .single();
+      if (inserted) order = inserted as unknown as OrderRecord;
+      else if (orderError?.code !== "23505") {
+        lastError = orderError?.message ?? "Failed to create order";
+        break;
+      }
+    }
+
+    if (!order) throw new Error(lastError || "Failed to create order");
+
+    // Re-check now that this order is saved: if another customer checked out
+    // the same last item at the same moment, one of the two orders is removed.
+    try {
+      await assertStockAvailable(serviceSupabase, orderItems, { excludeOrderId: order.id });
+    } catch (stockError) {
+      await serviceSupabase.from("orders").delete().eq("id", order.id);
+      throw stockError;
+    }
+
+    await announceNewOrder(serviceSupabase, order).catch((error) =>
+      console.error("[createSecureOrder] alert failed:", error),
+    );
 
     return order;
   });
@@ -405,7 +444,7 @@ function buildStockRows(
     name: input.title.trim(),
     category,
     cost,
-    low_stock_at: 0,
+    low_stock_at: 3,
     archived: false,
     note: "Auto-linked from Products",
     product_id: product.id,
@@ -466,18 +505,18 @@ async function createProductStockRows(
 export const createAdminProduct = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ input: productInputSchema }))
   .handler(async ({ data }) => {
-    await assertAdmin(data.accessToken);
+    const adminId = await assertAdmin(data.accessToken);
     const supabase = createServiceClient();
     const input = data.input as ProductInput;
     const category = input.productType?.trim() || "Other";
     const handle = stockGroupHandle(input.title, category);
     const variantIds = input.variants.map((_, index) => `${handle}-v${index}`);
 
-    const { data: product, error } = await supabase
-      .from("products")
-      .insert(productInputToDbRow({ ...input, handle }, true, variantIds))
-      .select("*")
-      .single();
+    const { data: product, error } = await writeWithActor(
+      (row) => supabase.from("products").insert(row).select("*").single(),
+      productInputToDbRow({ ...input, handle }, true, variantIds),
+      adminId,
+    );
     if (error || !product) throw new Error(error?.message || "Failed to create product");
 
     // Link the product to the POS: one stock row per variant, so restocking,
@@ -578,7 +617,7 @@ async function reconcileProductStock(
 export const updateAdminProduct = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), input: productInputSchema }))
   .handler(async ({ data }) => {
-    await assertAdmin(data.accessToken);
+    const adminId = await assertAdmin(data.accessToken);
     const supabase = createServiceClient();
     const input = data.input as ProductInput;
     const category = input.productType?.trim() || "Other";
@@ -630,12 +669,11 @@ export const updateAdminProduct = createServerFn({ method: "POST" })
       return match?.id ?? `${newHandle}-v${index}`;
     });
 
-    const { data: product, error } = await supabase
-      .from("products")
-      .update(productInputToDbRow({ ...input, handle: newHandle }, true, variantIds))
-      .eq("id", data.id)
-      .select("*")
-      .single();
+    const { data: product, error } = await writeWithActor(
+      (row) => supabase.from("products").update(row).eq("id", data.id).select("*").single(),
+      productInputToDbRow({ ...input, handle: newHandle }, true, variantIds),
+      adminId,
+    );
     if (error || !product) throw new Error(error?.message || "Failed to update product");
 
     try {
@@ -777,211 +815,88 @@ export const updateAdminOrderStatus = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await assertAdmin(data.accessToken);
-    const supabase = createServiceClient();
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: data.status satisfies OrderStatus })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
-
-    // Keep the POS in sync with the website order: record the sale and
-    // deduct stock when money is collected, cancel/refund/restock when
-    // the order is cancelled, and keep the delivery status current.
-    try {
-      await syncOrderWithPos(supabase, data.id, data.status);
-    } catch (syncError) {
-      throw new Error(
-        `Status saved, but POS sync failed: ${
-          syncError instanceof Error ? syncError.message : String(syncError)
-        }`,
-      );
-    }
-
+    const adminId = await assertAdmin(data.accessToken);
+    // Saves the status, keeps the POS / stock in sync and notifies the customer.
+    await applyOrderStatus(
+      createServiceClient(),
+      data.id,
+      data.status satisfies OrderStatus,
+      adminId,
+    );
     return { ok: true };
   });
 
-type OrderStatusDb = "pending" | "paid" | "shipped" | "done" | "cancelled";
-
-interface OrderItemJson {
-  productId?: string;
-  variantId?: string | null;
-  title?: string;
-  quantity?: number;
-  price?: number;
-}
-
-interface OrderRow {
-  id: string;
-  customer_name: string;
-  phone: string;
-  address: string;
-  total: number;
-  items: OrderItemJson[] | null;
-}
-
 /**
- * Mirror an online order's lifecycle into the POS:
- *  - paid / done  → record a POS sale (channel 'online', paid in cash on
- *    delivery) via record_online_sale, which also deducts stock and posts
- *    the cash to the ledger. Idempotent per order.
- *  - shipped      → mark the linked sale as sent.
- *  - done         → mark the linked sale as delivered.
- *  - cancelled    → cancel the linked sale (restocks items, posts a refund).
+ * Run the POS sync again for an order whose status was saved but whose sale
+ * failed (e.g. not enough stock at the time). Safe to repeat: record_online_sale
+ * is idempotent per order and cancel_sale ignores already-cancelled sales.
  */
-async function syncOrderWithPos(
-  serviceSupabase: SupabaseClient,
-  orderId: string,
-  status: OrderStatusDb,
-): Promise<void> {
-  const { data: existingSale, error: saleError } = await serviceSupabase
-    .from("sales")
-    .select("id, status")
-    .eq("order_id", orderId)
-    .maybeSingle();
-  if (saleError) throw new Error(saleError.message);
-
-  if (status === "cancelled") {
-    if (existingSale && existingSale.status !== "cancelled") {
-      const { error } = await serviceSupabase.rpc("cancel_sale", {
-        target_sale: existingSale.id,
-      });
-      if (error) throw new Error(error.message);
+export const retryAdminOrderPosSync = createServerFn({ method: "POST" })
+  .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    await assertAdmin(data.accessToken);
+    const supabase = createServiceClient();
+    const order = await getOrder(supabase, data.id);
+    // A prepaid order that went straight to "shipped" never had its sale
+    // created (only paid / done create one), so record it first.
+    if (order.status === "shipped" && order.payment_method !== "cod") {
+      await syncOrderWithPos(supabase, order.id, "paid");
     }
-    return;
-  }
-
-  if (status === "shipped" && existingSale) {
-    const { error } = await serviceSupabase
-      .from("sales")
-      .update({ delivery_status: "sent" })
-      .eq("id", existingSale.id);
-    if (error) throw new Error(error.message);
-    return;
-  }
-
-  if (status === "done" && existingSale) {
-    const { error } = await serviceSupabase
-      .from("sales")
-      .update({ delivery_status: "delivered" })
-      .eq("id", existingSale.id);
-    if (error) throw new Error(error.message);
-    return;
-  }
-
-  // Only paid / done create a sale (pending and shipped do not).
-  if ((status !== "paid" && status !== "done") || existingSale) return;
-
-  const { data: order, error: orderError } = await serviceSupabase
-    .from("orders")
-    .select("id, customer_name, phone, address, total, items")
-    .eq("id", orderId)
-    .maybeSingle();
-  if (orderError) throw new Error(orderError.message);
-  if (!order) throw new Error("Order not found");
-  const orderRow = order as OrderRow;
-
-  const lines = await buildSaleLines(serviceSupabase, orderRow.items ?? []);
-
-  const { error } = await serviceSupabase.rpc("record_online_sale", {
-    payload: {
-      orderId,
-      // Shop day in Cambodia; the server runs in UTC, which is "yesterday" before 07:00.
-      soldAt: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Phnom_Penh" }).format(new Date()),
-      customerName: orderRow.customer_name || "Online customer",
-      phone: orderRow.phone ?? "",
-      address: orderRow.address ?? "",
-      city: "",
-      channel: "online",
-      deliveryMethod: "Delivery",
-      deliveryFee: 0,
-      deliveryStatus: status === "done" ? "delivered" : "preparing",
-      discount: 0,
-      paid: Number(orderRow.total) || 0,
-      paymentMethod: "cash",
-      note: `Online order ${orderId.slice(0, 8)}`,
-      items: lines,
-    },
+    await syncOrderWithPos(supabase, order.id, order.status);
+    return { ok: true };
   });
-  if (error) throw new Error(error.message);
-}
 
 /**
- * Map the order's stored items (productId / variantId / price) onto POS
- * stock items. Stock-linked products have stock_items.sku === variantId;
- * otherwise we fall back to stock_items.product_id. Lines with no match
- * are still recorded (stockItemId null), they just don't move stock.
+ * Public order tracking: needs the order reference AND the phone number used
+ * at checkout, so nobody can look up other people's orders.
  */
-async function buildSaleLines(
-  serviceSupabase: SupabaseClient,
-  items: OrderItemJson[],
-): Promise<
-  Array<{
-    stockItemId: string | null;
-    name: string;
-    size: string;
-    color: string;
-    qty: number;
-    unitPrice: number;
-    unitCost: number;
-  }>
-> {
-  const variantIds = [...new Set(items.map((i) => i.variantId).filter(Boolean))] as string[];
-  const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
-
-  const filters: string[] = [];
-  if (variantIds.length) filters.push(`sku.in.(${variantIds.join(",")})`);
-  if (productIds.length) filters.push(`product_id.in.(${productIds.join(",")})`);
-
-  type StockRow = {
-    id: string;
-    sku: string;
-    product_id: string | null;
-    name: string;
-    size: string;
-    color: string;
-    cost: number;
-    archived: boolean;
-  };
-  let stockRows: StockRow[] = [];
-  if (filters.length) {
-    const { data, error } = await serviceSupabase
-      .from("stock_items")
-      .select("id, sku, product_id, name, size, color, cost, archived")
-      .or(filters.join(","));
-    if (error) throw new Error(error.message);
-    stockRows = (data ?? []) as StockRow[];
-  }
-
-  const bySku = new Map(stockRows.map((row) => [row.sku, row]));
-  const byProduct = new Map<string, StockRow[]>();
-  for (const row of stockRows) {
-    if (!row.product_id) continue;
-    const list = byProduct.get(row.product_id) ?? [];
-    list.push(row);
-    byProduct.set(row.product_id, list);
-  }
-
-  return items.map((item) => {
-    const qty = Math.max(Math.round(Number(item.quantity) || 1), 1);
-    const unitPrice = Number(item.price) || 0;
-    const stock =
-      (item.variantId ? bySku.get(item.variantId) : undefined) ??
-      (item.productId
-        ? (byProduct.get(item.productId) ?? []).find((row) => !row.archived)
-        : undefined);
-
+export const trackOrder = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      reference: z.string().trim().min(4).max(60),
+      phone: z.string().trim().min(6).max(40),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const supabase = createServiceClient();
+    const reference = data.reference.toUpperCase();
+    const { data: row, error } = await supabase
+      .from("orders")
+      .select(ORDER_COLUMNS)
+      .eq("bakong_reference", reference)
+      .maybeSingle();
+    if (error) throw new Error("Could not look up the order");
+    const order = row as unknown as OrderRecord | null;
+    const digits = (value: string) => value.replace(/\D/g, "").replace(/^855/, "").replace(/^0/, "");
+    if (!order || digits(order.phone) !== digits(data.phone)) return null;
     return {
-      stockItemId: stock?.id ?? null,
-      name: stock?.name ?? item.title ?? "Item",
-      size: stock?.size ?? "",
-      color: stock?.color ?? "",
-      qty,
-      unitPrice,
-      unitCost: stock ? Number(stock.cost) : 0,
+      id: order.id,
+      reference: order.bakong_reference,
+      status: order.status,
+      paymentMethod: order.payment_method,
+      total: Number(order.total),
+      currency: order.currency,
+      createdAt: order.created_at,
+      paidAt: order.paid_at,
+      customerName: order.customer_name,
+      items: (order.items ?? []).map((item) => ({
+        title: item.title ?? "Item",
+        quantity: Number(item.quantity ?? 1),
+      })),
     };
   });
-}
+
+/**
+ * Cancel KHQR orders nobody paid for (QR expired more than an hour ago).
+ * Each one is checked with ABA first, so a late payment is never lost.
+ */
+export const cancelUnpaidKhqrOrders = createServerFn({ method: "POST" })
+  .inputValidator(tokenSchema)
+  .handler(async ({ data }) => {
+    await assertAdmin(data.accessToken);
+    const { cancelExpiredKhqrOrders } = await import("@/lib/server/payments");
+    return cancelExpiredKhqrOrders(createServiceClient());
+  });
 
 export const updateAdminFeedbackApproval = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), approved: z.boolean() }))

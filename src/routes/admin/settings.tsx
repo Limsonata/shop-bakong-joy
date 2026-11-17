@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
+import { AlertsSetupCard } from "@/components/admin/AlertsSetupCard";
+import { ExchangeRateCard } from "@/components/admin/ExchangeRateCard";
 
 interface StoreSettings {
   storeName: string;
@@ -172,6 +174,10 @@ function SettingsAdmin() {
           )}
 
           <div className="space-y-6">
+            <AlertsSetupCard />
+
+            <ExchangeRateCard />
+
             <Card>
               <CardHeader>
                 <CardTitle>Store Information</CardTitle>

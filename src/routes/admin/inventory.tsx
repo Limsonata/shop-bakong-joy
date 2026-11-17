@@ -77,7 +77,14 @@ function toForm(item: StockItem): ItemFormState {
   return { lowStockAt: String(item.lowStockAt), note: item.note };
 }
 
-type WriteOffReason = "loss" | "adjustment";
+/** Damaged and lost remove units; a stock count sets the number on the shelf (up or down). */
+type WriteOffReason = "damaged" | "lost" | "recount";
+
+const WRITE_OFF_LABEL: Record<WriteOffReason, string> = {
+  damaged: "Damaged",
+  lost: "Lost / stolen",
+  recount: "Stock count (set the real number)",
+};
 
 function InventoryPage() {
   const [items, setItems] = useState<StockItem[]>([]);
@@ -100,7 +107,7 @@ function InventoryPage() {
 
   const [writeOffTarget, setWriteOffTarget] = useState<StockItem | null>(null);
   const [writeOffQty, setWriteOffQty] = useState("1");
-  const [writeOffReason, setWriteOffReason] = useState<WriteOffReason>("loss");
+  const [writeOffReason, setWriteOffReason] = useState<WriteOffReason>("damaged");
   const [writeOffNote, setWriteOffNote] = useState("");
 
   const load = async () => {
@@ -178,26 +185,45 @@ function InventoryPage() {
   const openWriteOff = (item: StockItem) => {
     setWriteOffTarget(item);
     setWriteOffQty("1");
-    setWriteOffReason("loss");
+    setWriteOffReason("damaged");
     setWriteOffNote("");
   };
 
   const submitWriteOff = async () => {
     if (!writeOffTarget) return;
     const quantity = Number(writeOffQty);
-    if (!Number.isInteger(quantity) || quantity <= 0) return toast.error("Enter a whole quantity");
-    if (quantity > stockLeft(writeOffTarget))
-      return toast.error(`Only ${stockLeft(writeOffTarget)} left — cannot write off ${quantity}`);
+    const left = stockLeft(writeOffTarget);
+    const recount = writeOffReason === "recount";
+    if (!Number.isInteger(quantity) || quantity < (recount ? 0 : 1)) {
+      return toast.error(recount ? "Enter how many you counted" : "Enter a whole quantity");
+    }
+    if (!recount && quantity > left) {
+      return toast.error(`Only ${left} left — cannot write off ${quantity}`);
+    }
+    const delta = recount ? quantity - left : -quantity;
+    if (delta === 0) {
+      toast.success(`Count matches: ${left} on the shelf`);
+      setWriteOffTarget(null);
+      return;
+    }
+    const extra = writeOffNote.trim();
+    const note = recount
+      ? `Stock count: counted ${quantity}, system had ${left}${extra ? ` — ${extra}` : ""}`
+      : `${writeOffReason === "damaged" ? "Damaged" : "Lost"}${extra ? ` — ${extra}` : ""}`;
 
     setSaving(true);
     try {
       const updated = await adjustStock({
         stockItemId: writeOffTarget.id,
-        delta: -quantity,
-        reason: writeOffReason,
-        note: writeOffNote.trim() || undefined,
+        delta,
+        reason: recount ? "adjustment" : "loss",
+        note,
       });
-      toast.success(`Wrote off ${quantity} × ${updated.name}`);
+      toast.success(
+        recount
+          ? `${updated.name}: stock set to ${quantity} (${delta > 0 ? "+" : ""}${delta})`
+          : `Wrote off ${quantity} × ${updated.name}`,
+      );
       setWriteOffTarget(null);
       await load();
     } catch (error) {
@@ -380,7 +406,10 @@ function InventoryPage() {
                 {items.length === 0 ? (
                   <>
                     No stock yet. Add one in{" "}
-                    <Link to="/admin/products/new" className="font-medium text-foreground underline">
+                    <Link
+                      to="/admin/products/new"
+                      className="font-medium text-foreground underline"
+                    >
                       Products → Add product
                     </Link>
                     .
@@ -439,7 +468,7 @@ function InventoryPage() {
                         <PackagePlus className="mr-2 h-4 w-4" /> Restock
                       </Button>
                       <Button variant="outline" className="h-11" onClick={() => openWriteOff(item)}>
-                        <PackageMinus className="mr-2 h-4 w-4" /> Write off
+                        <PackageMinus className="mr-2 h-4 w-4" /> Count / write off
                       </Button>
                       <Button variant="ghost" className="h-10" onClick={() => openEdit(item)}>
                         <Pencil className="mr-2 h-4 w-4" /> Edit
@@ -466,7 +495,10 @@ function InventoryPage() {
                   <TableHead className="text-right">In</TableHead>
                   <TableHead className="text-right">Sold</TableHead>
                   <TableHead className="text-right">Left</TableHead>
-                  <TableHead className="text-right" title="Stock left × cost — money tied up on the shelf, not profit">
+                  <TableHead
+                    className="text-right"
+                    title="Stock left × cost — money tied up on the shelf, not profit"
+                  >
                     Value (cost)
                   </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -563,7 +595,7 @@ function InventoryPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => openWriteOff(item)}
-                              title="Write-off (damaged / lost)"
+                              title="Stock count or write-off (damaged / lost)"
                             >
                               <PackageMinus className="h-4 w-4" />
                               <span className="sr-only">Write off {item.sku}</span>
@@ -724,23 +756,25 @@ function InventoryPage() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Write off {writeOffTarget?.sku}</DialogTitle>
+            <DialogTitle>Adjust stock {writeOffTarget?.sku}</DialogTitle>
             <DialogDescription>
               {writeOffTarget
                 ? `${writeOffTarget.name} · ${writeOffTarget.size} · ${writeOffTarget.color || "no colour"} — ${stockLeft(writeOffTarget)} left`
-                : null}
-              Removed units are subtracted from stock and logged in the movement history.
+                : null}{" "}
+              Every change is saved with its reason in the movement history.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label htmlFor="writeoff-qty">Quantity to remove</Label>
+                <Label htmlFor="writeoff-qty">
+                  {writeOffReason === "recount" ? "Counted on the shelf" : "Quantity to remove"}
+                </Label>
                 <Input
                   id="writeoff-qty"
                   type="number"
-                  min="1"
+                  min={writeOffReason === "recount" ? "0" : "1"}
                   value={writeOffQty}
                   onChange={(event) => setWriteOffQty(event.target.value)}
                 />
@@ -749,14 +783,25 @@ function InventoryPage() {
                 <Label htmlFor="writeoff-reason">Reason</Label>
                 <Select
                   value={writeOffReason}
-                  onValueChange={(v) => setWriteOffReason(v as WriteOffReason)}
+                  onValueChange={(v) => {
+                    const reason = v as WriteOffReason;
+                    setWriteOffReason(reason);
+                    if (writeOffTarget) {
+                      setWriteOffQty(
+                        reason === "recount" ? String(Math.max(stockLeft(writeOffTarget), 0)) : "1",
+                      );
+                    }
+                  }}
                 >
                   <SelectTrigger id="writeoff-reason">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="loss">Damaged / lost</SelectItem>
-                    <SelectItem value="adjustment">Count correction</SelectItem>
+                    {(Object.keys(WRITE_OFF_LABEL) as WriteOffReason[]).map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {WRITE_OFF_LABEL[reason]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -777,8 +822,12 @@ function InventoryPage() {
             <Button variant="outline" onClick={() => setWriteOffTarget(null)} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={submitWriteOff} disabled={saving} variant="destructive">
-              {saving ? "Saving…" : "Write off"}
+            <Button
+              onClick={submitWriteOff}
+              disabled={saving}
+              variant={writeOffReason === "recount" ? "default" : "destructive"}
+            >
+              {saving ? "Saving…" : writeOffReason === "recount" ? "Save count" : "Write off"}
             </Button>
           </DialogFooter>
         </DialogContent>

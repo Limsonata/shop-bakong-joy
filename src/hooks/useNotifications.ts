@@ -1,25 +1,49 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+
+export type NotificationType =
+  | "order_update"
+  | "admin_alert"
+  | "promotion"
+  | "system"
+  | "new_order"
+  | "payment_received"
+  | "payment_issue"
+  | "low_stock"
+  | "out_of_stock"
+  | "order_cancelled"
+  | "feedback";
 
 export interface Notification {
   id: string;
   user_id: string | null;
   recipient_role: "user" | "admin" | "all" | null;
-  type: "order_update" | "admin_alert" | "promotion" | "system";
+  type: NotificationType;
   title: string;
   message: string;
-  data: Record<string, unknown> | null;
+  data: (Record<string, unknown> & { link?: string; orderId?: string }) | null;
   read: boolean;
   created_at: string;
 }
 
-async function fetchNotifications(userId: string): Promise<Notification[]> {
+/**
+ * "customer": the user's own notifications + broadcasts to everyone.
+ * "admin": shop alerts (new orders, payments, low stock, reviews).
+ * Admins can read every row, so the scope filter matters.
+ */
+export type NotificationScope = "customer" | "admin";
+
+async function fetchNotifications(userId: string, scope: NotificationScope): Promise<Notification[]> {
   if (!supabase) return [];
+  const filter =
+    scope === "admin"
+      ? "recipient_role.in.(admin,all)"
+      : `user_id.eq.${userId},recipient_role.eq.all`;
   const { data, error } = await supabase
     .from("notifications")
     .select("*")
-    .or(`user_id.eq.${userId},recipient_role.eq.all`)
+    .or(filter)
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) {
@@ -30,27 +54,43 @@ async function fetchNotifications(userId: string): Promise<Notification[]> {
   return (data as Notification[]) ?? [];
 }
 
-export function useNotifications(userId: string | undefined) {
+function belongsTo(row: Partial<Notification>, userId: string, scope: NotificationScope): boolean {
+  if (scope === "admin") return row.recipient_role === "admin" || row.recipient_role === "all";
+  return row.user_id === userId || row.recipient_role === "all";
+}
+
+export function useNotifications(
+  userId: string | undefined,
+  options: { scope?: NotificationScope; onNew?: (notification: Notification) => void } = {},
+) {
+  const scope = options.scope ?? "customer";
   const queryClient = useQueryClient();
+  const queryKey = ["notifications", scope, userId];
+  const onNewRef = useRef(options.onNew);
+  onNewRef.current = options.onNew;
 
   const query = useQuery({
-    queryKey: ["notifications", userId],
-    queryFn: () => fetchNotifications(userId!),
+    queryKey,
+    queryFn: () => fetchNotifications(userId!, scope),
     enabled: isSupabaseConfigured && !!userId,
     staleTime: 30_000,
+    // Backup for when realtime is not enabled on the project.
+    refetchInterval: scope === "admin" ? 60_000 : false,
   });
 
-  // Realtime: invalidate on any new notification insert
   useEffect(() => {
     if (!supabase || !userId) return;
 
     const channel = supabase
-      .channel(`notifications-${userId}`)
+      .channel(`notifications-${scope}-${userId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+        (payload) => {
+          const row = payload.new as Notification;
+          if (!belongsTo(row, userId, scope)) return;
+          onNewRef.current?.(row);
+          queryClient.invalidateQueries({ queryKey: ["notifications", scope, userId] });
         },
       )
       .subscribe();
@@ -58,7 +98,7 @@ export function useNotifications(userId: string | undefined) {
     return () => {
       channel.unsubscribe();
     };
-  }, [userId, queryClient]);
+  }, [userId, scope, queryClient]);
 
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {
@@ -66,7 +106,7 @@ export function useNotifications(userId: string | undefined) {
       await supabase.from("notifications").update({ read: true }).eq("id", id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -78,7 +118,7 @@ export function useNotifications(userId: string | undefined) {
       await supabase.from("notifications").update({ read: true }).in("id", unreadIds);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 

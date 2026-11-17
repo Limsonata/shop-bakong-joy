@@ -41,6 +41,55 @@ export function isLowStock(item: StockItem): boolean {
   return !item.archived && stockLeft(item) <= item.lowStockAt;
 }
 
+/** One website product (or one name + category group) with all its size/colour rows. */
+export interface LowStockProduct {
+  key: string;
+  name: string;
+  category: string;
+  /** Units left across all live sizes/colours. */
+  left: number;
+  /** Alert level for the product: the highest alert level of its rows. */
+  alertAt: number;
+  /** Sizes/colours that are sold out, for the reorder list. */
+  soldOutVariants: string[];
+}
+
+/**
+ * Products that need reordering, counted once per product rather than once
+ * per size/colour row. Archived (retired) rows are skipped, and so are rows
+ * that never received any stock: a size you never bought is not a reorder.
+ * A product is low when its total units left are at or below its alert level.
+ */
+export function lowStockProducts(items: StockItem[]): LowStockProduct[] {
+  const groups = new Map<string, StockItem[]>();
+  for (const item of items) {
+    if (item.archived || item.stockIn <= 0) continue;
+    const key = item.productId || `${item.name.trim().toLowerCase()}|${item.category}`;
+    const rows = groups.get(key);
+    if (rows) rows.push(item);
+    else groups.set(key, [item]);
+  }
+
+  const low: LowStockProduct[] = [];
+  for (const [key, rows] of groups) {
+    const left = rows.reduce((sum, row) => sum + Math.max(stockLeft(row), 0), 0);
+    const alertAt = Math.max(...rows.map((row) => row.lowStockAt));
+    if (left > alertAt) continue;
+    low.push({
+      key,
+      name: rows[0].name,
+      category: rows[0].category,
+      left,
+      alertAt,
+      soldOutVariants: rows
+        .filter((row) => stockLeft(row) <= 0)
+        .map((row) => [row.size, row.color].filter((part) => part && part !== "Default").join(" "))
+        .filter(Boolean),
+    });
+  }
+  return low.sort((a, b) => a.left - b.left || a.name.localeCompare(b.name));
+}
+
 export function stockLabel(item: StockItem): string {
   return [item.name, item.size, item.color].filter(Boolean).join(" · ");
 }
@@ -84,6 +133,8 @@ export interface SaleItem {
   unitPrice: number;
   /** Cost snapshot, so profit stays correct if supplier prices change later. */
   unitCost: number;
+  /** Units already returned from this line (qty is what the customer kept). */
+  returnedQty?: number;
 }
 
 export interface Sale {
@@ -108,6 +159,8 @@ export interface Sale {
   note: string;
   items: SaleItem[];
   createdAt: string;
+  /** Website order this sale came from (online channel only). */
+  orderId?: string | null;
 }
 
 export function balanceOwed(sale: Sale): number {
@@ -207,6 +260,9 @@ export function isRunningCost(category: string): boolean {
   );
 }
 
+/** Alert when this many or fewer are left (new stock items start here). */
+export const DEFAULT_LOW_STOCK_AT = 3;
+
 export const PAYMENT_METHODS = ["cash", "ABA", "Bakong/KHQR", "Wing", "transfer"] as const;
 
 /**
@@ -238,6 +294,7 @@ export interface ShopSummary {
   unitsLeft: number;
   stockValue: number;
   potentialSales: number;
+  /** Products (not size/colour rows) at or below their alert level. */
   lowStockCount: number;
 }
 

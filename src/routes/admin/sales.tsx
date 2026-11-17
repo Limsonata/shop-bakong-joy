@@ -9,6 +9,7 @@ import {
   Plus,
   Printer,
   RefreshCw,
+  RotateCcw,
   Search,
   Send,
   Wallet,
@@ -17,6 +18,7 @@ import { toast } from "sonner";
 import { LinkifiedText } from "@/components/site/LinkifiedText";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { StatCard } from "@/components/admin/StatCard";
+import { ReminderButtons } from "@/components/admin/ReminderButtons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,11 +41,7 @@ import {
 } from "@/components/ui/select";
 import { formatPrice } from "@/lib/format";
 import { endOfDayAlertText, sendOwnerAlert } from "@/lib/pos/alerts";
-import {
-  printEndOfDayReport,
-  printSaleReceipt,
-  type EndOfDayReport,
-} from "@/lib/pos/receipt";
+import { printEndOfDayReport, printSaleReceipt, type EndOfDayReport } from "@/lib/pos/receipt";
 import {
   addFinanceEntry,
   addSalePayment,
@@ -51,6 +49,8 @@ import {
   downloadFile,
   listFinanceEntries,
   listSales,
+  previewReturn,
+  returnSaleItems,
   toCsv,
   updateSale,
 } from "@/lib/pos/store";
@@ -100,11 +100,17 @@ function SalesPage() {
   const [payMethod, setPayMethod] = useState<string>("cash");
   const [saving, setSaving] = useState(false);
 
+  // ── Return some items from a sale ──
+  const [returnTarget, setReturnTarget] = useState<Sale | null>(null);
+  const [returnQty, setReturnQty] = useState<Record<string, number>>({});
+  const [returnMethod, setReturnMethod] = useState<string>("cash");
+  const [returnNote, setReturnNote] = useState("");
+
   // ── End-of-day cash up (drawer reconciliation) ──
   const [cashUpOpen, setCashUpOpen] = useState(false);
   const [cashDate, setCashDate] = useState(() => localDate());
   const [openingFloat, setOpeningFloat] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("pos-opening-float") ?? "" : "",
+    typeof window !== "undefined" ? (localStorage.getItem("pos-opening-float") ?? "") : "",
   );
   const [countedCash, setCountedCash] = useState("");
   const [financeEntries, setFinanceEntries] = useState<FinanceEntry[]>([]);
@@ -207,6 +213,37 @@ function SalesPage() {
     }
   };
 
+  const openReturn = (sale: Sale) => {
+    setReturnTarget(sale);
+    setReturnQty({});
+    setReturnMethod(sale.paymentMethod || "cash");
+    setReturnNote("");
+  };
+
+  const returnLines = Object.entries(returnQty).map(([saleItemId, qty]) => ({ saleItemId, qty }));
+  const returnPreview = returnTarget ? previewReturn(returnTarget, returnLines) : null;
+
+  const submitReturn = async () => {
+    if (!returnTarget || !returnPreview || returnPreview.returned <= 0) {
+      return toast.error("Choose how many of each item come back");
+    }
+    setSaving(true);
+    try {
+      await returnSaleItems(returnTarget.id, returnLines, returnMethod, returnNote);
+      toast.success(
+        returnPreview.refund > 0
+          ? `Return saved. Give back ${formatPrice(returnPreview.refund)}.`
+          : "Return saved. Items are back in stock.",
+      );
+      setReturnTarget(null);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not record the return");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const doPrintReceipt = (sale: Sale) => {
     try {
       printSaleReceipt(sale);
@@ -228,7 +265,8 @@ function SalesPage() {
       if (entry.entryDate !== cashDate) continue;
       byMethod.set(
         entry.method,
-        (byMethod.get(entry.method) ?? 0) + (entry.kind === "income" ? entry.amount : -entry.amount),
+        (byMethod.get(entry.method) ?? 0) +
+          (entry.kind === "income" ? entry.amount : -entry.amount),
       );
       if (entry.method === "cash") {
         if (entry.kind === "income") cashIn += entry.amount;
@@ -236,8 +274,7 @@ function SalesPage() {
       }
       if (entry.kind === "expense" && entry.category === "Refund") refunds += entry.amount;
     }
-    const counted =
-      countedCash.trim() === "" ? null : Number.parseFloat(countedCash);
+    const counted = countedCash.trim() === "" ? null : Number.parseFloat(countedCash);
     return {
       salesCount: daySales.length,
       billed: round2(daySales.reduce((sum, sale) => sum + sale.total, 0)),
@@ -399,7 +436,8 @@ function SalesPage() {
         <CardContent className="space-y-4 pt-6">
           {sales.length >= SALES_LOAD_LIMIT ? (
             <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              Showing the most recent {SALES_LOAD_LIMIT} sales. Older sales exist but aren't loaded — narrow your search or export a date range from Money → CSV.
+              Showing the most recent {SALES_LOAD_LIMIT} sales. Older sales exist but aren't loaded
+              — narrow your search or export a date range from Money → CSV.
             </p>
           ) : null}
           <div className="flex flex-wrap items-end gap-3">
@@ -537,6 +575,12 @@ function SalesPage() {
                                   {item.name}
                                   {item.size ? ` · ${item.size}` : ""}
                                   {item.color ? ` · ${item.color}` : ""} × {item.qty}
+                                  {item.returnedQty ? (
+                                    <span className="text-xs text-muted-foreground">
+                                      {" "}
+                                      ({item.returnedQty} returned)
+                                    </span>
+                                  ) : null}
                                 </span>
                                 <span className="tabular-nums">
                                   {formatPrice(item.qty * item.unitPrice)}
@@ -588,6 +632,23 @@ function SalesPage() {
                           {sale.note ? (
                             <p className="italic text-muted-foreground">{sale.note}</p>
                           ) : null}
+                          {sale.status === "confirmed" && balanceOwed(sale) > 0 ? (
+                            <ReminderButtons
+                              target={{
+                                name: sale.customerName,
+                                phone: sale.phone,
+                                owed: balanceOwed(sale),
+                                codes: [sale.code],
+                              }}
+                            />
+                          ) : null}
+                          {sale.status === "confirmed" &&
+                          sale.items.some((item) => item.qty > 0) ? (
+                            <Button variant="ghost" size="sm" onClick={() => openReturn(sale)}>
+                              <RotateCcw className="mr-1 h-4 w-4" />
+                              Return items
+                            </Button>
+                          ) : null}
                           {sale.status === "confirmed" ? (
                             <Button
                               variant="ghost"
@@ -613,6 +674,118 @@ function SalesPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={returnTarget !== null} onOpenChange={(open) => !open && setReturnTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Return items</DialogTitle>
+            <DialogDescription>
+              {returnTarget
+                ? `${returnTarget.code} — ${returnTarget.customerName}. Returned items go back in stock.`
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+
+          {returnTarget ? (
+            <div className="grid gap-3">
+              <ul className="space-y-2">
+                {returnTarget.items
+                  .filter((item) => item.qty > 0)
+                  .map((item) => (
+                    <li key={item.id} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="min-w-0">
+                        <span className="block truncate">{item.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {[item.size, item.color].filter(Boolean).join(" · ")} ·{" "}
+                          {formatPrice(item.unitPrice)} each · bought {item.qty}
+                        </span>
+                      </span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max={item.qty}
+                        step="1"
+                        className="w-20"
+                        aria-label={`Units of ${item.name} returned`}
+                        value={returnQty[item.id] ?? 0}
+                        onChange={(event) => {
+                          const qty = Math.min(
+                            Math.max(Math.floor(Number(event.target.value) || 0), 0),
+                            item.qty,
+                          );
+                          setReturnQty((current) => ({ ...current, [item.id]: qty }));
+                        }}
+                      />
+                    </li>
+                  ))}
+              </ul>
+
+              {returnPreview && returnPreview.returned > 0 ? (
+                <dl className="space-y-0.5 rounded-md bg-muted/50 p-3 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Returned value</dt>
+                    <dd className="tabular-nums">−{formatPrice(returnPreview.returned)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">New total</dt>
+                    <dd className="tabular-nums">{formatPrice(returnPreview.total)}</dd>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <dt>Give back to customer</dt>
+                    <dd className="tabular-nums">{formatPrice(returnPreview.refund)}</dd>
+                  </div>
+                  {returnPreview.stillOwed > 0 ? (
+                    <div className="flex justify-between text-amber-700">
+                      <dt>Customer still owes</dt>
+                      <dd className="tabular-nums">{formatPrice(returnPreview.stillOwed)}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              ) : null}
+
+              {returnPreview && returnPreview.refund > 0 ? (
+                <div className="grid gap-1.5">
+                  <Label>Refund paid by</Label>
+                  <Select value={returnMethod} onValueChange={setReturnMethod}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method} value={method}>
+                          {method}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="return-note">Reason (optional)</Label>
+                <Input
+                  id="return-note"
+                  placeholder="Wrong size, damaged, changed mind…"
+                  value={returnNote}
+                  onChange={(event) => setReturnNote(event.target.value)}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReturnTarget(null)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitReturn}
+              disabled={saving || !returnPreview || returnPreview.returned <= 0}
+            >
+              {saving ? "Saving…" : "Save return"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={payTarget !== null} onOpenChange={(open) => !open && setPayTarget(null)}>
         <DialogContent className="sm:max-w-sm">

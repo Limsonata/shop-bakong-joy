@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { getMyOrders, type Order } from "@/lib/orderStore";
-import { ORDER_STATUS } from "@/lib/orderStatus";
+import { getMyOrders, orderNumber, type Order } from "@/lib/orderStore";
+import { PAYMENT_METHOD_LABEL, statusFor } from "@/lib/orderStatus";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/orders")({
@@ -105,14 +105,14 @@ function MyOrdersPage() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => {
-            const statusInfo = ORDER_STATUS[order.status];
+            const statusInfo = statusFor(order);
             return (
               <Card key={order.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <Package className="h-4 w-4" />
-                      {order.bakongReference || order.id.slice(0, 12)}
+                      <span className="font-mono">{orderNumber(order)}</span>
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
                       {new Date(order.createdAt).toLocaleString()}
@@ -155,10 +155,16 @@ function MyOrdersPage() {
                     </span>
                   </div>
 
-                  {order.bakongTransactionId && (
-                    <p className="text-xs text-muted-foreground">
-                      Transaction ref: {order.bakongTransactionId}
-                    </p>
+                  <p className="text-xs text-muted-foreground">
+                    {PAYMENT_METHOD_LABEL[order.paymentMethod]}
+                  </p>
+
+                  {order.status === "pending" && order.paymentMethod === "khqr" && (
+                    <Button asChild className="w-full">
+                      <Link to="/pay/$orderId" params={{ orderId: order.id }}>
+                        Pay now with KHQR
+                      </Link>
+                    </Button>
                   )}
                 </CardContent>
               </Card>

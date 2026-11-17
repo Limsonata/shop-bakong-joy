@@ -49,6 +49,8 @@ function notifIcon(type: Notification["type"]) {
       return <Tag className={cn(cls, "text-green-500")} />;
     case "system":
       return <Info className={cn(cls, "text-muted-foreground")} />;
+    default:
+      return <Package className={cn(cls, "text-blue-500")} />;
   }
 }
 

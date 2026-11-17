@@ -19,6 +19,7 @@ import { Route as TrackRouteImport } from './routes/track'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
+import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
 import { Route as AdminFeedbackRouteImport } from './routes/admin/feedback'
 import { Route as AdminFinanceRouteImport } from './routes/admin/finance'
 import { Route as AdminInventoryRouteImport } from './routes/admin/inventory'
@@ -30,9 +31,13 @@ import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminSalesRouteImport } from './routes/admin/sales'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as CheckoutBakongRouteImport } from './routes/checkout/bakong'
+import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
 import { Route as ProductHandleRouteImport } from './routes/product/$handle'
 import { Route as AdminProductsIdRouteImport } from './routes/admin/products.$id'
 import { Route as AdminProductsNewRouteImport } from './routes/admin/products.new'
+import { Route as ApiCronDailySummaryRouteImport } from './routes/api/cron/daily-summary'
+import { Route as ApiPaywayCallbackRouteImport } from './routes/api/payway/callback'
+import { Route as ApiTelegramWebhookRouteImport } from './routes/api/telegram/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +87,11 @@ const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
 const AdminContentRoute = AdminContentRouteImport.update({
   id: '/admin/content',
   path: '/admin/content',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCustomersRoute = AdminCustomersRouteImport.update({
+  id: '/admin/customers',
+  path: '/admin/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
@@ -139,6 +149,11 @@ const CheckoutBakongRoute = CheckoutBakongRouteImport.update({
   path: '/checkout/bakong',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayOrderIdRoute = PayOrderIdRouteImport.update({
+  id: '/pay/$orderId',
+  path: '/pay/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductHandleRoute = ProductHandleRouteImport.update({
   id: '/product/$handle',
   path: '/product/$handle',
@@ -154,6 +169,21 @@ const AdminProductsNewRoute = AdminProductsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AdminProductsRoute,
 } as any)
+const ApiCronDailySummaryRoute = ApiCronDailySummaryRouteImport.update({
+  id: '/api/cron/daily-summary',
+  path: '/api/cron/daily-summary',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaywayCallbackRoute = ApiPaywayCallbackRouteImport.update({
+  id: '/api/payway/callback',
+  path: '/api/payway/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTelegramWebhookRoute = ApiTelegramWebhookRouteImport.update({
+  id: '/api/telegram/webhook',
+  path: '/api/telegram/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/customers': typeof AdminCustomersRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/inventory': typeof AdminInventoryRoute
@@ -176,10 +207,14 @@ export interface FileRoutesByFullPath {
   '/admin/sales': typeof AdminSalesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/checkout/bakong': typeof CheckoutBakongRoute
+  '/pay/$orderId': typeof PayOrderIdRoute
   '/product/$handle': typeof ProductHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/api/cron/daily-summary': typeof ApiCronDailySummaryRoute
+  '/api/payway/callback': typeof ApiPaywayCallbackRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -191,6 +226,7 @@ export interface FileRoutesByTo {
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/customers': typeof AdminCustomersRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/inventory': typeof AdminInventoryRoute
@@ -202,10 +238,14 @@ export interface FileRoutesByTo {
   '/admin/sales': typeof AdminSalesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/checkout/bakong': typeof CheckoutBakongRoute
+  '/pay/$orderId': typeof PayOrderIdRoute
   '/product/$handle': typeof ProductHandleRoute
   '/admin': typeof AdminIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/api/cron/daily-summary': typeof ApiCronDailySummaryRoute
+  '/api/payway/callback': typeof ApiPaywayCallbackRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -218,6 +258,7 @@ export interface FileRoutesById {
   '/track': typeof TrackRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/customers': typeof AdminCustomersRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/inventory': typeof AdminInventoryRoute
@@ -229,10 +270,14 @@ export interface FileRoutesById {
   '/admin/sales': typeof AdminSalesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/checkout/bakong': typeof CheckoutBakongRoute
+  '/pay/$orderId': typeof PayOrderIdRoute
   '/product/$handle': typeof ProductHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/api/cron/daily-summary': typeof ApiCronDailySummaryRoute
+  '/api/payway/callback': typeof ApiPaywayCallbackRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -246,6 +291,7 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin/categories'
     | '/admin/content'
+    | '/admin/customers'
     | '/admin/feedback'
     | '/admin/finance'
     | '/admin/inventory'
@@ -257,10 +303,14 @@ export interface FileRouteTypes {
     | '/admin/sales'
     | '/admin/settings'
     | '/checkout/bakong'
+    | '/pay/$orderId'
     | '/product/$handle'
     | '/admin/'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/api/cron/daily-summary'
+    | '/api/payway/callback'
+    | '/api/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -272,6 +322,7 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin/categories'
     | '/admin/content'
+    | '/admin/customers'
     | '/admin/feedback'
     | '/admin/finance'
     | '/admin/inventory'
@@ -283,10 +334,14 @@ export interface FileRouteTypes {
     | '/admin/sales'
     | '/admin/settings'
     | '/checkout/bakong'
+    | '/pay/$orderId'
     | '/product/$handle'
     | '/admin'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/api/cron/daily-summary'
+    | '/api/payway/callback'
+    | '/api/telegram/webhook'
   id:
     | '__root__'
     | '/'
@@ -298,6 +353,7 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin/categories'
     | '/admin/content'
+    | '/admin/customers'
     | '/admin/feedback'
     | '/admin/finance'
     | '/admin/inventory'
@@ -309,10 +365,14 @@ export interface FileRouteTypes {
     | '/admin/sales'
     | '/admin/settings'
     | '/checkout/bakong'
+    | '/pay/$orderId'
     | '/product/$handle'
     | '/admin/'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/api/cron/daily-summary'
+    | '/api/payway/callback'
+    | '/api/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -325,6 +385,7 @@ export interface RootRouteChildren {
   TrackRoute: typeof TrackRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminContentRoute: typeof AdminContentRoute
+  AdminCustomersRoute: typeof AdminCustomersRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   AdminFinanceRoute: typeof AdminFinanceRoute
   AdminInventoryRoute: typeof AdminInventoryRoute
@@ -336,8 +397,12 @@ export interface RootRouteChildren {
   AdminSalesRoute: typeof AdminSalesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   CheckoutBakongRoute: typeof CheckoutBakongRoute
+  PayOrderIdRoute: typeof PayOrderIdRoute
   ProductHandleRoute: typeof ProductHandleRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  ApiCronDailySummaryRoute: typeof ApiCronDailySummaryRoute
+  ApiPaywayCallbackRoute: typeof ApiPaywayCallbackRoute
+  ApiTelegramWebhookRoute: typeof ApiTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -410,6 +475,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/content'
       fullPath: '/admin/content'
       preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/customers': {
+      id: '/admin/customers'
+      path: '/admin/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/feedback': {
@@ -489,6 +561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutBakongRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay/$orderId': {
+      id: '/pay/$orderId'
+      path: '/pay/$orderId'
+      fullPath: '/pay/$orderId'
+      preLoaderRoute: typeof PayOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$handle': {
       id: '/product/$handle'
       path: '/product/$handle'
@@ -509,6 +588,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/products/new'
       preLoaderRoute: typeof AdminProductsNewRouteImport
       parentRoute: typeof AdminProductsRoute
+    }
+    '/api/cron/daily-summary': {
+      id: '/api/cron/daily-summary'
+      path: '/api/cron/daily-summary'
+      fullPath: '/api/cron/daily-summary'
+      preLoaderRoute: typeof ApiCronDailySummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payway/callback': {
+      id: '/api/payway/callback'
+      path: '/api/payway/callback'
+      fullPath: '/api/payway/callback'
+      preLoaderRoute: typeof ApiPaywayCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telegram/webhook': {
+      id: '/api/telegram/webhook'
+      path: '/api/telegram/webhook'
+      fullPath: '/api/telegram/webhook'
+      preLoaderRoute: typeof ApiTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -537,6 +637,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrackRoute: TrackRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminContentRoute: AdminContentRoute,
+  AdminCustomersRoute: AdminCustomersRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
   AdminFinanceRoute: AdminFinanceRoute,
   AdminInventoryRoute: AdminInventoryRoute,
@@ -548,8 +649,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminSalesRoute: AdminSalesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   CheckoutBakongRoute: CheckoutBakongRoute,
+  PayOrderIdRoute: PayOrderIdRoute,
   ProductHandleRoute: ProductHandleRoute,
   AdminIndexRoute: AdminIndexRoute,
+  ApiCronDailySummaryRoute: ApiCronDailySummaryRoute,
+  ApiPaywayCallbackRoute: ApiPaywayCallbackRoute,
+  ApiTelegramWebhookRoute: ApiTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

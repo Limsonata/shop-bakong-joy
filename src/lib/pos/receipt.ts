@@ -4,6 +4,7 @@
  * window sized for an 80mm receipt printer — no dependencies, works with
  * any browser print dialog.
  */
+import { currentShopSettings, formatRiel } from "../shopSettings";
 import type { Sale } from "./types";
 
 const SHOP_NAME = "BillieGrace Closet";
@@ -11,6 +12,21 @@ const RECEIPT_FOOTER = "Thanks for shopping with us! Exchanges within 7 days wit
 
 function money(value: number): string {
   return `$${(Number.isFinite(value) ? value : 0).toFixed(2)}`;
+}
+
+/** Riel equivalent for a total line, or "" when the shop has KHR switched off. */
+function riel(value: number): string {
+  const rate = currentShopSettings().khrRate;
+  return rate > 0 ? formatRiel(value, rate) : "";
+}
+
+/** HTML row with the dollar amount and, under it, the riel amount. */
+function dualRow(label: string, value: number, bold = false): string {
+  const cls = bold ? ' class="total"' : "";
+  const khr = riel(value);
+  return `<tr><td${cls}>${label}</td><td class="r${bold ? " total" : ""}">${money(value)}${
+    khr ? `<br /><span class="muted khr">${khr}</span>` : ""
+  }</td></tr>`;
 }
 
 function esc(value: string): string {
@@ -48,6 +64,7 @@ function openPrintWindow(bodyHtml: string): void {
   td { vertical-align: top; padding: 0.5mm 0; }
   .r { text-align: right; white-space: nowrap; }
   .total { font-size: 14px; font-weight: bold; }
+  .khr { font-size: 11px; font-weight: normal; }
   .banner { text-align: center; font-weight: bold; margin: 2mm 0; letter-spacing: 1px; }
   @media print { body { width: auto; } }
 </style>
@@ -96,7 +113,7 @@ export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
   const items = sale.items
     .map(
       (item) => `<tr>
-        <td>${esc(item.name)}${item.size ? ` <span class="muted">${esc(item.size)}</span>` : ""}${item.color ? ` <span class="muted">${esc(item.color)}</span>` : ""}<br /><span class="muted">${item.qty} × ${money(item.unitPrice)}</span></td>
+        <td>${esc(item.name)}${item.size ? ` <span class="muted">${esc(item.size)}</span>` : ""}${item.color ? ` <span class="muted">${esc(item.color)}</span>` : ""}${item.returnedQty ? ` <span class="muted">(${item.returnedQty} returned)</span>` : ""}<br /><span class="muted">${item.qty} × ${money(item.unitPrice)}</span></td>
         <td class="r">${money(item.qty * item.unitPrice)}</td>
       </tr>`,
     )
@@ -110,15 +127,14 @@ export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
     sale.deliveryFee > 0
       ? `<tr><td>Delivery</td><td class="r">${money(sale.deliveryFee)}</td></tr>`
       : "",
-    `<tr><td class="total">Total</td><td class="r total">${money(sale.total)}</td></tr>`,
-    `<tr><td>Paid</td><td class="r">${money(sale.paid)}</td></tr>`,
+    dualRow("Total", sale.total, true),
+    dualRow("Paid", sale.paid),
     change > 0
-      ? `<tr><td>Cash given</td><td class="r">${money(extras.cashGiven ?? 0)}</td></tr><tr><td>Change</td><td class="r">${money(change)}</td></tr>`
+      ? `<tr><td>Cash given</td><td class="r">${money(extras.cashGiven ?? 0)}</td></tr>${dualRow("Change", change)}`
       : "",
-    Math.max(sale.total - sale.paid, 0) > 0
-      ? `<tr><td class="total">Balance due</td><td class="r total">${money(sale.total - sale.paid)}</td></tr>`
-      : "",
+    Math.max(sale.total - sale.paid, 0) > 0 ? dualRow("Balance due", sale.total - sale.paid, true) : "",
   ].join("");
+  const rate = currentShopSettings().khrRate;
 
   openPrintWindow(`
     <h1>${esc(SHOP_NAME)}</h1>
@@ -131,6 +147,7 @@ export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
     <table>${totals}</table>
     <hr />
     <p class="muted">Paid by: ${esc(sale.paymentMethod)}</p>
+    ${rate > 0 ? `<p class="muted">Rate: $1 = ៛${rate.toLocaleString("en-US")}</p>` : ""}
     ${sale.customerName ? `<p class="muted">Customer: ${esc(sale.customerName)}</p>` : ""}
     ${sale.deliveryMethod && sale.deliveryMethod !== "Pickup" ? `<p class="muted">Delivery: ${esc([sale.deliveryMethod, sale.city].filter(Boolean).join(", "))}</p>` : ""}
     <hr />
@@ -142,6 +159,10 @@ export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
 export function saleReceiptText(sale: Sale, extras: ReceiptExtras = {}): string {
   const change = changeDue(sale, extras);
   const balance = Math.max(sale.total - sale.paid, 0);
+  const withRiel = (value: number) => {
+    const khr = riel(value);
+    return khr ? `${money(value)} (${khr})` : money(value);
+  };
   const lines = [
     SHOP_NAME,
     `Receipt ${sale.code} · ${receiptDateLine(sale)}`,
@@ -154,10 +175,10 @@ export function saleReceiptText(sale: Sale, extras: ReceiptExtras = {}): string 
     "",
     sale.discount > 0 ? `Discount: −${money(sale.discount)}` : "",
     sale.deliveryFee > 0 ? `Delivery: ${money(sale.deliveryFee)}` : "",
-    `Total: ${money(sale.total)}`,
-    `Paid (${sale.paymentMethod}): ${money(sale.paid)}`,
-    change > 0 ? `Change: ${money(change)}` : "",
-    balance > 0 ? `Balance due: ${money(balance)}` : "",
+    `Total: ${withRiel(sale.total)}`,
+    `Paid (${sale.paymentMethod}): ${withRiel(sale.paid)}`,
+    change > 0 ? `Change: ${withRiel(change)}` : "",
+    balance > 0 ? `Balance due: ${withRiel(balance)}` : "",
     "",
     RECEIPT_FOOTER,
   ];

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -16,11 +16,14 @@ import {
   LogOut,
   Menu,
   Store,
+  Users,
 } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
+import { AdminNotificationBell } from "@/components/admin/AdminNotificationBell";
 import { usingLocalOnly } from "@/lib/pos/store";
+import { loadShopSettings } from "@/lib/shopSettings";
 import { SidebarNav, type NavGroupData, type NavItemData } from "@/components/ui/dashboard-sidebar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -52,6 +55,7 @@ const NAV_GROUPS = [
     label: "Money",
     items: [
       { to: "/admin/sales", label: "Sales", icon: Receipt },
+      { to: "/admin/customers", label: "Customers", icon: Users },
       { to: "/admin/finance", label: "Cash book", icon: ScrollText },
       { to: "/admin/reports", label: "Reports", icon: BarChart3 },
     ],
@@ -114,6 +118,11 @@ export function AdminShell({
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Keep the exchange rate for receipts fresh on this device.
+  useEffect(() => {
+    void loadShopSettings();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -180,7 +189,10 @@ export function AdminShell({
                   ) : null}
                 </div>
               </div>
-              {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+              <div className="flex flex-wrap items-center gap-2">
+                {actions}
+                <AdminNotificationBell />
+              </div>
             </div>
           </header>
 

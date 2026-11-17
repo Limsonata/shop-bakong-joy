@@ -59,7 +59,27 @@ export interface DbOrder {
   bakong_reference: string | null;
   bakong_transaction_id: string | null;
   status: "pending" | "paid" | "shipped" | "done" | "cancelled";
+  payment_method?: "khqr" | "aba_manual" | "cod" | null;
+  paid_at?: string | null;
+  payment_expires_at?: string | null;
+  payments?: DbPayment[] | null;
   items: unknown;
+  created_at: string;
+}
+
+export interface DbPayment {
+  id: string;
+  tran_id: string;
+  amount: number;
+  currency: string;
+  status: "pending" | "approved" | "declined" | "expired" | "cancelled" | "refunded";
+  apv: string | null;
+  bank_name: string | null;
+  payer_account: string | null;
+  payment_type: string | null;
+  paid_amount: number | null;
+  paid_currency: string | null;
+  paid_at: string | null;
   created_at: string;
 }
 
