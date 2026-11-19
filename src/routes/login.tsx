@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { login, register, forgotPassword, updatePassword } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { loginWithTelegram } from "@/lib/telegramAuth";
+import { loginWithTelegram, loginWithTelegramWebApp } from "@/lib/telegramAuth";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { Logo } from "@/components/site/Logo";
@@ -145,9 +145,7 @@ function LoginPage() {
   };
 
   // ── Telegram ───────────────────────────────────────────
-  const handleTelegramAuth = async (telegramUser: TelegramUser) => {
-    setIsLoading(true);
-    const result = await loginWithTelegram(telegramUser);
+  const finishTelegramLogin = async (result: Awaited<ReturnType<typeof loginWithTelegram>>) => {
     if (result.success && result.user) {
       toast.success(`Welcome, ${result.user.name}!`);
       try {
@@ -159,6 +157,16 @@ function LoginPage() {
       toast.error(result.error || "Telegram login failed");
       setIsLoading(false);
     }
+  };
+
+  const handleTelegramAuth = async (telegramUser: TelegramUser) => {
+    setIsLoading(true);
+    await finishTelegramLogin(await loginWithTelegram(telegramUser));
+  };
+
+  const handleTelegramWebAppAuth = async (initData: string) => {
+    setIsLoading(true);
+    await finishTelegramLogin(await loginWithTelegramWebApp(initData));
   };
 
   const handleReset = async (e: React.FormEvent) => {
@@ -302,6 +310,8 @@ function LoginPage() {
                         </div>
                         <TelegramLoginButton
                           onAuth={handleTelegramAuth}
+                          onWebAppAuth={handleTelegramWebAppAuth}
+                          useMiniApp
                           onError={(err) => toast.error(err)}
                         />
                       </div>

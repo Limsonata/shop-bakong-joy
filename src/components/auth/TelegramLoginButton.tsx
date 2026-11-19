@@ -4,6 +4,7 @@ import type { TelegramUser } from "@/lib/telegramAuth";
 
 interface TelegramLoginButtonProps {
   onAuth: (user: TelegramUser) => void;
+  onWebAppAuth?: (initData: string) => void;
   onError?: (error: string) => void;
   botName?: string;
   useMiniApp?: boolean;
@@ -13,6 +14,7 @@ const BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME || "YourShopBot";
 
 export function TelegramLoginButton({
   onAuth,
+  onWebAppAuth,
   onError,
   botName = BOT_NAME,
   useMiniApp = false,
@@ -67,34 +69,39 @@ export function TelegramLoginButton({
     };
   }, [botName, handleTelegramCallback, onError]);
 
+  useEffect(() => {
+    if (!useMiniApp || !window.Telegram?.WebApp) return;
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+  }, [useMiniApp]);
+
   const isInTelegram = typeof window !== "undefined" && !!window.Telegram?.WebApp;
+  const miniAppUser =
+    useMiniApp && isInTelegram ? window.Telegram!.WebApp!.initDataUnsafe?.user : null;
 
   if (useMiniApp && isInTelegram) {
     const handleMiniAppLogin = () => {
       const initData = window.Telegram!.WebApp!.initData;
-      const user = window.Telegram!.WebApp!.initDataUnsafe?.user;
-      if (user && initData) {
-        handleTelegramCallback({
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          username: user.username,
-          photo_url: user.photo_url,
-          auth_date: Math.floor(Date.now() / 1000),
-          hash: initData,
-        });
-      } else {
+      if (!initData || !onWebAppAuth) {
         onError?.("Telegram WebApp data not available");
+        return;
       }
+      onWebAppAuth(initData);
     };
+
+    const displayName =
+      [miniAppUser?.first_name, miniAppUser?.last_name].filter(Boolean).join(" ") || "Telegram";
 
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <button
           onClick={handleMiniAppLogin}
-          className="w-full bg-[#0088cc] hover:bg-[#0077b3] text-white rounded-full py-3 font-medium"
+          className="w-full bg-[#0088cc] hover:bg-[#0077b3] text-white rounded-full py-3 font-medium flex items-center justify-center gap-2"
         >
-          Continue with Telegram
+          {miniAppUser?.photo_url && (
+            <img src={miniAppUser.photo_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+          )}
+          <span>Continue as {displayName}</span>
         </button>
       </motion.div>
     );

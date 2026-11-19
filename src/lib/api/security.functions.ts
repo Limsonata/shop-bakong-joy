@@ -120,6 +120,14 @@ const telegramUserSchema = z.object({
   hash: z.string().min(1),
 });
 
+const telegramIdentitySchema = telegramUserSchema.omit({ hash: true });
+
+const telegramWebAppSchema = z.object({
+  initData: z.string().min(1),
+});
+
+type TelegramIdentity = z.infer<typeof telegramIdentitySchema>;
+
 function getEnv(name: string): string | undefined {
   return process.env[name] || undefined;
 }
@@ -954,9 +962,13 @@ function getTelegramDataCheckString(pairs: Record<string, string>): string {
     .join("\n");
 }
 
+function getTelegramLoginToken(): string | undefined {
+  return getEnv("TELEGRAM_LOGIN_BOT_TOKEN") || getEnv("TELEGRAM_BOT_TOKEN");
+}
+
 async function verifyTelegramHash(data: z.infer<typeof telegramUserSchema>): Promise<boolean> {
-  const token = getEnv("TELEGRAM_BOT_TOKEN");
-  if (!token) throw new Error("Missing TELEGRAM_BOT_TOKEN");
+  const token = getTelegramLoginToken();
+  if (!token) throw new Error("Missing TELEGRAM_LOGIN_BOT_TOKEN or TELEGRAM_BOT_TOKEN");
   const ageSeconds = Math.floor(Date.now() / 1000) - data.auth_date;
   if (ageSeconds < 0 || ageSeconds > 3600) return false;
 
@@ -965,13 +977,51 @@ async function verifyTelegramHash(data: z.infer<typeof telegramUserSchema>): Pro
   return safeEqualHex(expected, data.hash);
 }
 
-function telegramEmail(data: z.infer<typeof telegramUserSchema>): string {
+async function verifyTelegramWebAppData(initData: string): Promise<TelegramIdentity> {
+  const token = getTelegramLoginToken();
+  if (!token) throw new Error("Missing TELEGRAM_LOGIN_BOT_TOKEN or TELEGRAM_BOT_TOKEN");
+
+  const params = new URLSearchParams(initData);
+  const hash = params.get("hash");
+  const authDate = Number(params.get("auth_date"));
+  const ageSeconds = Math.floor(Date.now() / 1000) - authDate;
+  if (!hash || !Number.isFinite(authDate) || ageSeconds < 0 || ageSeconds > 3600) {
+    throw new Error("Invalid Telegram WebApp data");
+  }
+
+  const pairs: Record<string, string> = {};
+  params.forEach((value, key) => {
+    if (key !== "hash") pairs[key] = value;
+  });
+
+  const { createHmac } = await import("node:crypto");
+  const secretKey = createHmac("sha256", "WebAppData").update(token).digest();
+  const expected = createHmac("sha256", secretKey)
+    .update(getTelegramDataCheckString(pairs))
+    .digest("hex");
+  if (!(await safeEqualHex(expected, hash))) throw new Error("Invalid Telegram WebApp data");
+
+  const rawUser = params.get("user");
+  if (!rawUser) throw new Error("Invalid Telegram WebApp data");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawUser);
+  } catch {
+    throw new Error("Invalid Telegram WebApp data");
+  }
+  const user = telegramIdentitySchema.omit({ auth_date: true }).safeParse(parsed);
+  if (!user.success) throw new Error("Invalid Telegram WebApp data");
+
+  return { ...user.data, auth_date: authDate };
+}
+
+function telegramEmail(data: TelegramIdentity): string {
   return data.username ? `${data.username}@telegram.local` : `tg_${data.id}@telegram.local`;
 }
 
 async function telegramPassword(telegramId: number): Promise<string> {
-  const token = getEnv("TELEGRAM_AUTH_SECRET") || getEnv("TELEGRAM_BOT_TOKEN");
-  if (!token) throw new Error("Missing TELEGRAM_AUTH_SECRET or TELEGRAM_BOT_TOKEN");
+  const token = getEnv("TELEGRAM_AUTH_SECRET") || getTelegramLoginToken();
+  if (!token) throw new Error("Missing TELEGRAM_LOGIN_BOT_TOKEN or TELEGRAM_BOT_TOKEN");
   const secret = await sha256(token);
   return hmacSha256(`telegram:${telegramId}`, secret);
 }
@@ -995,85 +1045,101 @@ function authUserToUser(
   };
 }
 
+async function signInTelegramUser(data: TelegramIdentity): Promise<TelegramLoginResult> {
+  const serviceSupabase = createServiceClient();
+  const userSupabase = createUserClient();
+  const email = telegramEmail(data);
+  const password = await telegramPassword(data.id);
+  const name = [data.first_name, data.last_name].filter(Boolean).join(" ");
+
+  let { data: signInData, error: signInError } = await userSupabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError || !signInData.user || !signInData.session) {
+    const { error: createError } = await serviceSupabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        name,
+        telegram_id: data.id,
+        telegram_username: data.username,
+        telegram_photo: data.photo_url,
+      },
+    });
+
+    if (createError && !createError.message.toLowerCase().includes("already")) {
+      return { success: false, error: createError.message };
+    }
+
+    if (createError) {
+      const { data: listed } = await serviceSupabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+      const existing = listed.users.find((user) => user.email === email);
+      if (existing) {
+        await serviceSupabase.auth.admin.updateUserById(existing.id, {
+          password,
+          user_metadata: {
+            ...(existing.user_metadata ?? {}),
+            name,
+            telegram_id: data.id,
+            telegram_username: data.username,
+            telegram_photo: data.photo_url,
+          },
+        });
+      }
+    }
+
+    const retry = await userSupabase.auth.signInWithPassword({ email, password });
+    signInData = retry.data;
+    signInError = retry.error;
+  }
+
+  if (signInError || !signInData.user || !signInData.session) {
+    return { success: false, error: signInError?.message || "Telegram login failed" };
+  }
+
+  const { data: profile } = await serviceSupabase
+    .from("profiles")
+    .select("name, role")
+    .eq("id", signInData.user.id)
+    .maybeSingle();
+
+  return {
+    success: true,
+    user: authUserToUser(
+      signInData.user,
+      (profile?.name as string | null) || name,
+      ((profile?.role as UserRole | null) || "user") as UserRole,
+    ),
+    session: {
+      accessToken: signInData.session.access_token,
+      refreshToken: signInData.session.refresh_token,
+    },
+  };
+}
+
 export const verifyTelegramLogin = createServerFn({ method: "POST" })
   .inputValidator(telegramUserSchema)
   .handler(async ({ data }): Promise<TelegramLoginResult> => {
-    const isValid = await verifyTelegramHash(data);
-    if (!isValid) return { success: false, error: "Invalid Telegram authentication data" };
-
-    const serviceSupabase = createServiceClient();
-    const userSupabase = createUserClient();
-    const email = telegramEmail(data);
-    const password = await telegramPassword(data.id);
-    const name = [data.first_name, data.last_name].filter(Boolean).join(" ");
-
-    let { data: signInData, error: signInError } = await userSupabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError || !signInData.user || !signInData.session) {
-      const { error: createError } = await serviceSupabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          name,
-          telegram_id: data.id,
-          telegram_username: data.username,
-          telegram_photo: data.photo_url,
-        },
-      });
-
-      if (createError && !createError.message.toLowerCase().includes("already")) {
-        return { success: false, error: createError.message };
-      }
-
-      if (createError) {
-        const { data: listed } = await serviceSupabase.auth.admin.listUsers({
-          page: 1,
-          perPage: 1000,
-        });
-        const existing = listed.users.find((user) => user.email === email);
-        if (existing) {
-          await serviceSupabase.auth.admin.updateUserById(existing.id, {
-            password,
-            user_metadata: {
-              ...(existing.user_metadata ?? {}),
-              name,
-              telegram_id: data.id,
-              telegram_username: data.username,
-              telegram_photo: data.photo_url,
-            },
-          });
-        }
-      }
-
-      const retry = await userSupabase.auth.signInWithPassword({ email, password });
-      signInData = retry.data;
-      signInError = retry.error;
+    if (!(await verifyTelegramHash(data))) {
+      return { success: false, error: "Invalid Telegram authentication data" };
     }
+    return signInTelegramUser(data);
+  });
 
-    if (signInError || !signInData.user || !signInData.session) {
-      return { success: false, error: signInError?.message || "Telegram login failed" };
+export const verifyTelegramWebApp = createServerFn({ method: "POST" })
+  .inputValidator(telegramWebAppSchema)
+  .handler(async ({ data }): Promise<TelegramLoginResult> => {
+    let identity: TelegramIdentity;
+    try {
+      identity = await verifyTelegramWebAppData(data.initData);
+    } catch {
+      return { success: false, error: "Invalid Telegram authentication data" };
     }
-
-    const { data: profile } = await serviceSupabase
-      .from("profiles")
-      .select("name, role")
-      .eq("id", signInData.user.id)
-      .maybeSingle();
-
-    return {
-      success: true,
-      user: authUserToUser(
-        signInData.user,
-        (profile?.name as string | null) || name,
-        ((profile?.role as UserRole | null) || "user") as UserRole,
-      ),
-      session: {
-        accessToken: signInData.session.access_token,
-        refreshToken: signInData.session.refresh_token,
-      },
-    };
+    return signInTelegramUser(identity);
   });

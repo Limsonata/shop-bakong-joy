@@ -2,7 +2,7 @@
 
 import type { User, AuthResult } from "./auth";
 import { isSupabaseConfigured, supabase } from "./supabase";
-import { verifyTelegramLogin } from "./api/security.functions";
+import { verifyTelegramLogin, verifyTelegramWebApp } from "./api/security.functions";
 
 const TELEGRAM_AUTH_KEY = "telegram-auth";
 const isBrowser = typeof window !== "undefined";
@@ -50,12 +50,12 @@ function clearTelegramAuth(): void {
  * Authenticate with Telegram (Supabase Mode)
  * Creates/updates user in Supabase with Telegram metadata
  */
-async function loginTelegramSupabase(telegramUser: TelegramUser): Promise<AuthResult> {
+async function applyTelegramSession(
+  result: Awaited<ReturnType<typeof verifyTelegramLogin>>,
+): Promise<AuthResult> {
   if (!supabase) {
     return { success: false, error: "Supabase not configured" };
   }
-
-  const result = await verifyTelegramLogin({ data: telegramUser });
   if (!result.success || !result.user || !result.session) {
     return { success: false, error: result.error || "Telegram login failed" };
   }
@@ -69,11 +69,24 @@ async function loginTelegramSupabase(telegramUser: TelegramUser): Promise<AuthRe
   return result;
 }
 
+async function loginTelegramSupabase(telegramUser: TelegramUser): Promise<AuthResult> {
+  const result = await verifyTelegramLogin({ data: telegramUser });
+  return applyTelegramSession(result);
+}
+
 /**
  * Main Telegram login function
  */
 export async function loginWithTelegram(telegramUser: TelegramUser): Promise<AuthResult> {
   return loginTelegramSupabase(telegramUser);
+}
+
+/**
+ * Login using the signed initData provided by the Telegram Mini App runtime.
+ */
+export async function loginWithTelegramWebApp(initData: string): Promise<AuthResult> {
+  const result = await verifyTelegramWebApp({ data: { initData } });
+  return applyTelegramSession(result);
 }
 
 /**

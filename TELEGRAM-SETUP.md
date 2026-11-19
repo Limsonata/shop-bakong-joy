@@ -91,7 +91,15 @@ You can customize the styling in `TelegramLoginButton.tsx`.
 
 ### Mini App Support
 
-For Telegram Mini Apps (running inside Telegram), the component automatically detects `window.Telegram.WebApp` and adjusts the login flow.
+When `/login` is opened from inside Telegram, the widget is replaced by a one-tap button showing the customer's Telegram photo and name ("Continue as …"). It logs in using the signed `initData`, verified on the server with `TELEGRAM_LOGIN_BOT_TOKEN`.
+
+To let customers open it from the bot, set the bot's menu button to the login URL (use the login bot's token):
+
+```
+https://api.telegram.org/bot<LOGIN_BOT_TOKEN>/setChatMenuButton?menu_button={"type":"web_app","web_app":{"url":"https://biiliegrace.vercel.app/login"}}
+```
+
+In a normal browser the app cannot know the customer's Telegram identity until they authorize in the widget popup, so the account name/photo only appears inside Telegram.
 
 ## Troubleshooting
 
