@@ -39,7 +39,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/format";
 import { generateBakongQR, getBakongPaymentConfig, isValidBakongAccount } from "@/lib/bakong";
 import { lowStockAfterSale, saleAlertText, sendOwnerAlert } from "@/lib/pos/alerts";
-import { printSaleReceipt, saleReceiptHtml, shareSaleReceipt } from "@/lib/pos/receipt";
+import { printOrShareSaleReceipt, saleReceiptHtml, shareSaleReceipt } from "@/lib/pos/receipt";
 import { listStockItems, recordSale } from "@/lib/pos/store";
 import {
   PAYMENT_METHODS,
@@ -1008,10 +1008,15 @@ function PosPage() {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
                 if (!lastSale) return;
                 try {
-                  printSaleReceipt(lastSale.sale, { cashGiven: lastSale.cashGiven });
+                  const result = await printOrShareSaleReceipt(lastSale.sale, {
+                    cashGiven: lastSale.cashGiven,
+                  });
+                  if (result === "copied") {
+                    toast.success("Receipt copied — paste it in your printer app or a chat");
+                  }
                 } catch (error) {
                   toast.error(
                     error instanceof Error ? error.message : "Could not print the receipt",
@@ -1020,7 +1025,7 @@ function PosPage() {
               }}
             >
               <Printer className="mr-2 h-4 w-4" />
-              Print
+              Print / share
             </Button>
             <Button
               size="lg"

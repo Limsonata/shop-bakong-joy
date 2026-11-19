@@ -41,7 +41,11 @@ import {
 } from "@/components/ui/select";
 import { formatPrice } from "@/lib/format";
 import { endOfDayAlertText, sendOwnerAlert } from "@/lib/pos/alerts";
-import { printEndOfDayReport, printSaleReceipt, type EndOfDayReport } from "@/lib/pos/receipt";
+import {
+  printEndOfDayReport,
+  printOrShareSaleReceipt,
+  type EndOfDayReport,
+} from "@/lib/pos/receipt";
 import {
   addFinanceEntry,
   addSalePayment,
@@ -244,9 +248,12 @@ function SalesPage() {
     }
   };
 
-  const doPrintReceipt = (sale: Sale) => {
+  const doPrintReceipt = async (sale: Sale) => {
     try {
-      printSaleReceipt(sale);
+      const result = await printOrShareSaleReceipt(sale);
+      if (result === "copied") {
+        toast.success("Receipt copied — paste it in your printer app or a chat");
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not print the receipt");
     }

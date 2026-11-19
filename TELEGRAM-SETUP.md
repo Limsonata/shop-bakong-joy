@@ -25,11 +25,11 @@ The Telegram Login Widget only works on domains you've authorized in BotFather.
 1. Message [@BotFather](https://t.me/BotFather)
 2. Send `/setdomain` command
 3. Select **the same bot** whose username is in `VITE_TELEGRAM_BOT_NAME`
-4. Send only the bare hostname of your live site, e.g. `billiegrace.vercel.app`
+4. Send only the bare hostname of your live site, e.g. `biiliegrace.vercel.app`
 
 Rules:
 
-- Domain only: no `https://`, no path, no port (not `https://billiegrace.vercel.app/login`).
+- Domain only: no `https://`, no path, no port (not `https://biiliegrace.vercel.app/login`).
 - It must match the browser address bar exactly — `www.example.com` and `example.com` are different domains.
 - `localhost`, IP addresses and Vercel preview URLs are rejected. Test the widget on the live domain (or a public tunnel domain you register with BotFather).
 - You can register several domains if you use both a custom domain and a preview domain.
@@ -99,8 +99,8 @@ For Telegram Mini Apps (running inside Telegram), the component automatically de
 
 This message comes from Telegram, not the app: the widget compares the page hostname with the domains linked to the bot in BotFather.
 
-- In [@BotFather](https://t.me/BotFather), send `/setdomain`, pick the **same bot** as `VITE_TELEGRAM_BOT_NAME`, and send just the hostname (e.g. `billiegrace.vercel.app`) — no `https://`, path, or port.
-- Check the address bar: `www.billiegrace.vercel.app` and `billiegrace.vercel.app` are different domains.
+- In [@BotFather](https://t.me/BotFather), send `/setdomain`, pick the **same bot** as `VITE_TELEGRAM_BOT_NAME`, and send just the hostname (e.g. `biiliegrace.vercel.app`) — no `https://`, path, or port.
+- Check the address bar: `www.biiliegrace.vercel.app` and `biiliegrace.vercel.app` are different domains.
 - `localhost`, IP addresses and Vercel preview URLs will not work — open the live site instead.
 - If you just changed the setting, wait a few minutes and reload in a private window.
 

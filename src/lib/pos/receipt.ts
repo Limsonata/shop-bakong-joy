@@ -281,6 +281,30 @@ export async function shareSaleReceipt(
   throw new Error("This browser cannot share or copy the receipt");
 }
 
+/** Add-to-Home-Screen apps run standalone, where window.print() does nothing. */
+export function isStandaloneWebApp(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia?.("(display-mode: standalone)").matches === true ||
+    window.matchMedia?.("(display-mode: minimal-ui)").matches === true ||
+    window.matchMedia?.("(display-mode: fullscreen)").matches === true ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
+/**
+ * Use the browser print dialog normally; in an installed web app open the
+ * share sheet instead so the receipt can be sent to a Bluetooth printer app.
+ */
+export async function printOrShareSaleReceipt(
+  sale: Sale,
+  extras: ReceiptExtras = {},
+): Promise<"printed" | "shared" | "copied" | "cancelled"> {
+  if (isStandaloneWebApp()) return shareSaleReceipt(sale, extras);
+  printSaleReceipt(sale, extras);
+  return "printed";
+}
+
 export interface EndOfDayReport {
   date: string;
   /** Confirmed sales that happened on the date. */
