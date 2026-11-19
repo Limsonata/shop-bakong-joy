@@ -1,14 +1,15 @@
 /**
- * Print helpers for the back office: thermal-style sale receipts and the
- * end-of-day (Z) cash report. Everything renders as plain HTML in a popup
- * window sized for an 80mm receipt printer — no dependencies, works with
- * any browser print dialog.
+ * Receipt helpers for the back office: thermal-style sale receipts and the
+ * end-of-day (Z) cash report. The same markup powers an on-screen preview and
+ * an in-page print area, so phones no longer depend on a pop-up window
+ * (mobile browsers render those as a tiny page with no print controls).
  */
 import { currentShopSettings, formatRiel } from "../shopSettings";
 import type { Sale } from "./types";
 
 const SHOP_NAME = "BillieGrace Closet";
 const RECEIPT_FOOTER = "Thanks for shopping with us! Exchanges within 7 days with this receipt.";
+const PRINT_AREA_ID = "receipt-print-area";
 
 function money(value: number): string {
   return `$${(Number.isFinite(value) ? value : 0).toFixed(2)}`;
@@ -37,43 +38,43 @@ function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function openPrintWindow(bodyHtml: string): void {
+/**
+ * Print from a hidden element inside the current page instead of a pop-up.
+ * `@media print` in styles.css removes the app from layout and shows only
+ * this element. Chrome ignores `@page { size: 80mm auto }`, so the exact paper
+ * height is measured here and written as two explicit lengths.
+ */
+function printHtml(html: string): void {
   if (typeof window === "undefined") throw new Error("Printing is only available in the browser");
-  const win = window.open("", "_blank", "width=420,height=720");
-  if (!win) {
-    throw new Error("Pop-up blocked — allow pop-ups for this site to print receipts.");
+  let area = document.getElementById(PRINT_AREA_ID);
+  if (!area) {
+    area = document.createElement("div");
+    area.id = PRINT_AREA_ID;
+    area.className = "receipt-paper";
+    document.body.appendChild(area);
   }
-  win.document.write(`<!doctype html>
-<html>
-<head>
-<meta charset="utf-8" />
-<title>${esc(SHOP_NAME)}</title>
-<style>
-  @page { margin: 0; size: 80mm auto; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    width: 80mm; padding: 4mm 3mm;
-    font-family: "Courier New", ui-monospace, monospace;
-    font-size: 12px; line-height: 1.45; color: #000; background: #fff;
+  area.innerHTML = html;
+
+  const measure = document.createElement("div");
+  measure.className = "receipt-paper";
+  measure.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden";
+  measure.innerHTML = html;
+  document.body.appendChild(measure);
+  const heightMm = Math.max(
+    40,
+    Math.ceil((measure.getBoundingClientRect().height * 25.4) / 96) + 2,
+  );
+  measure.remove();
+
+  let pageStyle = document.getElementById("receipt-page-size") as HTMLStyleElement | null;
+  if (!pageStyle) {
+    pageStyle = document.createElement("style");
+    pageStyle.id = "receipt-page-size";
+    document.head.appendChild(pageStyle);
   }
-  h1 { font-size: 16px; text-align: center; letter-spacing: 1px; }
-  .center { text-align: center; }
-  .muted { color: #444; }
-  hr { border: none; border-top: 1px dashed #000; margin: 2mm 0; }
-  table { width: 100%; border-collapse: collapse; }
-  td { vertical-align: top; padding: 0.5mm 0; }
-  .r { text-align: right; white-space: nowrap; }
-  .total { font-size: 14px; font-weight: bold; }
-  .khr { font-size: 11px; font-weight: normal; }
-  .banner { text-align: center; font-weight: bold; margin: 2mm 0; letter-spacing: 1px; }
-  @media print { body { width: auto; } }
-</style>
-</head>
-<body>${bodyHtml}
-<script>window.onload = function () { window.focus(); window.print(); };</script>
-</body>
-</html>`);
-  win.document.close();
+  pageStyle.textContent = `@page { size: 80mm ${heightMm}mm; margin: 0; }`;
+
+  window.print();
 }
 
 /** Optional till details that are not stored on the sale itself. */
@@ -105,8 +106,11 @@ function changeDue(sale: Sale, extras: ReceiptExtras): number {
   return extras.cashGiven && extras.cashGiven > sale.paid ? extras.cashGiven - sale.paid : 0;
 }
 
-/** Thermal-style receipt for a sale (works for cancelled/refunded sales too). */
-export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
+/**
+ * The itemised receipt markup. Used for both the on-screen preview and the
+ * printed page so the customer always sees exactly what will be printed.
+ */
+export function saleReceiptHtml(sale: Sale, extras: ReceiptExtras = {}): string {
   const dateLine = receiptDateLine(sale);
   const change = changeDue(sale, extras);
 
@@ -132,11 +136,13 @@ export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
     change > 0
       ? `<tr><td>Cash given</td><td class="r">${money(extras.cashGiven ?? 0)}</td></tr>${dualRow("Change", change)}`
       : "",
-    Math.max(sale.total - sale.paid, 0) > 0 ? dualRow("Balance due", sale.total - sale.paid, true) : "",
+    Math.max(sale.total - sale.paid, 0) > 0
+      ? dualRow("Balance due", sale.total - sale.paid, true)
+      : "",
   ].join("");
   const rate = currentShopSettings().khrRate;
 
-  openPrintWindow(`
+  return `
     <h1>${esc(SHOP_NAME)}</h1>
     ${sale.status === "cancelled" ? '<p class="banner">*** CANCELLED — REFUNDED ***</p>' : ""}
     <p class="center muted">Receipt ${esc(sale.code)}</p>
@@ -152,7 +158,12 @@ export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
     ${sale.deliveryMethod && sale.deliveryMethod !== "Pickup" ? `<p class="muted">Delivery: ${esc([sale.deliveryMethod, sale.city].filter(Boolean).join(", "))}</p>` : ""}
     <hr />
     <p class="center">${esc(RECEIPT_FOOTER)}</p>
-  `);
+  `;
+}
+
+/** Thermal-style receipt for a sale (works for cancelled/refunded sales too). */
+export function printSaleReceipt(sale: Sale, extras: ReceiptExtras = {}): void {
+  printHtml(saleReceiptHtml(sale, extras));
 }
 
 /** Plain-text receipt for Telegram / Messenger / SMS. */
@@ -188,30 +199,86 @@ export function saleReceiptText(sale: Sale, extras: ReceiptExtras = {}): string 
     .trim();
 }
 
+/** Wrap long text lines so the generated image stays receipt-width. */
+function wrapReceiptLines(text: string, columns: number): string[] {
+  const wrapped: string[] = [];
+  for (const line of text.split("\n")) {
+    let rest = line;
+    while (rest.length > columns) {
+      let cut = rest.lastIndexOf(" ", columns);
+      if (cut <= 0) cut = columns;
+      wrapped.push(rest.slice(0, cut));
+      rest = rest.slice(cut).trimStart();
+    }
+    wrapped.push(rest);
+  }
+  return wrapped;
+}
+
+/** Draw the plain-text receipt onto a small PNG that printer apps can open. */
+async function receiptImageBlob(text: string): Promise<Blob> {
+  const columns = 32;
+  const lines = wrapReceiptLines(text, columns);
+  const fontSize = 18;
+  const lineHeight = 24;
+  const padding = 24;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil(columns * fontSize * 0.62 + padding * 2);
+  canvas.height = Math.ceil(lines.length * lineHeight + padding * 2);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not create the receipt image");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#000000";
+  ctx.font = `${fontSize}px "Courier New", monospace`;
+  ctx.textBaseline = "top";
+  lines.forEach((line, index) => ctx.fillText(line, padding, padding + index * lineHeight));
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Could not create the receipt image"))),
+      "image/png",
+    );
+  });
+}
+
 /**
- * Share the receipt with the phone's share sheet (Telegram, Messenger…).
- * Falls back to copying the text when the browser has no share sheet.
- * Returns "copied" so the caller can tell the user to paste it.
+ * Share the receipt as a PNG through the phone's share sheet, so it can be
+ * opened in a Bluetooth printer app. Falls back to sharing/copying the text.
  */
 export async function shareSaleReceipt(
   sale: Sale,
   extras: ReceiptExtras = {},
 ): Promise<"shared" | "copied" | "cancelled"> {
   const text = saleReceiptText(sale, extras);
-  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+  if (typeof navigator !== "undefined") {
     try {
-      await navigator.share({ title: `${SHOP_NAME} receipt ${sale.code}`, text });
-      return "shared";
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
-      // Any other failure (e.g. not allowed on this page): fall back to copying.
+      const blob = await receiptImageBlob(text);
+      const file = new File([blob], `receipt-${sale.code}.png`, { type: "image/png" });
+      if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: `${SHOP_NAME} receipt ${sale.code}` });
+          return "shared";
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
+        }
+      }
+    } catch {
+      // Image generation is best-effort; fall through to text sharing.
+    }
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: `${SHOP_NAME} receipt ${sale.code}`, text });
+        return "shared";
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
+      }
+    }
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      return "copied";
     }
   }
-  if (typeof navigator === "undefined" || !navigator.clipboard) {
-    throw new Error("This browser cannot share or copy text");
-  }
-  await navigator.clipboard.writeText(text);
-  return "copied";
+  throw new Error("This browser cannot share or copy the receipt");
 }
 
 export interface EndOfDayReport {
@@ -238,12 +305,11 @@ export function printEndOfDayReport(report: EndOfDayReport): void {
 
   const methods = report.collectedByMethod
     .map(
-      ({ method, amount }) =>
-        `<tr><td>${esc(method)}</td><td class="r">${money(amount)}</td></tr>`,
+      ({ method, amount }) => `<tr><td>${esc(method)}</td><td class="r">${money(amount)}</td></tr>`,
     )
     .join("");
 
-  openPrintWindow(`
+  printHtml(`
     <h1>${esc(SHOP_NAME)}</h1>
     <p class="center muted">End-of-day report</p>
     <p class="center muted">${esc(report.date)} · printed ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>

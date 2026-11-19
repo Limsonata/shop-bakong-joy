@@ -248,7 +248,7 @@ function SalesPage() {
     try {
       printSaleReceipt(sale);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not open the print window");
+      toast.error(error instanceof Error ? error.message : "Could not print the receipt");
     }
   };
 

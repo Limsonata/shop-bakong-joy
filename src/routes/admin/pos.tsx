@@ -39,7 +39,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/format";
 import { generateBakongQR, getBakongPaymentConfig, isValidBakongAccount } from "@/lib/bakong";
 import { lowStockAfterSale, saleAlertText, sendOwnerAlert } from "@/lib/pos/alerts";
-import { printSaleReceipt, shareSaleReceipt } from "@/lib/pos/receipt";
+import { printSaleReceipt, saleReceiptHtml, shareSaleReceipt } from "@/lib/pos/receipt";
 import { listStockItems, recordSale } from "@/lib/pos/store";
 import {
   PAYMENT_METHODS,
@@ -986,6 +986,24 @@ function PosPage() {
               Still owed {formatPrice(round2(lastSale.sale.total - lastSale.sale.paid))}
             </p>
           ) : null}
+          {lastSale ? (
+            <div className="rounded-md border bg-white p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Receipt preview
+                </span>
+                <span className="text-xs text-muted-foreground">80mm thermal</span>
+              </div>
+              <div className="max-h-80 overflow-auto rounded border bg-white">
+                <div
+                  className="receipt-paper"
+                  dangerouslySetInnerHTML={{
+                    __html: saleReceiptHtml(lastSale.sale, { cashGiven: lastSale.cashGiven }),
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
           <div className="grid grid-cols-2 gap-2">
             <Button
               size="lg"
@@ -996,7 +1014,7 @@ function PosPage() {
                   printSaleReceipt(lastSale.sale, { cashGiven: lastSale.cashGiven });
                 } catch (error) {
                   toast.error(
-                    error instanceof Error ? error.message : "Could not open the print window",
+                    error instanceof Error ? error.message : "Could not print the receipt",
                   );
                 }
               }}
@@ -1014,7 +1032,7 @@ function PosPage() {
                     cashGiven: lastSale.cashGiven,
                   });
                   if (result === "copied") {
-                    toast.success("Receipt copied — paste it in Telegram or Messenger");
+                    toast.success("Receipt copied — paste it in your printer app or a chat");
                   }
                 } catch (error) {
                   toast.error(

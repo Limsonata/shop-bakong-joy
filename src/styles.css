@@ -484,3 +484,91 @@ label {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* ---- Receipt paper: shared by the on-screen preview and print output ---- */
+.receipt-paper {
+  width: min(80mm, 100%);
+  margin: 0 auto;
+  padding: 4mm 3mm;
+  background: #fff;
+  color: #000;
+  font-family: "Courier New", ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.receipt-paper h1 {
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+.receipt-paper .center {
+  text-align: center;
+}
+.receipt-paper .muted {
+  color: #444;
+}
+.receipt-paper hr {
+  border: none;
+  border-top: 1px dashed #000;
+  margin: 2mm 0;
+}
+.receipt-paper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.receipt-paper td {
+  vertical-align: top;
+  padding: 0.5mm 0;
+}
+.receipt-paper .r {
+  text-align: right;
+  white-space: nowrap;
+}
+.receipt-paper .total {
+  font-size: 14px;
+  font-weight: 700;
+}
+.receipt-paper .khr {
+  font-size: 11px;
+  font-weight: 400;
+}
+.receipt-paper .banner {
+  text-align: center;
+  font-weight: 700;
+  margin: 2mm 0;
+  letter-spacing: 1px;
+}
+
+/* The hidden print area lives directly under <body> so print CSS can isolate it. */
+#receipt-print-area {
+  display: none;
+}
+
+@media print {
+  /* Fallback; the exact height is injected by printHtml() before printing. */
+  @page {
+    size: 80mm 200mm;
+    margin: 0;
+  }
+  /* Remove the app from layout entirely: visibility:hidden still reserves
+     space and produces pages of blank paper after the receipt. */
+  body > *:not(#receipt-print-area) {
+    display: none !important;
+  }
+  html,
+  body {
+    width: 80mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  #receipt-print-area {
+    display: block !important;
+    position: static !important;
+    width: 80mm !important;
+    margin: 0 !important;
+  }
+}

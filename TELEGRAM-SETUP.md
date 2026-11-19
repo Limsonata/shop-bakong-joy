@@ -20,12 +20,19 @@ Users can now log in via:
 
 ### Step 2: Configure Domain
 
-The Telegram Login Widget only works on domains you've authorized.
+The Telegram Login Widget only works on domains you've authorized in BotFather.
 
 1. Message [@BotFather](https://t.me/BotFather)
 2. Send `/setdomain` command
-3. Select your bot
-4. Enter your domain (e.g., `https://yourshop.com` or `https://localhost:8080` for development)
+3. Select **the same bot** whose username is in `VITE_TELEGRAM_BOT_NAME`
+4. Send only the bare hostname of your live site, e.g. `billiegrace.vercel.app`
+
+Rules:
+
+- Domain only: no `https://`, no path, no port (not `https://billiegrace.vercel.app/login`).
+- It must match the browser address bar exactly — `www.example.com` and `example.com` are different domains.
+- `localhost`, IP addresses and Vercel preview URLs are rejected. Test the widget on the live domain (or a public tunnel domain you register with BotFather).
+- You can register several domains if you use both a custom domain and a preview domain.
 
 ### Step 3: Update Environment Variables
 
@@ -45,7 +52,7 @@ VITE_TELEGRAM_BOT_NAME=yourshopbot  # The bot username you created (without @)
    npm run dev
    ```
 
-2. Navigate to `http://localhost:8080/login`
+2. Navigate to `https://<your-domain>/login` (the widget shows "Bot domain invalid" on localhost — see [Troubleshooting](#bot-domain-invalid))
 
 3. Click the "Telegram" tab
 
@@ -66,16 +73,7 @@ VITE_TELEGRAM_BOT_NAME=yourshopbot  # The bot username you created (without @)
 
 ### Security Notes
 
-⚠️ **Important:** In production, you should verify the Telegram hash server-side:
-
-1. Send the `hash` to your backend
-2. Verify it against Telegram's algorithm (requires your bot token)
-3. The current implementation works for demo purposes
-
-For production use, update `telegramAuth.ts` to:
-- Send auth data to your backend
-- Verify the hash using HMAC-SHA256 with your bot token
-- Create/update user records after verification
+The Telegram hash is already verified server-side in `verifyTelegramLogin` (`src/lib/api/security.functions.ts`) using HMAC-SHA256 with `TELEGRAM_BOT_TOKEN`, plus a 1-hour auth-date expiry check. Set `TELEGRAM_BOT_TOKEN` (and optionally `TELEGRAM_AUTH_SECRET`) on the server; the login widget itself only needs `VITE_TELEGRAM_BOT_NAME`.
 
 ## Customization
 
@@ -99,8 +97,12 @@ For Telegram Mini Apps (running inside Telegram), the component automatically de
 
 ### "Bot domain invalid"
 
-- Make sure you've set the domain via `/setdomain` in @BotFather
-- Ensure the domain matches exactly (including `https://`)
+This message comes from Telegram, not the app: the widget compares the page hostname with the domains linked to the bot in BotFather.
+
+- In [@BotFather](https://t.me/BotFather), send `/setdomain`, pick the **same bot** as `VITE_TELEGRAM_BOT_NAME`, and send just the hostname (e.g. `billiegrace.vercel.app`) — no `https://`, path, or port.
+- Check the address bar: `www.billiegrace.vercel.app` and `billiegrace.vercel.app` are different domains.
+- `localhost`, IP addresses and Vercel preview URLs will not work — open the live site instead.
+- If you just changed the setting, wait a few minutes and reload in a private window.
 
 ### Widget doesn't appear
 
